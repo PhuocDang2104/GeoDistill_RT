@@ -73,6 +73,21 @@ Current policy: first 800 `val_selection_cropped` samples become `train`, remain
 
 KITTI 16-bit depth PNG files are decoded as meters with scale `256.0`.
 
+## Colab Project Path
+
+The expected Drive project root is:
+
+```python
+PROJECT_DIR = "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT"
+```
+
+In shell cells, always quote this path because it contains `|`:
+
+```bash
+PROJECT_DIR="/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT"
+cd "$PROJECT_DIR"
+```
+
 ## Teacher Setup
 
 Clone official repositories:

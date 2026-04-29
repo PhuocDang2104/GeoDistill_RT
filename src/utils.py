@@ -76,7 +76,7 @@ def load_project_config(config_path: str | Path) -> tuple[dict[str, Any], dict[s
 def resolve_runtime_paths(paths: Mapping[str, Any], repo_root: Path) -> dict[str, str]:
     configured_root_text = str(paths.get("project_root", repo_root)).replace("\\", "/").rstrip("/")
     configured_root = Path(str(paths.get("project_root", repo_root))).expanduser()
-    runtime_root = configured_root if configured_root.exists() else repo_root
+    runtime_root = configured_root if _path_exists(configured_root) else repo_root
     out: dict[str, str] = {}
     out["project_root"] = str(runtime_root)
 
@@ -103,6 +103,13 @@ def resolve_runtime_paths(paths: Mapping[str, Any], repo_root: Path) -> dict[str
         else:
             out[key] = str((runtime_root / p).resolve())
     return out
+
+
+def _path_exists(path: Path) -> bool:
+    try:
+        return path.exists()
+    except OSError:
+        return False
 
 
 def resolve_repo_path(project_root: str | Path, value: str | Path) -> Path:
