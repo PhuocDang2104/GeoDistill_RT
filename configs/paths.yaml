@@ -1,0 +1,14 @@
+project_root: "/content/drive/MyDrive/GeoRT"
+
+data_root: "/content/drive/MyDrive/GeoRT/data/depth_selection"
+split_root: "/content/drive/MyDrive/GeoRT/data/depth_selection/splits"
+
+third_party_root: "/content/drive/MyDrive/GeoRT/third_party"
+weights_root: "/content/drive/MyDrive/GeoRT/weights"
+
+teacher_root: "/content/drive/MyDrive/GeoRT/teacher_outputs"
+student_root: "/content/drive/MyDrive/GeoRT/student_outputs"
+
+train_split: "train.txt"
+val_split: "val.txt"
+test_split: "test.txt"

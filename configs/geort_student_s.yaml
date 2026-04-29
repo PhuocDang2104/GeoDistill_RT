@@ -1,0 +1,48 @@
+paths_file: "configs/paths.yaml"
+
+seed: 42
+device: "cuda"
+
+data:
+  image_size: [352, 1216]
+  output_scale: 4
+  num_workers: 2
+  depth_scale: 256.0
+
+model:
+  name: "GeoRT-Student-S"
+  encoder: "mobilevitv2_0.75"
+  fusion_channels: 48
+  e4_channels: 48
+  e8_channels: 72
+  e16_channels: 128
+
+sparse_propagation:
+  scale: 4
+  k: 4
+  mode: "analytic"
+
+train:
+  epochs: 30
+  batch_size: 2
+  lr: 0.0001
+  weight_decay: 0.00001
+  amp: true
+  resume: null
+
+loss:
+  lambda_gt: 1.0
+  lambda_T: 0.5
+  lambda_S: 1.0
+  lambda_C: 0.05
+  lambda_E: 0.01
+  lambda_s: 0.01
+  use_teacher_conf: true
+
+schedule:
+  add_teacher_epoch: 5
+  add_confidence_epoch: 15
+
+outputs:
+  save_every: 1
+  save_visuals: true
