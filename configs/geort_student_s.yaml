@@ -39,6 +39,16 @@ loss:
   lambda_s: 0.01
   use_teacher_conf: true
 
+mono_ssi:
+  enabled: true
+  weight: 0.05
+  teacher_dir: "teacher_outputs/depth_anything"
+  key: "D_da_raw"
+  start_epoch: 5
+  robust: "smooth_l1"
+  min_valid_pixels: 128
+  min_depth: 0.001
+
 schedule:
   add_teacher_epoch: 5
   add_confidence_epoch: 15

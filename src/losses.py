@@ -42,12 +42,76 @@ def edge_smoothness_loss(D_c: torch.Tensor, rgb: torch.Tensor) -> torch.Tensor:
     return (dx_d * torch.exp(-dx_i)).mean() + (dy_d * torch.exp(-dy_i)).mean()
 
 
+def scale_shift_invariant_loss(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor | None = None,
+    eps: float = 1e-6,
+    min_valid_pixels: int = 128,
+    min_depth: float = 1e-3,
+) -> torch.Tensor:
+    """Scale-and-shift invariant dense structure loss.
+
+    Shapes:
+      pred: [B,1,h,w] metric student depth.
+      target: [B,1,h,w] relative monocular depth, e.g. D_da_raw.
+      mask: optional [B,1,h,w] validity mask.
+
+    The fit is target-to-prediction:
+      pred ~= a * target + b
+
+    This keeps metric scale governed by sparse/GT/DMD3C supervision while
+    Depth Anything contributes only relative structure.
+    """
+    if pred.ndim == 3:
+        pred = pred[:, None]
+    if target.ndim == 3:
+        target = target[:, None]
+    pred_f = pred.float()
+    target_f = target.float()
+    if mask is None:
+        mask_b = torch.ones_like(pred_f, dtype=torch.bool)
+    else:
+        mask_b = mask.bool()
+        if mask_b.ndim == 3:
+            mask_b = mask_b[:, None]
+
+    losses: list[torch.Tensor] = []
+    for idx in range(pred_f.shape[0]):
+        p = pred_f[idx, 0]
+        t = target_f[idx, 0]
+        valid = mask_b[idx, 0] & torch.isfinite(p.detach()) & torch.isfinite(t) & (p.detach() > min_depth)
+        if int(valid.sum().item()) < int(min_valid_pixels):
+            continue
+
+        x = t[valid].detach()
+        y = p[valid].detach()
+        n = x.numel()
+        sum_x = x.sum()
+        sum_y = y.sum()
+        sum_xx = (x * x).sum()
+        sum_xy = (x * y).sum()
+        denom = n * sum_xx - sum_x * sum_x
+        if (not bool(torch.isfinite(denom).item())) or float(denom.abs().item()) <= eps:
+            continue
+
+        a = (n * sum_xy - sum_x * sum_y) / denom
+        b = (sum_y - a * sum_x) / n
+        aligned = a.detach() * t[valid] + b.detach()
+        losses.append(F.smooth_l1_loss(p[valid], aligned, reduction="mean"))
+
+    if not losses:
+        return pred.new_tensor(0.0)
+    return torch.stack(losses).mean().to(dtype=pred.dtype)
+
+
 def geort_loss(
     pred: dict[str, torch.Tensor],
     batch: dict[str, torch.Tensor],
     loss_cfg: dict[str, Any],
     schedule_cfg: dict[str, Any],
     epoch: int,
+    mono_ssi_cfg: dict[str, Any] | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute the GeoRT objective without a normal loss.
 
@@ -57,6 +121,7 @@ def geort_loss(
     Batch supervision shapes before downsampling:
       gt/sparse/mask/gt_mask: [B,1,H,W]
       D_teacher/C_teacher: [B,1,H/4,W/4] if available
+      D_da_raw/da_raw_valid: [B,1,H,W] if mono SSI is enabled.
     """
     D_c = pred["D_c"]
     log_var = pred["log_var"]
@@ -102,12 +167,28 @@ def geort_loss(
     else:
         L_C = D_c.new_tensor(0.0)
 
+    L_ssi = D_c.new_tensor(0.0)
+    if mono_ssi_cfg and bool(mono_ssi_cfg.get("enabled", False)) and epoch >= int(mono_ssi_cfg.get("start_epoch", 5)):
+        mono_key = str(mono_ssi_cfg.get("key", "D_da_raw"))
+        if mono_key in batch:
+            D_da_raw = match_prediction_size(batch[mono_key].float(), target_hw, mode="bilinear")
+            da_mask = batch.get("da_raw_valid")
+            da_mask_ds = match_prediction_size(da_mask.float(), target_hw, mode="nearest") if da_mask is not None else None
+            L_ssi = scale_shift_invariant_loss(
+                D_c,
+                D_da_raw,
+                mask=da_mask_ds,
+                min_valid_pixels=int(mono_ssi_cfg.get("min_valid_pixels", 128)),
+                min_depth=float(mono_ssi_cfg.get("min_depth", 1e-3)),
+            )
+
     total = (
         float(loss_cfg.get("lambda_gt", 1.0)) * L_gt
         + float(loss_cfg.get("lambda_T", 0.5)) * L_T
         + float(loss_cfg.get("lambda_S", 1.0)) * L_S
         + float(loss_cfg.get("lambda_C", 0.05)) * L_C
         + float(loss_cfg.get("lambda_E", 0.01)) * L_E
+        + float((mono_ssi_cfg or {}).get("weight", 0.0)) * L_ssi
     )
     items = {
         "loss": float(total.detach().cpu()),
@@ -116,5 +197,6 @@ def geort_loss(
         "L_S": float(L_S.detach().cpu()),
         "L_C": float(L_C.detach().cpu()),
         "L_E": float(L_E.detach().cpu()),
+        "L_ssi": float(L_ssi.detach().cpu()),
     }
     return total, items

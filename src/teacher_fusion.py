@@ -12,7 +12,7 @@ class FusionResult:
     C_teacher: np.ndarray
     w_m3d: np.ndarray
     w_da: np.ndarray
-    w_dmd3c: np.ndarray | None
+    w_dmd3c: np.ndarray
     D_full: np.ndarray
     C_full: np.ndarray
 
@@ -94,15 +94,18 @@ def fuse_teachers(
     confidence_mode: str = "max_weight",
     min_depth: float = 1e-3,
     max_depth: float = 120.0,
+    prior_m3d: float = 1.0,
+    prior_da: float = 0.1,
+    prior_dmd3c: float = 2.0,
 ) -> FusionResult:
-    """Conflict-aware teacher fusion.
+    """DMD3C-dominant conflict-aware teacher fusion.
 
-    Implements:
+    Diagnostic weights still implement:
       q_i = exp(-alpha * (1 - <N(D_i), N_dsine>))
       r_i = exp(-beta * M * |D_i - S|)
-      w_i = q_i r_i / sum_j q_j r_j
-      D_T = sum_i w_i D_i
-      C_T = max_i w_i
+
+    with teacher priors. The metric pseudo target is DMD3C wherever DMD3C
+    is valid; weighted fusion is only a fallback for invalid DMD3C pixels.
     """
     shape_hw = D_m3d.shape
     D_m3d = _resize_depth_like(D_m3d, shape_hw)
@@ -113,12 +116,15 @@ def fuse_teachers(
 
     teacher_names = ["m3d", "da"]
     depths = [D_m3d.astype(np.float32), D_da_aligned.astype(np.float32)]
+    priors = [float(prior_m3d), float(prior_da)]
+    D_dmd3c_resized = None
     if D_dmd3c is not None:
         teacher_names.append("dmd3c")
-        depths.append(_resize_depth_like(D_dmd3c, shape_hw).astype(np.float32))
+        D_dmd3c_resized = _resize_depth_like(D_dmd3c, shape_hw).astype(np.float32)
+        depths.append(D_dmd3c_resized)
+        priors.append(float(prior_dmd3c))
     scores = []
-    normals = []
-    for D in depths:
+    for D, prior in zip(depths, priors):
         valid = np.isfinite(D) & (D > min_depth) & (D < max_depth)
         N_depth = depth_to_normals(D, K, min_depth=min_depth)
         dot = np.sum(N_depth * N_dsine, axis=0)
@@ -126,13 +132,12 @@ def fuse_teachers(
         if valid_dot.any() and float(np.nanmean(dot[valid_dot])) < 0.0:
             N_depth = -N_depth
             dot = -dot
-        normals.append(N_depth)
         dot = np.clip(dot, -1.0, 1.0)
         delta_normal = 1.0 - dot
         delta_sparse = np.where(mask, np.abs(D - sparse), 0.0)
         q = np.exp(-float(alpha_normal) * np.clip(delta_normal, 0.0, 2.0))
         r = np.exp(-float(beta_sparse) * np.clip(delta_sparse, 0.0, max_depth))
-        score = (q * r).astype(np.float32)
+        score = (float(prior) * q * r).astype(np.float32)
         score[~valid] = 0.0
         score[~np.isfinite(score)] = 0.0
         scores.append(score)
@@ -143,11 +148,11 @@ def fuse_teachers(
     weights = np.zeros_like(score_stack, dtype=np.float32)
     weights[:, valid_any] = score_stack[:, valid_any] / denom[:, valid_any]
 
-    D_full = np.zeros(shape_hw, dtype=np.float32)
+    D_weighted = np.zeros(shape_hw, dtype=np.float32)
     for idx, D in enumerate(depths):
-        D_full += weights[idx] * D
-    D_full[~valid_any] = 0.0
-    D_full = np.clip(D_full, 0.0, max_depth).astype(np.float32)
+        D_weighted += weights[idx] * D
+    D_weighted[~valid_any] = 0.0
+    D_weighted = np.clip(D_weighted, 0.0, max_depth).astype(np.float32)
 
     if confidence_mode == "ones":
         C_full = valid_any.astype(np.float32)
@@ -156,17 +161,28 @@ def fuse_teachers(
     else:
         raise ValueError(f"Unsupported confidence_mode: {confidence_mode}")
 
+    D_full = D_weighted.copy()
+    if D_dmd3c_resized is not None:
+        dmd_valid = np.isfinite(D_dmd3c_resized) & (D_dmd3c_resized > min_depth) & (D_dmd3c_resized < max_depth)
+        D_full[dmd_valid] = D_dmd3c_resized[dmd_valid]
+        C_full[dmd_valid] = 1.0
+    D_full = np.clip(D_full, 0.0, max_depth).astype(np.float32)
+    C_full = np.clip(C_full, 0.0, 1.0).astype(np.float32)
+
     D_teacher = downsample_map(D_full, output_scale, interpolation=cv2.INTER_AREA)
     C_teacher = downsample_map(C_full, output_scale, interpolation=cv2.INTER_AREA)
     w_m3d = downsample_map(weights[0], output_scale, interpolation=cv2.INTER_AREA)
     w_da = downsample_map(weights[1], output_scale, interpolation=cv2.INTER_AREA)
-    w_dmd3c = downsample_map(weights[2], output_scale, interpolation=cv2.INTER_AREA) if "dmd3c" in teacher_names else None
+    if "dmd3c" in teacher_names:
+        w_dmd3c = downsample_map(weights[2], output_scale, interpolation=cv2.INTER_AREA)
+    else:
+        w_dmd3c = np.zeros_like(w_m3d, dtype=np.float32)
     return FusionResult(
         D_teacher=D_teacher.astype(np.float32),
         C_teacher=C_teacher.astype(np.float32),
         w_m3d=w_m3d.astype(np.float32),
         w_da=w_da.astype(np.float32),
-        w_dmd3c=w_dmd3c.astype(np.float32) if w_dmd3c is not None else None,
+        w_dmd3c=w_dmd3c.astype(np.float32),
         D_full=D_full,
         C_full=C_full,
     )

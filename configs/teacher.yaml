@@ -51,5 +51,8 @@ dmd3c:
 fusion:
   alpha_normal: 1.0
   beta_sparse: 1.0
+  prior_m3d: 1.0
+  prior_da: 0.1
+  prior_dmd3c: 2.0
   use_teacher_confidence: true
   confidence_mode: "max_weight"

@@ -11,12 +11,13 @@ At inference time there is no Metric3D, Depth Anything V2, DSINE, DMD3C, normal 
 ## Method Summary
 
 1. Metric3D / Metric3Dv2 predicts metric dense depth.
-2. Depth Anything V2 predicts relative dense depth and is aligned to sparse LiDAR with robust scale-shift fitting.
+2. Depth Anything V2 predicts relative dense depth. Raw `D_da_raw` is kept as a dense structure teacher for scale-and-shift-invariant (SSI) training loss.
 3. DSINE predicts surface normals.
-4. DMD3C can optionally predict a fine depth-completion teacher from RGB + sparse LiDAR.
-5. Teacher depth candidates are fused per pixel using sparse-depth consistency and DSINE normal consistency.
-6. The fused teacher target and confidence are saved at 1/4 resolution.
-7. GeoRT-Student-S learns coarse metric depth and confidence from GT, sparse LiDAR, and fused teacher supervision.
+4. DMD3C predicts the main metric depth-completion teacher from RGB + sparse LiDAR.
+5. Teacher fusion still computes diagnostic Metric3D / Depth Anything / DMD3C weights, but the metric target uses DMD3C wherever DMD3C is valid.
+6. Weighted fusion is only a fallback where DMD3C is invalid. Depth Anything aligned is kept for backward compatibility and diagnostics.
+7. The fused teacher target and confidence are saved at 1/4 resolution, with optional full-resolution `D_full/C_full`.
+8. GeoRT-Student-S learns coarse metric depth and confidence from GT, sparse LiDAR, DMD3C-dominant fused supervision, and optional DA raw SSI structure loss.
 
 ## Repo Structure
 
@@ -158,6 +159,36 @@ weights/dmd3c/dmd3c_distillation_depth_anything_v2.pth
 
 ## Generate Pseudo Labels
 
+Generate Depth Anything raw maps for SSI:
+
+```bash
+python -m src.teachers.generate_teachers \
+  --config configs/teacher.yaml \
+  --split val \
+  --run_depth_anything
+```
+
+Generate DMD3C metric teacher:
+
+```bash
+python -m src.teachers.generate_teachers \
+  --config configs/teacher.yaml \
+  --split val \
+  --run_dmd3c
+```
+
+Regenerate DMD3C-dominant fused teacher:
+
+```bash
+python -m src.teachers.generate_teachers \
+  --config configs/teacher.yaml \
+  --split val \
+  --run_fusion \
+  --overwrite
+```
+
+Full teacher workflow:
+
 ```bash
 python -m src.teachers.generate_teachers \
   --config configs/teacher.yaml \
@@ -171,7 +202,7 @@ python -m src.teachers.generate_teachers \
 
 Teacher generation is restartable. Existing `.npz` files are skipped when `skip_existing: true`.
 
-After changing Depth Anything alignment logic, recompute aligned files from existing raw outputs:
+Depth Anything aligned files are kept only for compatibility/debug. If you need to recompute them from raw outputs:
 
 ```bash
 python -m src.teachers.generate_teachers \
@@ -181,13 +212,19 @@ python -m src.teachers.generate_teachers \
   --max_samples 2
 ```
 
+Evaluate saved teachers and print mean fusion weights:
+
+```bash
+python -m src.eval_teacher_outputs --config configs/teacher.yaml --split val --max_samples 50
+```
+
 ## Train Student
 
 ```bash
 python -m src.train_student --config configs/geort_student_s.yaml
 ```
 
-Checkpoints and logs are saved under `student_outputs/`.
+Checkpoints and logs are saved under `student_outputs/`. If `mono_ssi.enabled: true`, training loads `teacher_outputs/depth_anything/{split}_raw/*.npz` when available and adds DA raw SSI loss after `mono_ssi.start_epoch`. Missing DA raw files are skipped without crashing.
 
 ## Run Inference
 
@@ -252,8 +289,17 @@ Fused teacher:
 
 ```text
 teacher_outputs/fused/{split}/{sample_id}.npz
-keys: D_teacher [H/4,W/4], C_teacher [H/4,W/4], w_m3d optional, w_da optional, w_dmd3c optional
+keys:
+  D_teacher float32 [H/4,W/4]
+  C_teacher float32 [H/4,W/4]
+  D_full float32 [H,W]
+  C_full float32 [H,W]
+  w_m3d float32 [H/4,W/4]
+  w_da float32 [H/4,W/4]
+  w_dmd3c float32 [H/4,W/4]
 ```
+
+`D_full/D_teacher` are DMD3C-dominant metric targets: DMD3C is used wherever valid, with conflict-aware weighted fusion only as fallback.
 
 Student inference:
 
@@ -268,5 +314,6 @@ keys: D_c float32 [H/4,W/4], C float32 [H/4,W/4]
 - If a teacher wrapper fails to import, verify the matching official repo exists under `third_party/`.
 - If a teacher fails to load weights, verify the expected checkpoint exists under `weights/`.
 - If Metric3D depth scale looks wrong, verify the KITTI intrinsics file for that sample.
+- If Depth Anything aligned looks warped in Open3D, do not use it as the metric target. Regenerate fused outputs with DMD3C enabled and train with DA raw SSI loss.
 - If DSINE output is invalid, verify `weights/dsine/dsine.txt` points to a valid checkpoint.
 - If DMD3C import fails on `BpOps`, build `third_party/DMD3C/exts` with `python setup.py install` on CUDA.

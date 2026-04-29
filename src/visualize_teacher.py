@@ -13,8 +13,8 @@ from .utils import ensure_dir, load_project_config, scale_intrinsics
 
 
 NORMAL_KEYS = ("N_dsine", "normal", "normals")
-DEPTH_KEYS = ("D_m3d", "D_da_aligned", "D_dmd3c", "D_teacher", "D_da_raw", "D_c", "depth", "arr_0")
-CONF_KEYS = ("C_teacher", "C", "confidence", "w_m3d", "w_da", "w_dmd3c")
+DEPTH_KEYS = ("D_m3d", "D_da_aligned", "D_dmd3c", "D_full", "D_teacher", "D_da_raw", "D_c", "depth", "arr_0")
+CONF_KEYS = ("C_full", "C_teacher", "C", "confidence", "w_m3d", "w_da", "w_dmd3c")
 
 
 def parse_args() -> argparse.Namespace:

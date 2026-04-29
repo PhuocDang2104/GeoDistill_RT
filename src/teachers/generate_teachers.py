@@ -10,7 +10,6 @@ from tqdm import tqdm
 from ..dataset import KITTIDepthCompletionDataset
 from ..teacher_fusion import fuse_teachers
 from ..utils import (
-    as_save_dtype,
     device_from_config,
     ensure_dir,
     load_npz_array,
@@ -237,21 +236,13 @@ class TeacherGenerator:
 
     def _run_fusion(self, sid: str, sparse: np.ndarray, mask: np.ndarray, K: np.ndarray) -> None:
         path = self.path_fused(sid)
-        required_keys = ["D_teacher", "C_teacher"]
+        required_keys = ["D_teacher", "C_teacher", "D_full", "C_full", "w_m3d", "w_da", "w_dmd3c"]
         if self.skip_existing and npz_has_keys(path, required_keys):
             return
 
         m3d_key = self.cfg["metric3d"].get("output_key", "D_m3d")
         da_key = self.cfg["depth_anything"].get("output_key_aligned", "D_da_aligned")
         dsine_key = self.cfg["dsine"].get("output_key", "N_dsine")
-        source_paths = [self.path_metric3d(sid), self.path_da_aligned(sid), self.path_dsine(sid)]
-        if not all(p.exists() for p in source_paths):
-            self.logger.warning("Skipping fusion for %s: missing one of %s", sid, [str(p) for p in source_paths])
-            return
-
-        D_m3d = load_npz_array(source_paths[0], m3d_key).astype(np.float32)
-        D_da = load_npz_array(source_paths[1], da_key).astype(np.float32)
-        N_dsine = load_npz_array(source_paths[2], dsine_key).astype(np.float32)
         D_dmd3c = None
         if self.cfg.get("dmd3c", {}).get("enabled", False):
             dmd3c_path = self.path_dmd3c(sid)
@@ -260,6 +251,22 @@ class TeacherGenerator:
                 self.logger.warning("Skipping fusion for %s: DMD3C enabled but missing %s", sid, dmd3c_path)
                 return
             D_dmd3c = load_npz_array(dmd3c_path, dmd3c_key).astype(np.float32)
+
+        m3d_path = self.path_metric3d(sid)
+        da_path = self.path_da_aligned(sid)
+        dsine_path = self.path_dsine(sid)
+        if D_dmd3c is None and not all(p.exists() for p in [m3d_path, da_path, dsine_path]):
+            self.logger.warning("Skipping fusion for %s: missing one of %s", sid, [str(p) for p in [m3d_path, da_path, dsine_path]])
+            return
+
+        shape_hw = sparse.shape
+        D_m3d = load_npz_array(m3d_path, m3d_key).astype(np.float32) if m3d_path.exists() else np.zeros(shape_hw, dtype=np.float32)
+        D_da = load_npz_array(da_path, da_key).astype(np.float32) if da_path.exists() else np.zeros(shape_hw, dtype=np.float32)
+        if dsine_path.exists():
+            N_dsine = load_npz_array(dsine_path, dsine_key).astype(np.float32)
+        else:
+            N_dsine = np.zeros((3, shape_hw[0], shape_hw[1]), dtype=np.float32)
+            N_dsine[2] = 1.0
         fcfg = self.cfg.get("fusion", {})
         result = fuse_teachers(
             D_m3d=D_m3d,
@@ -273,15 +280,19 @@ class TeacherGenerator:
             beta_sparse=float(fcfg.get("beta_sparse", 1.0)),
             output_scale=self.output_scale,
             confidence_mode=fcfg.get("confidence_mode", "max_weight"),
+            prior_m3d=float(fcfg.get("prior_m3d", 1.0)),
+            prior_da=float(fcfg.get("prior_da", 0.1)),
+            prior_dmd3c=float(fcfg.get("prior_dmd3c", 2.0)),
         )
         payload = {
-            "D_teacher": as_save_dtype(result.D_teacher, self.save_dtype),
-            "C_teacher": as_save_dtype(result.C_teacher, self.save_dtype),
-            "w_m3d": as_save_dtype(result.w_m3d, self.save_dtype),
-            "w_da": as_save_dtype(result.w_da, self.save_dtype),
+            "D_teacher": result.D_teacher.astype(np.float32),
+            "C_teacher": result.C_teacher.astype(np.float32),
+            "D_full": result.D_full.astype(np.float32),
+            "C_full": result.C_full.astype(np.float32),
+            "w_m3d": result.w_m3d.astype(np.float32),
+            "w_da": result.w_da.astype(np.float32),
+            "w_dmd3c": result.w_dmd3c.astype(np.float32),
         }
-        if result.w_dmd3c is not None:
-            payload["w_dmd3c"] = as_save_dtype(result.w_dmd3c, self.save_dtype)
         save_npz_atomic(path, **payload)
 
 

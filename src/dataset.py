@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -41,6 +42,7 @@ class KITTIDepthCompletionDataset(Dataset):
       rgb: [3,H,W], sparse: [1,H,W], mask: [1,H,W]
       ray: [3,H,W], uv: [2,H,W], K: [3,3]
       D_teacher/C_teacher when loaded: [1,H/4,W/4] by default.
+      D_da_raw/da_raw_valid when loaded: [1,H,W] dense relative mono teacher.
     """
 
     def __init__(
@@ -54,6 +56,8 @@ class KITTIDepthCompletionDataset(Dataset):
         depth_scale: float = 256.0,
         teacher_root: str | Path | None = None,
         load_teacher: bool = False,
+        load_mono: bool = False,
+        mono_key: str = "D_da_raw",
         return_tensors: bool = True,
     ) -> None:
         self.data_root = Path(data_root)
@@ -65,6 +69,8 @@ class KITTIDepthCompletionDataset(Dataset):
         self.depth_scale = float(depth_scale)
         self.teacher_root = Path(teacher_root) if teacher_root is not None else None
         self.load_teacher = load_teacher
+        self.load_mono = load_mono
+        self.mono_key = mono_key
         self.return_tensors = return_tensors
 
         lines = read_split(self.split_root, split_file)
@@ -103,6 +109,10 @@ class KITTIDepthCompletionDataset(Dataset):
             D_teacher, C_teacher = self._load_teacher(sample["sample_id"], sample["rgb"].shape[:2])
             out["D_teacher"] = torch.from_numpy(D_teacher[None]).float()
             out["C_teacher"] = torch.from_numpy(C_teacher[None]).float()
+        if self.load_mono:
+            D_da_raw, da_raw_valid = self._load_da_raw(sample["sample_id"], sample["rgb"].shape[:2])
+            out["D_da_raw"] = torch.from_numpy(D_da_raw[None]).float()
+            out["da_raw_valid"] = torch.from_numpy(da_raw_valid[None]).float()
         return out
 
     def load_sample_np(self, index: int) -> dict[str, Any]:
@@ -167,6 +177,54 @@ class KITTIDepthCompletionDataset(Dataset):
             D = data["D_teacher"].astype(np.float32)
             C = data["C_teacher"].astype(np.float32)
         return D, C
+
+    def _load_da_raw(self, sample_id: str, image_hw: tuple[int, int]) -> tuple[np.ndarray, np.ndarray]:
+        """Load Depth Anything raw relative depth for SSI distillation.
+
+        Supported legacy locations:
+          teacher_outputs/depth_anything/{split}_raw/{sample_id}.npz
+          teacher_outputs/depth_anything/{split}/{sample_id}.npz
+          teacher_outputs/depth_anything/{split}_aligned/{sample_id}.npz
+
+        Expected NPZ key:
+          D_da_raw: float32 [H,W], relative monocular depth.
+        """
+        h, w = image_hw
+        if self.teacher_root is None:
+            zeros = np.zeros((h, w), dtype=np.float32)
+            return zeros, zeros
+
+        root = self.teacher_root / "depth_anything"
+        candidates = [
+            root / f"{self.split_name}_raw" / f"{sample_id}.npz",
+            root / self.split_name / f"{sample_id}.npz",
+            root / f"{self.split_name}_aligned" / f"{sample_id}.npz",
+        ]
+        for path in candidates:
+            if not path.exists():
+                continue
+            try:
+                with np.load(path) as data:
+                    if self.mono_key not in data:
+                        continue
+                    raw = data[self.mono_key].astype(np.float32)
+            except Exception:
+                continue
+            if raw.ndim == 3:
+                if raw.shape[0] == 1:
+                    raw = raw[0]
+                elif raw.shape[-1] == 1:
+                    raw = raw[..., 0]
+                else:
+                    raw = raw[..., 0]
+            if raw.shape != (h, w):
+                raw = cv2.resize(raw, (w, h), interpolation=cv2.INTER_LINEAR).astype(np.float32)
+            valid = np.isfinite(raw).astype(np.float32)
+            raw = np.where(np.isfinite(raw), raw, 0.0).astype(np.float32)
+            return raw, valid
+
+        zeros = np.zeros((h, w), dtype=np.float32)
+        return zeros, zeros
 
     def _sample_intrinsics(self, info: SampleInfo, image_hw: tuple[int, int]) -> np.ndarray:
         if info.K is not None:

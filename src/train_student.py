@@ -32,6 +32,8 @@ def to_device(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
 
 def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool) -> DataLoader:
     data_cfg = cfg["data"]
+    mono_cfg = cfg.get("mono_ssi", {})
+    load_mono = training and bool(mono_cfg.get("enabled", False))
     dataset = KITTIDepthCompletionDataset(
         data_root=paths["data_root"],
         split_root=paths["split_root"],
@@ -42,6 +44,8 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         depth_scale=float(data_cfg.get("depth_scale", 256.0)),
         teacher_root=paths["teacher_root"],
         load_teacher=training or split == "val",
+        load_mono=load_mono,
+        mono_key=str(mono_cfg.get("key", "D_da_raw")),
         return_tensors=True,
     )
     return DataLoader(
@@ -142,6 +146,10 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
         logger.info("Resumed from %s at epoch %d", resume, start_epoch)
 
     epochs = int(cfg["train"].get("epochs", 30))
+    mono_cfg = cfg.get("mono_ssi", {})
+    mono_enabled = bool(mono_cfg.get("enabled", False))
+    mono_start_epoch = int(mono_cfg.get("start_epoch", 5))
+    warned_missing_mono = False
     for epoch in range(start_epoch, epochs):
         model.train()
         running: dict[str, float] = {}
@@ -149,10 +157,22 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
         pbar = tqdm(train_loader, desc=f"train:{epoch}")
         for batch in pbar:
             batch = to_device(batch, device)
+            if (
+                mono_enabled
+                and epoch >= mono_start_epoch
+                and not warned_missing_mono
+                and (
+                    "D_da_raw" not in batch
+                    or "da_raw_valid" not in batch
+                    or float(batch["da_raw_valid"].sum().detach().cpu()) < 1.0
+                )
+            ):
+                logger.warning("mono_ssi is enabled but no Depth Anything raw map was found for this batch; SSI loss will be skipped.")
+                warned_missing_mono = True
             optimizer.zero_grad(set_to_none=True)
             with torch.cuda.amp.autocast(enabled=amp_enabled):
                 pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"])
-                loss, items = geort_loss(pred, batch, cfg["loss"], cfg["schedule"], epoch)
+                loss, items = geort_loss(pred, batch, cfg["loss"], cfg["schedule"], epoch, mono_cfg)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
