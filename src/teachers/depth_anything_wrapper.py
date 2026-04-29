@@ -29,7 +29,9 @@ class DepthAnythingV2Wrapper:
 
     Saved keys:
       D_da_raw: float32 relative depth [H,W]
-      D_da_aligned: float32 metric-aligned depth [H,W], scale, shift
+      D_da_aligned: float32 metric-aligned depth [H,W]
+      scale, shift: inverse-depth fit parameters where
+        1 / D_da_aligned = scale * D_da_raw + shift
     """
 
     def __init__(
@@ -168,19 +170,60 @@ class DepthAnythingV2Wrapper:
         min_depth: float = 0.1,
         max_depth: float = 120.0,
     ) -> tuple[np.ndarray, float, float, int]:
-        scale, shift, count = cls.fit_scale_shift(
-            raw_depth,
-            sparse_depth,
-            mask=mask,
-            robust=robust,
-            min_valid_points=min_valid_points,
-            min_depth=min_depth,
-            max_depth=max_depth,
+        """Align Depth Anything relative output to metric sparse depth.
+
+        Depth Anything V2 raw output is relative / inverse-depth-like. Fit:
+
+            inv_metric = scale * raw + shift
+
+        then recover metric depth:
+
+            metric = 1 / inv_metric
+        """
+        if mask is None:
+            mask = sparse_depth > 0
+
+        valid = (
+            mask.astype(bool)
+            & np.isfinite(raw_depth)
+            & np.isfinite(sparse_depth)
+            & (sparse_depth >= min_depth)
+            & (sparse_depth <= max_depth)
         )
-        aligned = scale * raw_depth.astype(np.float32) + shift
+
+        x = raw_depth[valid].astype(np.float64)
+        z = sparse_depth[valid].astype(np.float64)
+        finite = np.isfinite(x) & np.isfinite(z)
+        x, z = x[finite], z[finite]
+        if x.size < min_valid_points:
+            raise ValueError(f"Not enough valid sparse points for DA alignment: {x.size} < {min_valid_points}")
+
+        y = 1.0 / np.clip(z, min_depth, max_depth)
+        A = np.stack([x, np.ones_like(x)], axis=1)
+        theta = np.linalg.lstsq(A, y, rcond=None)[0]
+
+        if robust:
+            weights = np.ones_like(y)
+            for _ in range(8):
+                Aw = A * np.sqrt(weights)[:, None]
+                yw = y * np.sqrt(weights)
+                theta = np.linalg.lstsq(Aw, yw, rcond=None)[0]
+                residual = A @ theta - y
+                mad = np.median(np.abs(residual - np.median(residual)))
+                delta = max(1e-3, 1.4826 * mad)
+                abs_r = np.abs(residual)
+                weights = np.where(abs_r <= delta, 1.0, delta / np.maximum(abs_r, 1e-8))
+
+        scale, shift = float(theta[0]), float(theta[1])
+        if not np.isfinite(scale) or not np.isfinite(shift):
+            raise ValueError(f"Unstable inverse DA scale-shift fit: scale={scale}, shift={shift}")
+
+        inv_aligned = scale * raw_depth.astype(np.float32) + shift
+        inv_aligned = np.maximum(inv_aligned, 1.0 / max_depth)
+        aligned = 1.0 / inv_aligned
         aligned[~np.isfinite(aligned)] = 0.0
         aligned = np.clip(aligned, 0.0, max_depth).astype(np.float32)
-        return aligned, scale, shift, count
+        return aligned, scale, shift, int(x.size)
 
     def save_raw(self, path: str | Path, raw_depth: np.ndarray, key: str = "D_da_raw") -> None:
         ensure_dir(Path(path).parent)
@@ -193,6 +236,15 @@ class DepthAnythingV2Wrapper:
         scale: float,
         shift: float,
         key: str = "D_da_aligned",
+        alignment_mode: str = "inverse_depth",
     ) -> None:
         ensure_dir(Path(path).parent)
-        save_npz_atomic(path, **{key: aligned_depth.astype(np.float32), "scale": float(scale), "shift": float(shift)})
+        save_npz_atomic(
+            path,
+            **{
+                key: aligned_depth.astype(np.float32),
+                "scale": float(scale),
+                "shift": float(shift),
+                "alignment_mode": np.array(alignment_mode),
+            },
+        )

@@ -37,6 +37,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run_fusion", action="store_true")
     parser.add_argument("--run_all", action="store_true")
     parser.add_argument("--max_samples", type=int, default=None)
+    parser.add_argument("--overwrite", action="store_true", help="Regenerate outputs even when .npz files already exist.")
+    parser.add_argument(
+        "--realign_depth_anything",
+        action="store_true",
+        help="Recompute Depth Anything aligned outputs from existing raw outputs when possible.",
+    )
     return parser.parse_args()
 
 
@@ -53,6 +59,7 @@ class TeacherGenerator:
         self.output_scale = int(cfg.get("output_scale", 4))
         self.save_dtype = str(cfg.get("save_dtype", "float16"))
         self.skip_existing = bool(cfg.get("skip_existing", True))
+        self.force_da_align = False
         self._metric3d: Metric3DWrapper | None = None
         self._depth_anything: DepthAnythingV2Wrapper | None = None
         self._dsine: DSINEWrapper | None = None
@@ -187,13 +194,13 @@ class TeacherGenerator:
         raw_path = self.path_da_raw(sid)
         aligned_path = self.path_da_aligned(sid)
 
-        if not (self.skip_existing and npz_has_keys(raw_path, [raw_key])):
+        if npz_has_keys(raw_path, [raw_key]) and (self.skip_existing or self.force_da_align):
+            raw = load_npz_array(raw_path, raw_key).astype(np.float32)
+        else:
             raw = self.depth_anything.infer(rgb)
             self.depth_anything.save_raw(raw_path, raw, key=raw_key)
-        else:
-            raw = load_npz_array(raw_path, raw_key).astype(np.float32)
 
-        if self.skip_existing and npz_has_keys(aligned_path, [aligned_key, "scale", "shift"]):
+        if not self.force_da_align and self.skip_existing and npz_has_keys(aligned_path, [aligned_key, "scale", "shift"]):
             return
 
         align_cfg = c.get("align", {})
@@ -281,13 +288,16 @@ class TeacherGenerator:
 def main() -> None:
     args = parse_args()
     cfg, paths = load_project_config(args.config)
+    if args.overwrite:
+        cfg["skip_existing"] = False
     run_metric3d = args.run_all or args.run_metric3d
-    run_da = args.run_all or args.run_depth_anything
+    run_da = args.run_all or args.run_depth_anything or args.realign_depth_anything
     run_dsine = args.run_all or args.run_dsine
     run_dmd3c = args.run_all or args.run_dmd3c
     run_fusion = args.run_all or args.run_fusion
     max_samples = args.max_samples if args.max_samples is not None else cfg.get("max_samples")
     generator = TeacherGenerator(cfg, paths, args.split)
+    generator.force_da_align = bool(args.realign_depth_anything)
     generator.run(run_metric3d, run_da, run_dsine, run_dmd3c, run_fusion, max_samples)
 
 

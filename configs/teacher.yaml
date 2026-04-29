@@ -24,6 +24,7 @@ depth_anything:
   output_key_raw: "D_da_raw"
   output_key_aligned: "D_da_aligned"
   align:
+    mode: "inverse_depth"
     robust: true
     min_valid_points: 50
     loss: "huber"

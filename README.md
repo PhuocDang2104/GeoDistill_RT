@@ -171,6 +171,16 @@ python -m src.teachers.generate_teachers \
 
 Teacher generation is restartable. Existing `.npz` files are skipped when `skip_existing: true`.
 
+After changing Depth Anything alignment logic, recompute aligned files from existing raw outputs:
+
+```bash
+python -m src.teachers.generate_teachers \
+  --config configs/teacher.yaml \
+  --split val \
+  --realign_depth_anything \
+  --max_samples 2
+```
+
 ## Train Student
 
 ```bash
@@ -186,6 +196,17 @@ python -m src.infer_student \
   --config configs/geort_student_s.yaml \
   --checkpoint student_outputs/checkpoints/best.pth \
   --split test
+```
+
+## Visualize Teacher Outputs
+
+See [docs/visualize_teacher_outputs.md](docs/visualize_teacher_outputs.md).
+
+Examples:
+
+```bash
+python -m src.visualize_teacher teacher_outputs/dsine/val/sample.npz
+python -m src.visualize_teacher teacher_outputs/metric3d/val/sample.npz
 ```
 
 ## Output Formats
@@ -204,7 +225,13 @@ teacher_outputs/depth_anything/{split}_raw/{sample_id}.npz
 keys: D_da_raw float32 [H,W]
 
 teacher_outputs/depth_anything/{split}_aligned/{sample_id}.npz
-keys: D_da_aligned float32 [H,W], scale float, shift float
+keys: D_da_aligned float32 [H,W], scale float, shift float, alignment_mode
+```
+
+For Depth Anything V2, `alignment_mode` is `inverse_depth` by default:
+
+```text
+1 / D_da_aligned = scale * D_da_raw + shift
 ```
 
 DSINE:
