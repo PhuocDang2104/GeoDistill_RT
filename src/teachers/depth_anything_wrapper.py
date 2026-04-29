@@ -120,9 +120,27 @@ class DepthAnythingV2Wrapper:
         huber_delta: float | None = None,
         max_iters: int = 8,
     ) -> tuple[float, float, int]:
-        """Fit D_aligned = scale * D_raw + shift on valid sparse pixels."""
+        """Robust inverse-depth scale-shift fit for Depth Anything V2.
+
+        Fit:
+            inv_metric = scale * D_da_raw + shift
+
+        where:
+            inv_metric = 1 / sparse_metric_depth
+
+        Returns scale and shift in the ORIGINAL raw_depth domain, so caller can use:
+            inv_aligned = scale * raw_depth + shift
+            aligned = 1 / inv_aligned
+        """
+        if raw_depth.shape != sparse_depth.shape:
+            raise ValueError(
+                f"raw_depth and sparse_depth must have same shape, "
+                f"got {raw_depth.shape} vs {sparse_depth.shape}"
+            )
+
         if mask is None:
             mask = sparse_depth > 0
+
         valid = (
             mask.astype(bool)
             & np.isfinite(raw_depth)
@@ -130,34 +148,124 @@ class DepthAnythingV2Wrapper:
             & (sparse_depth >= min_depth)
             & (sparse_depth <= max_depth)
         )
-        x = raw_depth[valid].astype(np.float64)
-        y = sparse_depth[valid].astype(np.float64)
-        finite = np.isfinite(x) & np.isfinite(y)
-        x, y = x[finite], y[finite]
-        if x.size < min_valid_points:
-            raise ValueError(f"Not enough valid sparse points for DA alignment: {x.size} < {min_valid_points}")
 
-        A = np.stack([x, np.ones_like(x)], axis=1)
-        theta = np.linalg.lstsq(A, y, rcond=None)[0]
+        x_raw = raw_depth[valid].astype(np.float64)
+        z = sparse_depth[valid].astype(np.float64)
+
+        finite = np.isfinite(x_raw) & np.isfinite(z)
+        x_raw = x_raw[finite]
+        z = z[finite]
+
+        if x_raw.size < min_valid_points:
+            raise ValueError(
+                f"Not enough valid sparse points for DA alignment: "
+                f"{x_raw.size} < {min_valid_points}"
+            )
+
+        # Target is inverse metric depth.
+        y = 1.0 / np.clip(z, min_depth, max_depth)
+
+        # Normalize raw prediction for stable scale-shift estimation.
+        x_med = float(np.median(x_raw))
+        x_mad = float(np.median(np.abs(x_raw - x_med)))
+        x_std = float(np.std(x_raw))
+        x_scale = max(1e-6, 1.4826 * x_mad, 0.1 * x_std)
+
+        x = (x_raw - x_med) / x_scale
+
+        def _fit_lstsq(x_fit: np.ndarray, y_fit: np.ndarray) -> tuple[float, float]:
+            A = np.stack([x_fit, np.ones_like(x_fit)], axis=1)
+            theta = np.linalg.lstsq(A, y_fit, rcond=None)[0]
+            return float(theta[0]), float(theta[1])
+
+        # RANSAC first: sparse LiDAR anchors can contain outliers / projected mismatch.
+        n = x.size
+        rng = np.random.default_rng(0)
+
+        best_inliers = np.ones(n, dtype=bool)
+        best_count = -1
+        best_error = np.inf
+
+        residual_threshold = 0.015  # inverse-depth residual threshold
+        ransac_iters = 256
+
+        if n >= 2:
+            for _ in range(ransac_iters):
+                ids = rng.choice(n, size=2, replace=False)
+
+                try:
+                    s, t = _fit_lstsq(x[ids], y[ids])
+                except Exception:
+                    continue
+
+                pred = s * x + t
+                residual = np.abs(pred - y)
+
+                inliers = residual <= residual_threshold
+                count = int(np.count_nonzero(inliers))
+                error = float(np.median(residual[inliers])) if count > 0 else np.inf
+
+                if count > best_count or (count == best_count and error < best_error):
+                    best_count = count
+                    best_error = error
+                    best_inliers = inliers
+
+        min_inliers = max(12, min_valid_points // 4)
+        if np.count_nonzero(best_inliers) >= min_inliers:
+            x_fit = x[best_inliers]
+            y_fit = y[best_inliers]
+        else:
+            x_fit = x
+            y_fit = y
+
+        scale_norm, shift_norm = _fit_lstsq(x_fit, y_fit)
+
+        # Huber refinement after RANSAC.
         if robust:
-            weights = np.ones_like(y)
-            for _ in range(max_iters):
-                Aw = A * np.sqrt(weights)[:, None]
-                yw = y * np.sqrt(weights)
-                theta = np.linalg.lstsq(Aw, yw, rcond=None)[0]
-                residual = A @ theta - y
-                if huber_delta is None:
-                    mad = np.median(np.abs(residual - np.median(residual)))
-                    delta = max(1.0, 1.4826 * mad)
-                else:
-                    delta = huber_delta
-                abs_r = np.abs(residual)
-                weights = np.where(abs_r <= delta, 1.0, delta / np.maximum(abs_r, 1e-6))
+            if huber_delta is None:
+                residual0 = scale_norm * x_fit + shift_norm - y_fit
+                mad = np.median(np.abs(residual0 - np.median(residual0)))
+                delta = max(1e-3, 1.4826 * mad)
+            else:
+                delta = float(huber_delta)
 
-        scale, shift = float(theta[0]), float(theta[1])
-        if not np.isfinite(scale) or not np.isfinite(shift) or abs(scale) < 1e-8:
-            raise ValueError(f"Unstable DA scale-shift fit: scale={scale}, shift={shift}")
-        return scale, shift, int(x.size)
+            weights = np.ones_like(y_fit, dtype=np.float64)
+
+            for _ in range(max_iters):
+                A = np.stack([x_fit, np.ones_like(x_fit)], axis=1)
+                Aw = A * np.sqrt(weights)[:, None]
+                yw = y_fit * np.sqrt(weights)
+
+                theta = np.linalg.lstsq(Aw, yw, rcond=None)[0]
+                scale_norm, shift_norm = float(theta[0]), float(theta[1])
+
+                residual = scale_norm * x_fit + shift_norm - y_fit
+                abs_r = np.abs(residual)
+
+                weights = np.where(
+                    abs_r <= delta,
+                    1.0,
+                    delta / np.maximum(abs_r, 1e-8),
+                )
+
+        # Convert normalized fit back to original raw_depth domain:
+        #
+        # inv = scale_norm * ((raw - x_med) / x_scale) + shift_norm
+        #     = (scale_norm / x_scale) * raw
+        #       + (shift_norm - scale_norm * x_med / x_scale)
+        scale = scale_norm / x_scale
+        shift = shift_norm - scale_norm * x_med / x_scale
+
+        if (
+            not np.isfinite(scale)
+            or not np.isfinite(shift)
+            or abs(scale) < 1e-12
+        ):
+            raise ValueError(
+                f"Unstable inverse DA scale-shift fit: scale={scale}, shift={shift}"
+            )
+
+        return float(scale), float(shift), int(x_raw.size)
 
     @classmethod
     def align_to_sparse(
@@ -172,58 +280,106 @@ class DepthAnythingV2Wrapper:
     ) -> tuple[np.ndarray, float, float, int]:
         """Align Depth Anything relative output to metric sparse depth.
 
-        Depth Anything V2 raw output is relative / inverse-depth-like. Fit:
+        Keep output format unchanged:
+            aligned: metric depth [H,W]
+            scale, shift: inverse-depth fit params
 
+        Main formula:
             inv_metric = scale * raw + shift
-
-        then recover metric depth:
-
             metric = 1 / inv_metric
-        """
-        if mask is None:
-            mask = sparse_depth > 0
 
-        valid = (
-            mask.astype(bool)
-            & np.isfinite(raw_depth)
+        The function tests both raw and -raw orientations, then picks the one
+        with lower sparse-anchor median error. This avoids near/far inversion
+        problems from relative-depth outputs.
+        """
+        if raw_depth.shape != sparse_depth.shape:
+            raw_depth = cv2.resize(
+                raw_depth.astype(np.float32),
+                (sparse_depth.shape[1], sparse_depth.shape[0]),
+                interpolation=cv2.INTER_CUBIC,
+            )
+
+        if mask is not None and mask.shape != sparse_depth.shape:
+            mask = cv2.resize(
+                mask.astype(np.uint8),
+                (sparse_depth.shape[1], sparse_depth.shape[0]),
+                interpolation=cv2.INTER_NEAREST,
+            ).astype(bool)
+
+        if mask is None:
+            anchor_mask = sparse_depth > 0
+        else:
+            anchor_mask = mask.astype(bool)
+
+        anchor_mask = (
+            anchor_mask
             & np.isfinite(sparse_depth)
             & (sparse_depth >= min_depth)
             & (sparse_depth <= max_depth)
         )
 
-        x = raw_depth[valid].astype(np.float64)
-        z = sparse_depth[valid].astype(np.float64)
-        finite = np.isfinite(x) & np.isfinite(z)
-        x, z = x[finite], z[finite]
-        if x.size < min_valid_points:
-            raise ValueError(f"Not enough valid sparse points for DA alignment: {x.size} < {min_valid_points}")
+        if np.count_nonzero(anchor_mask) < min_valid_points:
+            raise ValueError(
+                f"Not enough valid sparse points for DA alignment: "
+                f"{np.count_nonzero(anchor_mask)} < {min_valid_points}"
+            )
 
-        y = 1.0 / np.clip(z, min_depth, max_depth)
-        A = np.stack([x, np.ones_like(x)], axis=1)
-        theta = np.linalg.lstsq(A, y, rcond=None)[0]
+        min_inv = 1.0 / max_depth
+        max_inv = 1.0 / min_depth
 
-        if robust:
-            weights = np.ones_like(y)
-            for _ in range(8):
-                Aw = A * np.sqrt(weights)[:, None]
-                yw = y * np.sqrt(weights)
-                theta = np.linalg.lstsq(Aw, yw, rcond=None)[0]
-                residual = A @ theta - y
-                mad = np.median(np.abs(residual - np.median(residual)))
-                delta = max(1e-3, 1.4826 * mad)
-                abs_r = np.abs(residual)
-                weights = np.where(abs_r <= delta, 1.0, delta / np.maximum(abs_r, 1e-8))
+        candidates: list[tuple[float, np.ndarray, float, float, int]] = []
 
-        scale, shift = float(theta[0]), float(theta[1])
-        if not np.isfinite(scale) or not np.isfinite(shift):
-            raise ValueError(f"Unstable inverse DA scale-shift fit: scale={scale}, shift={shift}")
+        for raw_candidate in (
+            raw_depth.astype(np.float32),
+            -raw_depth.astype(np.float32),
+        ):
+            try:
+                scale, shift, count = cls.fit_scale_shift(
+                    raw_depth=raw_candidate,
+                    sparse_depth=sparse_depth,
+                    mask=anchor_mask,
+                    robust=robust,
+                    min_valid_points=min_valid_points,
+                    min_depth=min_depth,
+                    max_depth=max_depth,
+                    huber_delta=None,
+                    max_iters=12,
+                )
 
-        inv_aligned = scale * raw_depth.astype(np.float32) + shift
-        inv_aligned = np.maximum(inv_aligned, 1.0 / max_depth)
-        aligned = 1.0 / inv_aligned
+                inv_aligned = scale * raw_candidate.astype(np.float32) + float(shift)
+
+                # Critical: prevent inverse depth from approaching zero.
+                # If it approaches zero, depth explodes and Open3D creates a fan
+                # spreading from the camera origin.
+                inv_aligned = np.clip(inv_aligned, min_inv, max_inv).astype(np.float32)
+
+                aligned = 1.0 / np.maximum(inv_aligned, 1e-8)
+                aligned = np.clip(aligned, min_depth, max_depth).astype(np.float32)
+
+                # Measure alignment quality only at sparse anchors.
+                residual = np.abs(aligned[anchor_mask] - sparse_depth[anchor_mask])
+                score = float(np.median(residual)) if residual.size else np.inf
+
+                candidates.append((score, aligned, scale, shift, count))
+
+            except Exception:
+                continue
+
+        if not candidates:
+            raise ValueError("No valid Depth Anything alignment candidate.")
+
+        # Pick best raw orientation.
+        candidates.sort(key=lambda item: item[0])
+        _, aligned, scale, shift, count = candidates[0]
+
+        # Enforce exact sparse anchors to avoid local ray/fan distortion around
+        # LiDAR support points.
+        aligned[anchor_mask] = sparse_depth[anchor_mask].astype(np.float32)
+
         aligned[~np.isfinite(aligned)] = 0.0
-        aligned = np.clip(aligned, 0.0, max_depth).astype(np.float32)
-        return aligned, scale, shift, int(x.size)
+        aligned = np.clip(aligned, min_depth, max_depth).astype(np.float32)
+
+        return aligned, float(scale), float(shift), int(count)
 
     def save_raw(self, path: str | Path, raw_depth: np.ndarray, key: str = "D_da_raw") -> None:
         ensure_dir(Path(path).parent)
