@@ -17,6 +17,21 @@ class FusionResult:
     C_full: np.ndarray
 
 
+def robust_normalize_structure(x: np.ndarray, valid: np.ndarray | None = None) -> np.ndarray:
+    x = x.astype(np.float32)
+    valid_mask = np.isfinite(x) if valid is None else (valid & np.isfinite(x))
+    values = x[valid_mask]
+    if values.size < 32:
+        return np.zeros_like(x, dtype=np.float32)
+    median = float(np.median(values))
+    mad = float(np.median(np.abs(values - median)))
+    std = float(np.std(values))
+    scale = max(1e-6, 1.4826 * mad, 0.05 * std)
+    out = (x - median) / scale
+    out[~np.isfinite(out)] = 0.0
+    return np.clip(out, -10.0, 10.0).astype(np.float32)
+
+
 def _resize_depth_like(depth: np.ndarray, shape_hw: tuple[int, int]) -> np.ndarray:
     if depth.shape == shape_hw:
         return depth.astype(np.float32)
@@ -78,6 +93,79 @@ def downsample_map(array: np.ndarray, scale: int = 4, interpolation: int = cv2.I
         channels = [cv2.resize(array[c].astype(np.float32), (out_w, out_h), interpolation=interpolation) for c in range(array.shape[0])]
         return np.stack(channels, axis=0).astype(np.float32)
     raise ValueError(f"Unsupported array shape for downsample: {array.shape}")
+
+
+def build_geometry_teacher(
+    shape_hw: tuple[int, int],
+    D_da_raw: np.ndarray | None = None,
+    D_da_aligned: np.ndarray | None = None,
+    D_m3d: np.ndarray | None = None,
+    D_dmd3c: np.ndarray | None = None,
+    min_depth: float = 1e-3,
+    max_depth: float = 120.0,
+    prior_da: float = 1.0,
+    prior_m3d: float = 0.5,
+    prior_dmd3c: float = 0.25,
+) -> dict[str, np.ndarray]:
+    """Build a separated structure teacher R_G/C_G.
+
+    Relative Depth Anything raw is preferred for geometry. Metric teachers are
+    converted through log-depth and robust normalization so they supervise only
+    structure, not metric scale.
+    """
+    candidates: list[tuple[str, np.ndarray, np.ndarray, float]] = []
+
+    if D_da_raw is not None:
+        raw = _resize_depth_like(D_da_raw, shape_hw)
+        valid = np.isfinite(raw)
+        candidates.append(("da", robust_normalize_structure(raw, valid), valid, float(prior_da)))
+    elif D_da_aligned is not None:
+        da = _resize_depth_like(D_da_aligned, shape_hw)
+        valid = np.isfinite(da) & (da > min_depth) & (da < max_depth)
+        candidates.append(("da", robust_normalize_structure(np.log(np.clip(da, min_depth, max_depth)), valid), valid, float(prior_da)))
+
+    if D_m3d is not None:
+        m3d = _resize_depth_like(D_m3d, shape_hw)
+        valid = np.isfinite(m3d) & (m3d > min_depth) & (m3d < max_depth)
+        candidates.append(("m3d", robust_normalize_structure(np.log(np.clip(m3d, min_depth, max_depth)), valid), valid, float(prior_m3d)))
+
+    if D_dmd3c is not None:
+        dmd = _resize_depth_like(D_dmd3c, shape_hw)
+        valid = np.isfinite(dmd) & (dmd > min_depth) & (dmd < max_depth)
+        candidates.append(("dmd3c", robust_normalize_structure(np.log(np.clip(dmd, min_depth, max_depth)), valid), valid, float(prior_dmd3c)))
+
+    h, w = shape_hw
+    if not candidates:
+        zeros = np.zeros((h, w), dtype=np.float32)
+        return {"R_G": zeros, "C_G": zeros, "w_da": zeros, "w_m3d": zeros, "w_dmd3c": zeros}
+
+    scores = []
+    maps = []
+    names = []
+    for name, R, valid, prior in candidates:
+        score = (float(prior) * valid.astype(np.float32)).astype(np.float32)
+        scores.append(score)
+        maps.append(R.astype(np.float32))
+        names.append(name)
+    score_stack = np.stack(scores, axis=0)
+    denom = score_stack.sum(axis=0, keepdims=True)
+    valid_any = denom[0] > 1e-8
+    weights = np.zeros_like(score_stack, dtype=np.float32)
+    weights[:, valid_any] = score_stack[:, valid_any] / denom[:, valid_any]
+
+    R_G = np.zeros((h, w), dtype=np.float32)
+    for idx, R in enumerate(maps):
+        R_G += weights[idx] * R
+    C_G = np.zeros((h, w), dtype=np.float32)
+    C_G[valid_any] = np.max(weights[:, valid_any], axis=0)
+
+    out = {"R_G": R_G.astype(np.float32), "C_G": C_G.astype(np.float32)}
+    for key in ("da", "m3d", "dmd3c"):
+        if key in names:
+            out[f"w_{key}"] = weights[names.index(key)].astype(np.float32)
+        else:
+            out[f"w_{key}"] = np.zeros((h, w), dtype=np.float32)
+    return out
 
 
 def fuse_teachers(

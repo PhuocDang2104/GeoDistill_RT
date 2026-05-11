@@ -220,11 +220,17 @@ python -m src.eval_teacher_outputs --config configs/teacher.yaml --split val --m
 
 ## Train Student
 
+Before training with the default strict GeoRT objective, generate train-split teacher files:
+
+```bash
+python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_dmd3c --run_depth_anything --run_fusion
+```
+
 ```bash
 python -m src.train_student --config configs/geort_student_s.yaml
 ```
 
-Checkpoints and logs are saved under `student_outputs/`. If `mono_ssi.enabled: true`, training loads `teacher_outputs/depth_anything/{split}_raw/*.npz` when available and adds DA raw SSI loss after `mono_ssi.start_epoch`. Missing DA raw files are skipped without crashing.
+Checkpoints and logs are saved under `student_outputs/`. With the default strict config, training checks teacher coverage before the first epoch and raises if DMD3C/metric coarse or geometry SSI teachers are missing for the train split. This prevents `L_T` or `L_ssi` from silently staying at zero. For debugging-only baselines, lower or disable `teacher_checks` and `require_*_teacher` in `configs/geort_student_s.yaml`.
 
 ## Run Inference
 

@@ -44,6 +44,62 @@ def depth_metrics_torch(
     return {"rmse": rmse, "mae": mae, "abs_rel": abs_rel, "delta1": a1, "delta2": a2, "delta3": a3}
 
 
+def _range_key(lo: float, hi: float) -> str:
+    return f"{int(lo)}_{int(hi)}"
+
+
+def depth_metrics_by_range_torch(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor,
+    bins: list[float] | tuple[float, ...] = (0.0, 20.0, 40.0, 60.0, 80.0, 120.0),
+    min_depth: float = 1e-3,
+    max_depth: float = 120.0,
+) -> dict[str, float]:
+    out: dict[str, float] = {}
+    base_mask = mask.bool() & valid_mask(target, min_depth, max_depth)
+    diff = pred.float().clamp_min(min_depth) - target.float().clamp_min(min_depth)
+    abs_diff = diff.abs()
+    for idx in range(len(bins) - 1):
+        lo = float(bins[idx])
+        hi = float(bins[idx + 1])
+        m = base_mask & (target >= lo) & (target < hi)
+        if int(m.sum().item()) < 1:
+            continue
+        key = _range_key(lo, hi)
+        out[f"rmse_{key}"] = torch.sqrt(masked_mean(diff * diff, m)).item()
+        out[f"mae_{key}"] = masked_mean(abs_diff, m).item()
+    return out
+
+
+def depth_metrics_by_edge_torch(
+    pred: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor,
+    rgb: torch.Tensor,
+    edge_threshold: float = 0.05,
+    min_depth: float = 1e-3,
+    max_depth: float = 120.0,
+) -> dict[str, float]:
+    base_mask = mask.bool() & valid_mask(target, min_depth, max_depth)
+    gray = rgb.float().mean(dim=1, keepdim=True)
+    gx = torch.zeros_like(gray)
+    gy = torch.zeros_like(gray)
+    gx[..., :, 1:] = (gray[..., :, 1:] - gray[..., :, :-1]).abs()
+    gy[..., 1:, :] = (gray[..., 1:, :] - gray[..., :-1, :]).abs()
+    edge = (torch.maximum(gx, gy) > edge_threshold) & base_mask
+    nonedge = (~edge) & base_mask
+    diff = pred.float().clamp_min(min_depth) - target.float().clamp_min(min_depth)
+    out: dict[str, float] = {}
+    if int(edge.sum().item()) > 0:
+        out["rmse_edge"] = torch.sqrt(masked_mean(diff * diff, edge)).item()
+        out["mae_edge"] = masked_mean(diff.abs(), edge).item()
+    if int(nonedge.sum().item()) > 0:
+        out["rmse_nonedge"] = torch.sqrt(masked_mean(diff * diff, nonedge)).item()
+        out["mae_nonedge"] = masked_mean(diff.abs(), nonedge).item()
+    return out
+
+
 def depth_metrics_np(
     pred: np.ndarray,
     target: np.ndarray,

@@ -14,7 +14,6 @@ from tqdm import tqdm
 from .dataset import KITTIDepthCompletionDataset
 from .metrics import average_metric_dict, depth_metrics_torch
 from .model_geort import GeoRTStudentS
-from .sparse_propagation import downsample_depth_with_mask
 from .train_student import to_device
 from .utils import device_from_config, ensure_dir, load_project_config, save_npz_atomic, setup_logger
 
@@ -44,14 +43,14 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str) -> DataL
     return DataLoader(dataset, batch_size=1, shuffle=False, num_workers=int(data_cfg.get("num_workers", 2)), pin_memory=torch.cuda.is_available())
 
 
-def save_visuals(out_dir: Path, sample_id: str, D_c: np.ndarray, C: np.ndarray) -> None:
-    depth16 = np.clip(D_c * 256.0, 0, np.iinfo(np.uint16).max).astype(np.uint16)
-    cv2.imwrite(str(out_dir / f"{sample_id}_depth16.png"), depth16)
+def save_visuals(out_dir: Path, sample_id: str, D_full: np.ndarray, C_full: np.ndarray) -> None:
+    depth16 = np.clip(D_full * 256.0, 0, np.iinfo(np.uint16).max).astype(np.uint16)
+    cv2.imwrite(str(out_dir / f"{sample_id}_D_full_depth16.png"), depth16)
 
-    conf = C.astype(np.float32)
+    conf = C_full.astype(np.float32)
     conf = (conf - conf.min()) / max(1e-6, float(conf.max() - conf.min()))
     heat = cv2.applyColorMap((conf * 255.0).astype(np.uint8), cv2.COLORMAP_TURBO)
-    cv2.imwrite(str(out_dir / f"{sample_id}_confidence.png"), heat)
+    cv2.imwrite(str(out_dir / f"{sample_id}_C_full.png"), heat)
 
 
 @torch.no_grad()
@@ -73,18 +72,27 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
     for batch in tqdm(loader, desc=f"infer:{split}"):
         batch = to_device(batch, device)
         pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"])
-        D_c = pred["D_c"][0, 0].detach().cpu().numpy().astype(np.float32)
-        C = pred["C"][0, 0].detach().cpu().numpy().astype(np.float32)
+        D_full = pred.get("D_full", pred["D_c"])[0, 0].detach().cpu().numpy().astype(np.float32)
+        C_full = pred.get("C_full", pred["C"])[0, 0].detach().cpu().numpy().astype(np.float32)
+        D_1_4 = pred.get("D_1_4", pred["D_c"])[0, 0].detach().cpu().numpy().astype(np.float32)
+        C_1_4 = pred.get("C_1_4", pred["C"])[0, 0].detach().cpu().numpy().astype(np.float32)
         sample_id = batch["sample_id"][0] if isinstance(batch["sample_id"], list) else str(batch["sample_id"])
-        save_npz_atomic(out_dir / f"{sample_id}.npz", D_c=D_c, C=C)
+        save_npz_atomic(
+            out_dir / f"{sample_id}.npz",
+            D_full=D_full,
+            C_full=C_full,
+            D_1_4=D_1_4,
+            C_1_4=C_1_4,
+            D_c=D_1_4,
+            C=C_1_4,
+        )
         if save_visual:
-            save_visuals(out_dir, sample_id, D_c, C)
+            save_visuals(out_dir, sample_id, D_full, C_full)
 
         if batch["gt_mask"].sum().item() > 0:
-            scale = max(1, batch["gt"].shape[-2] // pred["D_c"].shape[-2])
-            gt_ds, gt_mask_ds = downsample_depth_with_mask(batch["gt"], batch["gt_mask"], scale=scale)
-            if gt_mask_ds.sum().item() > 0:
-                metrics_records.append(depth_metrics_torch(pred["D_c"], gt_ds, gt_mask_ds > 0.5))
+            gt_mask = (batch["gt_mask"] > 0.5) & (batch["gt"] > 1e-3)
+            if gt_mask.sum().item() > 0:
+                metrics_records.append(depth_metrics_torch(pred.get("D_full", pred["D_c"]), batch["gt"], gt_mask))
 
     if metrics_records:
         metrics = average_metric_dict(metrics_records)

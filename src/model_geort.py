@@ -137,6 +137,33 @@ class SparseRayInjection(nn.Module):
         return feat + gate * prior
 
 
+class GuidedConvexUpsample(nn.Module):
+    """Full-resolution guided convex upsampling over a 3x3 local window."""
+
+    def __init__(self, guide_channels: int = 6, hidden: int = 24, kernel_size: int = 3, max_depth: float = 120.0) -> None:
+        super().__init__()
+        self.kernel_size = int(kernel_size)
+        self.max_depth = float(max_depth)
+        self.weight_head = nn.Sequential(
+            ConvBNAct(guide_channels, hidden, kernel=3),
+            nn.Conv2d(hidden, self.kernel_size * self.kernel_size, kernel_size=1),
+        )
+
+    def forward(self, value_coarse: torch.Tensor, rgb: torch.Tensor, sparse: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        h, w = rgb.shape[-2:]
+        value_up = F.interpolate(value_coarse, size=(h, w), mode="bilinear", align_corners=False)
+        sparse_norm = torch.log1p(sparse.clamp_min(0.0)) / torch.log(torch.tensor(self.max_depth + 1.0, device=sparse.device, dtype=sparse.dtype))
+        if bool((value_up.detach().amax() > 2.0).item()):
+            value_norm = (value_up / self.max_depth).clamp(0.0, 1.0)
+        else:
+            value_norm = value_up.clamp(0.0, 1.0)
+        guide = torch.cat([rgb, sparse_norm, mask, value_norm], dim=1)
+        weights = torch.softmax(self.weight_head(guide), dim=1)
+        patches = F.unfold(value_up, kernel_size=self.kernel_size, padding=self.kernel_size // 2)
+        patches = patches.view(value_up.shape[0], 1, self.kernel_size * self.kernel_size, h, w)
+        return (patches * weights[:, None]).sum(dim=2)
+
+
 @dataclass
 class GeoRTConfig:
     encoder: str = "mobilevitv2_0.75"
@@ -146,6 +173,8 @@ class GeoRTConfig:
     e16_channels: int = 128
     sparse_scale: int = 4
     sparse_k: int = 4
+    max_depth: float = 120.0
+    sparse_anchor_lambda: float = 0.7
 
 
 class GeoRTStudentS(nn.Module):
@@ -159,9 +188,9 @@ class GeoRTStudentS(nn.Module):
       uv: [B,2,H,W]
 
     Outputs:
-      D_c: [B,1,H/4,W/4]
-      C: [B,1,H/4,W/4]
-      log_var: [B,1,H/4,W/4]
+      D_full/C_full: [B,1,H,W] official inference outputs.
+      D_1_4/C_1_4: [B,1,H/4,W/4] internal coarse outputs.
+      D_c/C are backward-compatible aliases for D_1_4/C_1_4.
     """
 
     def __init__(
@@ -173,10 +202,14 @@ class GeoRTStudentS(nn.Module):
         e16_channels: int = 128,
         sparse_scale: int = 4,
         sparse_k: int = 4,
+        max_depth: float = 120.0,
+        sparse_anchor_lambda: float = 0.7,
     ) -> None:
         super().__init__()
         self.sparse_scale = int(sparse_scale)
         self.sparse_k = int(sparse_k)
+        self.max_depth = float(max_depth)
+        self.sparse_anchor_lambda = float(sparse_anchor_lambda)
         self.eps = 1e-3
 
         self.rgb_stem = nn.Sequential(ConvBNAct(3, 24), ConvBNAct(24, 24))
@@ -202,11 +235,19 @@ class GeoRTStudentS(nn.Module):
 
         self.depth_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
         self.conf_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
+        self.guided_up = GuidedConvexUpsample(guide_channels=6, hidden=24, kernel_size=3, max_depth=self.max_depth)
+        self.full_residual = nn.Sequential(
+            ConvBNAct(7, 16, kernel=3),
+            ConvBNAct(16, 16, kernel=3, groups=16),
+            ConvBNAct(16, 8, kernel=1),
+            nn.Conv2d(8, 1, kernel_size=1),
+        )
 
     @classmethod
     def from_config(cls, cfg: dict) -> "GeoRTStudentS":
         model_cfg = cfg.get("model", {})
         sparse_cfg = cfg.get("sparse_propagation", {})
+        student_cfg = cfg.get("student", {})
         return cls(
             encoder=model_cfg.get("encoder", "mobilevitv2_0.75"),
             fusion_channels=int(model_cfg.get("fusion_channels", 48)),
@@ -215,6 +256,8 @@ class GeoRTStudentS(nn.Module):
             e16_channels=int(model_cfg.get("e16_channels", 128)),
             sparse_scale=int(sparse_cfg.get("scale", 4)),
             sparse_k=int(sparse_cfg.get("k", 4)),
+            max_depth=float(student_cfg.get("max_depth", model_cfg.get("max_depth", 120.0))),
+            sparse_anchor_lambda=float(student_cfg.get("sparse_anchor_lambda", 0.7)),
         )
 
     def forward(
@@ -250,8 +293,34 @@ class GeoRTStudentS(nn.Module):
         P4 = self.lat4(E4) + F.interpolate(P8, size=E4.shape[-2:], mode="nearest")
         P4 = self.smooth4(P4)
 
-        log_depth = self.depth_head(P4).clamp(min=-4.0, max=5.5)
-        log_var = self.conf_head(P4).clamp(min=-8.0, max=8.0)
-        D_c = torch.exp(log_depth)
-        C = torch.exp(-log_var)
-        return {"D_c": D_c, "C": C, "log_var": log_var}
+        delta_z_1_4 = self.depth_head(P4).clamp(min=-4.0, max=4.0)
+        D_1_4 = (D_init.clamp_min(self.eps) * torch.exp(delta_z_1_4)).clamp(self.eps, self.max_depth)
+
+        s_1_4 = F.softplus(self.conf_head(P4))
+        C_1_4 = torch.exp(-s_1_4).clamp(1e-4, 1.0)
+
+        D_up = self.guided_up(D_1_4, rgb, sparse, mask).clamp(self.eps, self.max_depth)
+        C_up = self.guided_up(C_1_4, rgb, sparse, mask).clamp(1e-4, 1.0)
+
+        sparse_scaled = sparse.clamp(0.0, self.max_depth) / self.max_depth
+        D_up_scaled = D_up / self.max_depth
+        refine_in = torch.cat([rgb, sparse_scaled, mask, D_up_scaled, C_up], dim=1)
+        delta_z_full = self.full_residual(refine_in).clamp(min=-0.5, max=0.5)
+        D_full = (D_up * torch.exp(delta_z_full)).clamp(self.eps, self.max_depth)
+        D_full = D_full + self.sparse_anchor_lambda * mask * (sparse.clamp(self.eps, self.max_depth) - D_full)
+        D_full = D_full.clamp(self.eps, self.max_depth)
+        C_full = C_up.clamp(1e-4, 1.0)
+
+        return {
+            "D_full": D_full,
+            "C_full": C_full,
+            "D_1_4": D_1_4,
+            "C_1_4": C_1_4,
+            "D_init": D_init,
+            "D_up": D_up,
+            "delta_z_1_4": delta_z_1_4,
+            "delta_z_full": delta_z_full,
+            "D_c": D_1_4,
+            "C": C_1_4,
+            "log_var": -torch.log(C_1_4.clamp_min(1e-6)),
+        }

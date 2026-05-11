@@ -17,6 +17,10 @@ model:
   e8_channels: 72
   e16_channels: 128
 
+student:
+  max_depth: 120.0
+  sparse_anchor_lambda: 0.7
+
 sparse_propagation:
   scale: 4
   k: 4
@@ -32,12 +36,36 @@ train:
 
 loss:
   lambda_gt: 1.0
-  lambda_T: 0.5
   lambda_S: 1.0
+  lambda_cm: 0.4
+  lambda_aux: 0.2
+  lambda_range: 0.15
+  lambda_gt_1_4: 1.0
+  lambda_cm_1_4: 1.0
+  lambda_ssi: 0.03
+  lambda_ord: 0.03
   lambda_C: 0.05
+  lambda_C_calib: 0.5
   lambda_E: 0.01
   lambda_s: 0.01
   use_teacher_conf: true
+  calibrate_metric_teacher: true
+  require_dense_metric_teacher: true
+  require_geometry_teacher: true
+  min_dense_metric_pixels: 1024
+  metric_teacher_range_weight: true
+  metric_teacher_range_scale: 0.5
+  metric_conf_min: 0.05
+  metric_conf_sparse_decay: 6.0
+  metric_conf_range_decay: 0.25
+  metric_conf_sparse_blend_radius: 48.0
+  confidence_tau: 2.0
+  min_depth: 0.001
+  max_depth: 120.0
+  range_bins: [0.0, 20.0, 40.0, 60.0, 80.0, 120.0]
+  range_weights: [1.0, 1.2, 1.5, 2.0, 2.5]
+  geometry_conf_threshold: 0.05
+  geometry_min_valid_pixels: 512
 
 mono_ssi:
   enabled: true
@@ -51,7 +79,18 @@ mono_ssi:
 
 schedule:
   add_teacher_epoch: 5
+  add_geometry_epoch: 10
   add_confidence_epoch: 15
+  teacher_ramp_epochs: 5
+  geometry_ramp_epochs: 5
+  confidence_ramp_epochs: 3
+
+teacher_checks:
+  enabled: true
+  require_metric: true
+  require_geometry: true
+  min_metric_coverage: 0.95
+  min_geometry_coverage: 0.95
 
 outputs:
   save_every: 1

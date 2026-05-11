@@ -54,5 +54,8 @@ fusion:
   prior_m3d: 1.0
   prior_da: 0.1
   prior_dmd3c: 2.0
+  geometry_prior_da: 1.0
+  geometry_prior_m3d: 0.5
+  geometry_prior_dmd3c: 0.25
   use_teacher_confidence: true
   confidence_mode: "max_weight"

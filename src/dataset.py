@@ -35,13 +35,169 @@ class SampleInfo:
     calib_path: Path | None = None
 
 
+def _as_hw(array: np.ndarray) -> np.ndarray:
+    arr = np.asarray(array)
+    if arr.ndim == 3:
+        if arr.shape[0] == 1:
+            arr = arr[0]
+        elif arr.shape[-1] == 1:
+            arr = arr[..., 0]
+        else:
+            arr = arr[0]
+    return arr.astype(np.float32)
+
+
+def _resize_hw(array: np.ndarray, shape_hw: tuple[int, int], interpolation: int = cv2.INTER_LINEAR) -> np.ndarray:
+    arr = _as_hw(array)
+    if arr.shape == shape_hw:
+        return arr.astype(np.float32)
+    h, w = shape_hw
+    return cv2.resize(arr, (w, h), interpolation=interpolation).astype(np.float32)
+
+
+def _load_first_npz_key(
+    path: Path,
+    keys: tuple[str, ...],
+    shape_hw: tuple[int, int],
+    interpolation: int = cv2.INTER_LINEAR,
+) -> np.ndarray | None:
+    if not path.exists():
+        return None
+    try:
+        with np.load(path) as data:
+            for key in keys:
+                if key in data:
+                    return _resize_hw(data[key], shape_hw, interpolation)
+    except Exception:
+        return None
+    return None
+
+
+def _valid_depth(depth: np.ndarray, min_depth: float, max_depth: float) -> np.ndarray:
+    return np.isfinite(depth) & (depth > min_depth) & (depth < max_depth)
+
+
+def _calibrate_to_gt(
+    depth: np.ndarray,
+    gt: np.ndarray,
+    gt_valid: np.ndarray,
+    min_depth: float,
+    max_depth: float,
+    min_points: int = 128,
+) -> np.ndarray:
+    valid = gt_valid & _valid_depth(depth, min_depth, max_depth)
+    if int(valid.sum()) < int(min_points):
+        return depth.astype(np.float32)
+
+    x = depth[valid].astype(np.float64)
+    y = gt[valid].astype(np.float64)
+    residual = np.abs(x - y)
+    if residual.size >= 512:
+        keep = residual <= np.percentile(residual, 90.0)
+        x = x[keep]
+        y = y[keep]
+    if x.size < int(min_points):
+        return depth.astype(np.float32)
+
+    A = np.stack([x, np.ones_like(x)], axis=1)
+    try:
+        gamma, delta = np.linalg.lstsq(A, y, rcond=None)[0]
+    except np.linalg.LinAlgError:
+        return depth.astype(np.float32)
+    if not np.isfinite(gamma) or not np.isfinite(delta) or gamma <= 0.05 or gamma > 20.0:
+        return depth.astype(np.float32)
+    calibrated = gamma * depth.astype(np.float32) + np.float32(delta)
+    calibrated[~np.isfinite(calibrated)] = 0.0
+    return calibrated.astype(np.float32)
+
+
+def _nearest_sparse_confidence(
+    depth: np.ndarray,
+    sparse: np.ndarray,
+    sparse_mask: np.ndarray,
+    min_depth: float,
+    max_depth: float,
+    decay: float,
+    blend_radius: float,
+) -> np.ndarray:
+    anchor = (sparse_mask > 0.5) & _valid_depth(sparse, min_depth, max_depth) & _valid_depth(depth, min_depth, max_depth)
+    if int(anchor.sum()) < 1:
+        return np.ones_like(depth, dtype=np.float32)
+
+    rel_error = np.abs(depth[anchor] - sparse[anchor]) / np.clip(sparse[anchor], min_depth, max_depth)
+    anchor_conf = np.exp(-float(decay) * np.clip(rel_error, 0.0, 10.0)).astype(np.float32)
+    try:
+        src = np.ones(depth.shape, dtype=np.uint8)
+        src[anchor] = 0
+        dist, labels = cv2.distanceTransformWithLabels(src, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+        max_label = int(labels.max())
+        label_conf = np.ones(max_label + 1, dtype=np.float32)
+        anchor_labels = labels[anchor].reshape(-1)
+        for lab, conf in zip(anchor_labels, anchor_conf.reshape(-1)):
+            if 0 <= int(lab) <= max_label:
+                label_conf[int(lab)] = min(label_conf[int(lab)], float(conf))
+        dense_conf = label_conf[labels]
+        if blend_radius > 0:
+            far_blend = 1.0 - np.exp(-dist.astype(np.float32) / float(blend_radius))
+            dense_conf = dense_conf + (1.0 - dense_conf) * far_blend
+        return np.clip(dense_conf, 0.0, 1.0).astype(np.float32)
+    except Exception:
+        out = np.ones_like(depth, dtype=np.float32)
+        out[anchor] = anchor_conf
+        return out
+
+
+def _metric_confidence(
+    depth: np.ndarray,
+    sparse: np.ndarray,
+    sparse_mask: np.ndarray,
+    min_depth: float,
+    max_depth: float,
+    c_min: float,
+    sparse_decay: float,
+    range_decay: float,
+    blend_radius: float,
+) -> np.ndarray:
+    valid = _valid_depth(depth, min_depth, max_depth)
+    range_conf = np.exp(-float(range_decay) * np.clip(depth, 0.0, max_depth) / float(max_depth)).astype(np.float32)
+    sparse_conf = _nearest_sparse_confidence(depth, sparse, sparse_mask, min_depth, max_depth, sparse_decay, blend_radius)
+    conf = range_conf * sparse_conf
+    conf = np.clip(conf, float(c_min), 1.0).astype(np.float32)
+    conf[~valid] = 0.0
+    return conf
+
+
+def _robust_normalize(x: np.ndarray, valid: np.ndarray | None = None) -> np.ndarray:
+    x = x.astype(np.float32)
+    valid_mask = np.isfinite(x) if valid is None else (valid & np.isfinite(x))
+    values = x[valid_mask]
+    if values.size < 32:
+        return np.zeros_like(x, dtype=np.float32)
+    median = float(np.median(values))
+    mad = float(np.median(np.abs(values - median)))
+    std = float(np.std(values))
+    scale = max(1e-6, 1.4826 * mad, 0.05 * std)
+    out = (x - median) / scale
+    out[~np.isfinite(out)] = 0.0
+    return np.clip(out, -10.0, 10.0).astype(np.float32)
+
+
+def _downsample_map(array: np.ndarray, scale: int, interpolation: int = cv2.INTER_AREA) -> np.ndarray:
+    h, w = array.shape[-2:]
+    out_h = max(1, h // int(scale))
+    out_w = max(1, w // int(scale))
+    return cv2.resize(_as_hw(array), (out_w, out_h), interpolation=interpolation).astype(np.float32)
+
+
 class KITTIDepthCompletionDataset(Dataset):
     """KITTI Depth Completion dataset adapter.
 
     Tensor output shapes:
       rgb: [3,H,W], sparse: [1,H,W], mask: [1,H,W]
       ray: [3,H,W], uv: [2,H,W], K: [3,3]
-      D_teacher/C_teacher when loaded: [1,H/4,W/4] by default.
+      D_cm/C_cm when loaded: [1,H,W] metric teacher with GT priority.
+      R_G/C_G when loaded: [1,H,W] fused/canonical geometry teacher.
+      D_teacher/C_teacher are backward-compatible [1,H/4,W/4] aliases.
       D_da_raw/da_raw_valid when loaded: [1,H,W] dense relative mono teacher.
     """
 
@@ -56,8 +212,16 @@ class KITTIDepthCompletionDataset(Dataset):
         depth_scale: float = 256.0,
         teacher_root: str | Path | None = None,
         load_teacher: bool = False,
+        load_geometry: bool = False,
         load_mono: bool = False,
         mono_key: str = "D_da_raw",
+        min_depth: float = 1e-3,
+        max_depth: float = 120.0,
+        calibrate_metric_teacher: bool = True,
+        metric_conf_min: float = 0.05,
+        metric_conf_sparse_decay: float = 6.0,
+        metric_conf_range_decay: float = 0.25,
+        metric_conf_sparse_blend_radius: float = 48.0,
         return_tensors: bool = True,
     ) -> None:
         self.data_root = Path(data_root)
@@ -69,8 +233,16 @@ class KITTIDepthCompletionDataset(Dataset):
         self.depth_scale = float(depth_scale)
         self.teacher_root = Path(teacher_root) if teacher_root is not None else None
         self.load_teacher = load_teacher
+        self.load_geometry = load_geometry
         self.load_mono = load_mono
         self.mono_key = mono_key
+        self.min_depth = float(min_depth)
+        self.max_depth = float(max_depth)
+        self.calibrate_metric_teacher = bool(calibrate_metric_teacher)
+        self.metric_conf_min = float(metric_conf_min)
+        self.metric_conf_sparse_decay = float(metric_conf_sparse_decay)
+        self.metric_conf_range_decay = float(metric_conf_range_decay)
+        self.metric_conf_sparse_blend_radius = float(metric_conf_sparse_blend_radius)
         self.return_tensors = return_tensors
 
         lines = read_split(self.split_root, split_file)
@@ -106,14 +278,156 @@ class KITTIDepthCompletionDataset(Dataset):
             "orig_hw": torch.tensor(sample["orig_hw"], dtype=torch.long),
         }
         if self.load_teacher:
-            D_teacher, C_teacher = self._load_teacher(sample["sample_id"], sample["rgb"].shape[:2])
+            D_cm, C_cm = self._load_metric_teacher(
+                sample["sample_id"],
+                sample["rgb"].shape[:2],
+                sample["gt"],
+                sample["gt_mask"],
+                sample["sparse"],
+                sample["mask"],
+            )
+            out["D_cm"] = torch.from_numpy(D_cm[None]).float()
+            out["C_cm"] = torch.from_numpy(C_cm[None]).float()
+            D_teacher = _downsample_map(D_cm, self.output_scale, interpolation=cv2.INTER_AREA)
+            C_teacher = _downsample_map(C_cm, self.output_scale, interpolation=cv2.INTER_AREA)
             out["D_teacher"] = torch.from_numpy(D_teacher[None]).float()
             out["C_teacher"] = torch.from_numpy(C_teacher[None]).float()
+        if self.load_geometry:
+            R_G, C_G = self._load_geometry_teacher(sample["sample_id"], sample["rgb"].shape[:2])
+            out["R_G"] = torch.from_numpy(R_G[None]).float()
+            out["C_G"] = torch.from_numpy(C_G[None]).float()
         if self.load_mono:
             D_da_raw, da_raw_valid = self._load_da_raw(sample["sample_id"], sample["rgb"].shape[:2])
             out["D_da_raw"] = torch.from_numpy(D_da_raw[None]).float()
             out["da_raw_valid"] = torch.from_numpy(da_raw_valid[None]).float()
         return out
+
+    def _load_metric_teacher(
+        self,
+        sample_id: str,
+        image_hw: tuple[int, int],
+        gt: np.ndarray,
+        gt_mask: np.ndarray,
+        sparse: np.ndarray,
+        sparse_mask: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Load the theory metric branch: D_cm/C_cm = GT priority, otherwise DMD3C."""
+        h, w = image_hw
+        zeros = np.zeros((h, w), dtype=np.float32)
+        if self.teacher_root is None:
+            return np.where(gt_mask > 0.5, gt, zeros).astype(np.float32), (gt_mask > 0.5).astype(np.float32)
+
+        D_cm: np.ndarray | None = None
+        C_cm: np.ndarray | None = None
+        candidates = [
+            (
+                self.teacher_root / "metric_coarse" / self.split_name / f"{sample_id}.npz",
+                ("D_cm", "D_full", "D_teacher"),
+                ("C_cm", "C_full", "C_teacher", "C_dmd3c"),
+            ),
+            (
+                self.teacher_root / "fused" / self.split_name / f"{sample_id}.npz",
+                ("D_cm", "D_full", "D_teacher"),
+                ("C_cm", "C_full", "C_teacher", "C_dmd3c"),
+            ),
+        ]
+        for path, depth_keys, conf_keys in candidates:
+            depth = _load_first_npz_key(path, depth_keys, image_hw, cv2.INTER_LINEAR)
+            if depth is None:
+                continue
+            conf = _load_first_npz_key(path, conf_keys, image_hw, cv2.INTER_LINEAR)
+            D_cm = depth
+            C_cm = conf if conf is not None else _valid_depth(depth, self.min_depth, self.max_depth).astype(np.float32)
+            break
+
+        if D_cm is None:
+            dmd_path = self.teacher_root / "dmd3c" / self.split_name / f"{sample_id}.npz"
+            D_dmd = _load_first_npz_key(dmd_path, ("D_dmd3c", "D_dmd", "D"), image_hw, cv2.INTER_LINEAR)
+            if D_dmd is not None:
+                D_cm = D_dmd
+                C_cm = None
+
+        if D_cm is None:
+            D_cm = zeros.copy()
+            C_cm = zeros.copy()
+        else:
+            gt_valid = (gt_mask > 0.5) & _valid_depth(gt, self.min_depth, self.max_depth)
+            if self.calibrate_metric_teacher:
+                D_cm = _calibrate_to_gt(D_cm, gt, gt_valid, self.min_depth, self.max_depth)
+            valid = _valid_depth(D_cm, self.min_depth, self.max_depth)
+            D_cm = np.where(valid, D_cm, 0.0).astype(np.float32)
+            auto_conf = _metric_confidence(
+                D_cm,
+                sparse,
+                sparse_mask,
+                self.min_depth,
+                self.max_depth,
+                self.metric_conf_min,
+                self.metric_conf_sparse_decay,
+                self.metric_conf_range_decay,
+                self.metric_conf_sparse_blend_radius,
+            )
+            if C_cm is None:
+                C_cm = auto_conf
+            else:
+                C_cm = np.clip(np.where(np.isfinite(C_cm), C_cm, 0.0), 0.0, 1.0).astype(np.float32)
+                C_cm = (C_cm * auto_conf).astype(np.float32)
+            C_cm[~valid] = 0.0
+
+        gt_valid = (gt_mask > 0.5) & _valid_depth(gt, self.min_depth, self.max_depth)
+        D_cm[gt_valid] = gt[gt_valid].astype(np.float32)
+        C_cm[gt_valid] = 1.0
+        return D_cm.astype(np.float32), C_cm.astype(np.float32)
+
+    def _load_geometry_teacher(self, sample_id: str, image_hw: tuple[int, int]) -> tuple[np.ndarray, np.ndarray]:
+        """Load R_G/C_G. Falls back to DA raw as structure-only supervision."""
+        h, w = image_hw
+        zeros = np.zeros((h, w), dtype=np.float32)
+        if self.teacher_root is None:
+            return zeros, zeros
+
+        R: np.ndarray | None = None
+        C: np.ndarray | None = None
+        valid: np.ndarray | None = None
+
+        path = self.teacher_root / "geometry_fused" / self.split_name / f"{sample_id}.npz"
+        R = _load_first_npz_key(path, ("R_G", "R_G_star", "R_fused", "R_teacher"), image_hw, cv2.INTER_LINEAR)
+        if R is not None:
+            C = _load_first_npz_key(path, ("C_G", "C_geometry", "C_teacher"), image_hw, cv2.INTER_LINEAR)
+            valid = np.isfinite(R)
+
+        if R is None:
+            fallbacks = [
+                (Path("geometry_raw") / "depth_anything_v2" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw"),
+                (Path("geometry_raw") / "depth_anything" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw"),
+                (Path("depth_anything") / f"{self.split_name}_raw", ("D_da_raw", "R_i", "depth"), "raw"),
+                (Path("depth_anything") / self.split_name, ("D_da_raw", "R_i", "depth"), "raw"),
+                (Path("depth_anything") / f"{self.split_name}_aligned", ("D_da_aligned", "D_full", "D_teacher"), "log_metric"),
+                (Path("metric3d") / self.split_name, ("D_m3d",), "log_metric"),
+                (Path("dmd3c") / self.split_name, ("D_dmd3c", "D_dmd", "D"), "log_metric"),
+            ]
+            for rel, keys, transform in fallbacks:
+                arr = _load_first_npz_key(self.teacher_root / rel / f"{sample_id}.npz", keys, image_hw, cv2.INTER_LINEAR)
+                if arr is None:
+                    continue
+                if transform == "log_metric":
+                    valid = _valid_depth(arr, self.min_depth, self.max_depth)
+                    R = np.log(np.clip(arr, self.min_depth, self.max_depth))
+                else:
+                    valid = np.isfinite(arr)
+                    R = arr
+                C = valid.astype(np.float32)
+                break
+
+        if R is None:
+            return zeros, zeros
+
+        R = _robust_normalize(R, valid)
+        if C is None:
+            C = np.isfinite(R).astype(np.float32)
+        C = np.clip(np.where(np.isfinite(C), C, 0.0), 0.0, 1.0).astype(np.float32)
+        C[~np.isfinite(R)] = 0.0
+        return R.astype(np.float32), C.astype(np.float32)
 
     def load_sample_np(self, index: int) -> dict[str, Any]:
         info = self.samples[index]
@@ -196,6 +510,8 @@ class KITTIDepthCompletionDataset(Dataset):
 
         root = self.teacher_root / "depth_anything"
         candidates = [
+            self.teacher_root / "geometry_raw" / "depth_anything_v2" / self.split_name / f"{sample_id}.npz",
+            self.teacher_root / "geometry_raw" / "depth_anything" / self.split_name / f"{sample_id}.npz",
             root / f"{self.split_name}_raw" / f"{sample_id}.npz",
             root / self.split_name / f"{sample_id}.npz",
             root / f"{self.split_name}_aligned" / f"{sample_id}.npz",
@@ -205,9 +521,10 @@ class KITTIDepthCompletionDataset(Dataset):
                 continue
             try:
                 with np.load(path) as data:
-                    if self.mono_key not in data:
+                    key = next((k for k in (self.mono_key, "R_da", "D_da_raw", "R_i", "depth", "D_da_aligned", "D_full") if k in data), None)
+                    if key is None:
                         continue
-                    raw = data[self.mono_key].astype(np.float32)
+                    raw = data[key].astype(np.float32)
             except Exception:
                 continue
             if raw.ndim == 3:

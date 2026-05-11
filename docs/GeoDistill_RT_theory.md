@@ -17,6 +17,7 @@
 7. [Inference](#7-inference)
 8. [Research Gap and Contributions](#8-research-gap-and-contributions)
 9. [Conclusion](#9-conclusion)
+10. [Reference Notes](#10-reference-notes)
 
 ---
 
@@ -33,29 +34,33 @@ $$
 and predicts:
 
 $$
-(D_c,C),
+(D_{\text{full}},C_{\text{full}}),
 $$
 
 where:
 
-- $D_c$ is the coarse metric depth.
-- $C$ is the confidence / uncertainty map.
+- $D_{\text{full}}$ is the full-resolution metric depth.
+- $C_{\text{full}}$ is the full-resolution confidence / uncertainty map.
+- $D_{1/4}$ and $C_{1/4}$ are internal coarse predictions used for efficient computation.
 
-During training, the framework uses multiple geometry teachers:
+During training, the framework separates teacher supervision into two different roles:
 
 | Signal | Role |
 |---|---|
-| Metric3D v2 | metric depth prior |
-| Depth Anything V2 | fine relative depth structure |
-| DSINE | surface normal prior |
-| Sparse LiDAR | real metric anchor |
+| Ground-truth depth $D_{\text{gt}}$ | strongest metric anchor where available |
+| DMD3C $D_{\text{DMD}}$ | primary dense coarse metric teacher |
+| Depth Anything V2 / Distill Any Depth / UniDepthV2 | relative/metric monocular geometry teachers for layout, edge, and ordinal structure |
+| DSINE | surface-normal prior for geometric reliability |
+| Sparse LiDAR $S$ | real metric anchor available at inference and training |
 
 The teachers are used **only during training**. At inference time, only the lightweight student is deployed.
 
-The key idea is **not to distill from a single teacher directly**. Instead, multiple geometry teachers are fused with per-pixel reliability estimated from:
+The key idea is a separated supervision and prediction pipeline:
 
-1. sparse LiDAR metric consistency;
-2. surface-normal geometric consistency.
+1. the **coarse metric teacher** is built from $D_{\text{gt}}$ and DMD3C to minimize metric RMSE;
+2. the **geometry teacher** is fused from monocular models such as DA2, Distill Any Depth, and UniDepthV2;
+3. the student predicts an efficient $1/4$ coarse depth internally, then produces full-resolution dense depth with guided upsampling and tiny residual refinement;
+4. the geometry teacher is used through scale-and-shift-invariant, ordinal, and structure-aware losses.
 
 ---
 
@@ -82,6 +87,14 @@ where:
 - $M$ is the validity mask.
 - $K$ is the camera intrinsic matrix.
 
+The valid sparse-depth set is:
+
+$$
+\Omega_M
+=
+\{p\mid M(p)=1,\ S(p)>0,\ S(p)<D_{\max}\}.
+$$
+
 From $K$, construct a ray map:
 
 $$
@@ -97,190 +110,641 @@ $$
 
 ## 2.2 Output
 
-The student predicts coarse metric depth and confidence at $1/4$ resolution:
+The student uses a coarse internal representation at $1/4$ resolution:
 
 $$
-D_c \in \mathbb{R}^{\frac{H}{4}\times\frac{W}{4}},
+D_{1/4} \in \mathbb{R}^{\frac{H}{4}\times\frac{W}{4}},
 \qquad
-C \in \mathbb{R}^{\frac{H}{4}\times\frac{W}{4}}.
+C_{1/4} \in \mathbb{R}^{\frac{H}{4}\times\frac{W}{4}}.
 $$
 
-If full-resolution visualization is required:
+The official inference output is full-resolution:
 
 $$
-D_{\text{out}}=\operatorname{Up}(D_c),
+D_{\text{full}} \in \mathbb{R}^{H\times W},
 \qquad
-C_{\text{out}}=\operatorname{Up}(C).
+C_{\text{full}} \in \mathbb{R}^{H\times W}.
+$$
+
+The model decomposition is:
+
+$$
+D_{1/4},C_{1/4}
+=
+f_{\theta}(I,S,M,K),
+$$
+
+$$
+D_{\text{full}},C_{\text{full}}
+=
+g_{\phi}
+\left(
+D_{1/4},C_{1/4},I,S,M,K
+\right).
+$$
+
+Final output:
+
+$$
+D_{\text{out}}=D_{\text{full}},
+\qquad
+C_{\text{out}}=C_{\text{full}}.
 $$
 
 ---
 
 # 3. Teacher Signals
 
-Depth teachers:
+The updated design uses **two teacher branches**:
 
 $$
-D_{\text{M3D}},
+\mathcal{B}_{\text{metric}}
+\qquad\text{and}\qquad
+\mathcal{B}_{\text{geom}}.
+$$
+
+The two branches have separate responsibilities and separate losses.
+
+## 3.1 Coarse Metric Teacher: GT + DMD3C
+
+The coarse metric teacher is responsible for minimizing RMSE. It uses:
+
+$$
+D_{\text{gt}},
 \qquad
-D_{\text{DA}}.
+D_{\text{DMD}}.
 $$
 
-Normal teacher:
+where:
+
+- $D_{\text{gt}}$ is the KITTI ground-truth depth where available;
+- $D_{\text{DMD}}$ is the DMD3C dense depth-completion prediction;
+- both are metric-depth signals in meters.
+
+Because $D_{\text{gt}}$ is the most trustworthy metric supervision, it has priority over any teacher:
 
 $$
-N_{\text{DSINE}}.
-$$
-
-Sparse LiDAR:
-
-$$
-S.
-$$
-
-Depth Anything V2 mainly provides relative depth. Therefore, it is aligned to metric scale using sparse LiDAR:
-
-$$
-\tilde{D}_{\text{DA}} = aD_{\text{DA}} + b.
-$$
-
-The scale-shift parameters are estimated as:
-
-$$
-(a,b)
+\Omega_{\text{gt}}
 =
-\arg\min_{a,b}
-\sum_{p \in \Omega_M}
+\{p\mid D_{\text{gt}}(p)>0,\ D_{\text{gt}}(p)<D_{\max}\}.
+$$
+
+Similarly:
+
+$$
+\Omega_{\text{DMD}}
+=
+\{p\mid D_{\text{DMD}}(p)>0,\ D_{\text{DMD}}(p)<D_{\max}\}.
+$$
+
+Optionally, DMD3C can be calibrated to ground truth on valid pixels before being used outside $\Omega_{\text{gt}}$:
+
+$$
+(\gamma^\star,\delta^\star)
+=
+\arg\min_{\gamma,\delta}
+\sum_{p\in\Omega_{\text{gt}}\cap\Omega_{\text{DMD}}}
 \rho
 \left(
- aD_{\text{DA}}(p)+b-S(p)
+\gamma D_{\text{DMD}}(p)+\delta-D_{\text{gt}}(p)
 \right),
+$$
+
+$$
+\widehat{D}_{\text{DMD}}(p)
+=
+\gamma^\star D_{\text{DMD}}(p)+\delta^\star.
+$$
+
+Without calibration:
+
+$$
+\widehat{D}_{\text{DMD}} = D_{\text{DMD}}.
+$$
+
+The final coarse metric teacher is:
+
+$$
+D_{\text{cm}}(p)
+=
+\begin{cases}
+D_{\text{gt}}(p),
+& p\in\Omega_{\text{gt}},
+\\[2mm]
+\widehat{D}_{\text{DMD}}(p),
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{DMD}},
+\\[2mm]
+0,
+& \text{otherwise}.
+\end{cases}
+$$
+
+The confidence of this metric teacher is:
+
+$$
+C_{\text{cm}}(p)
+=
+\begin{cases}
+1,
+& p\in\Omega_{\text{gt}},
+\\[2mm]
+c_{\text{DMD}}(p),
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{DMD}},
+\\[2mm]
+0,
+& \text{otherwise}.
+\end{cases}
 $$
 
 where:
 
 $$
-\Omega_M = \{p \mid M(p)=1\}.
+c_{\text{DMD}}(p)=C_{\text{DMD}}(p).
 $$
 
-After alignment, $\tilde{D}_{\text{DA}}$ is treated as a metric-aligned depth candidate.
-
-The depth teacher set is:
+DMD3C confidence combines sparse consistency, geometry agreement, edge risk, and range risk:
 
 $$
-\mathcal{T}
+C_{\text{DMD}}(p)
+=
+\operatorname{clip}
+\left(
+C_S(p)\,
+C_G^{\text{DMD}}(p)\,
+C_E(p)\,
+C_R(p),
+C_{\min},
+1
+\right).
+$$
+
+The sparse-consistency term measures local disagreement with LiDAR anchors:
+
+$$
+e_S(p)
+=
+\min_{q\in\mathcal{N}_K(p)\cap\Omega_M}
+\frac{
+\left|D_{\text{DMD}}(q)-S(q)\right|
+}{
+S(q)+\epsilon
+},
+\qquad
+C_S(p)=\exp(-a e_S(p)).
+$$
+
+If $\mathcal{N}_K(p)\cap\Omega_M$ is empty, set $C_S(p)=1$.
+
+The geometry-agreement term compares DMD3C structure with the fused geometry teacher once $R_G^\ast$ is available:
+
+$$
+e_G(p)
+=
+\left|
+\operatorname{Norm}
+\left(
+\log(D_{\text{DMD}}(p)+\epsilon)
+\right)
+-
+R_G^\ast(p)
+\right|,
+$$
+
+$$
+C_G^{\text{DMD}}(p)=\exp(-b e_G(p)).
+$$
+
+The edge-risk term lowers DMD3C supervision around high-risk discontinuities:
+
+$$
+e_E(p)
+=
+\left|\nabla D_{\text{DMD}}(p)\right|
+\left|\nabla I(p)\right|,
+\qquad
+C_E(p)=\exp(-c e_E(p)).
+$$
+
+A lightweight alternative is:
+
+$$
+C_E(p)=\exp(-c|\nabla I(p)|).
+$$
+
+The range-risk term reduces confidence in far-range regions:
+
+$$
+e_R(p)
+=
+\frac{D_{\text{DMD}}(p)}{D_{\max}},
+\qquad
+C_R(p)=\exp(-d e_R(p)).
+$$
+
+Recommended default:
+
+$$
+C_{\min}=0.05.
+$$
+
+This branch produces the metric target used by:
+
+$$
+\mathcal{L}_{\text{cm}},
+\qquad
+\mathcal{L}_{C}.
+$$
+
+It is the only dense teacher branch allowed to dominate metric RMSE.
+
+## 3.2 Geometry Teacher: Fused Monocular Layout
+
+The geometry branch is responsible for layout, ordinal depth, boundaries, and global scene structure. Candidate teachers include:
+
+| Teacher | Output type | Recommended role |
+|---|---|---|
+| Depth Anything V2 | relative depth | strong dense structure and boundaries |
+| Distill Any Depth | relative / normalized depth | robust relative geometry from distillation |
+| UniDepthV2 | metric depth / 3D points | metric-aware geometry, camera-aware global layout |
+| Metric3D v2 | metric depth | optional diagnostic or fallback geometry source |
+
+Let the geometry teacher set be:
+
+$$
+\mathcal{G}
 =
 \left\{
-D_{\text{M3D}},
-\tilde{D}_{\text{DA}}
+G_1,\ldots,G_n
 \right\}.
 $$
+
+Each teacher is converted to a canonical structure representation before fusion:
+
+$$
+R_i(p)
+=
+\operatorname{Norm}_{\Omega_i}
+\left(
+\phi_i(G_i(p))
+\right),
+$$
+
+where:
+
+- $\phi_i$ maps teacher output to a comparable structure signal;
+- for relative-depth teachers, $\phi_i(G_i)=G_i$ or $\log(G_i+\epsilon)$;
+- for metric-depth teachers, $\phi_i(G_i)=\log(G_i+\epsilon)$ or $1/(G_i+\epsilon)$;
+- $\operatorname{Norm}$ is a robust median/MAD or percentile normalization.
+
+A useful robust normalization is:
+
+$$
+\operatorname{Norm}_{\Omega}(x)(p)
+=
+\frac{x(p)-\operatorname{median}_{q\in\Omega}x(q)}
+{\operatorname{MAD}_{q\in\Omega}x(q)+\epsilon}.
+$$
+
+The geometry teacher branch produces structure supervision:
+
+$$
+R_G^\ast,
+\qquad
+C_G,
+$$
+
+where $R_G^\ast$ is a fused relative/structure map and $C_G$ is its reliability.
 
 ---
 
 # 4. Conflict-Aware Teacher Fusion
 
-For each teacher:
+Fusion is now applied mainly to the **geometry teacher branch**:
 
 $$
-D_i \in \mathcal{T},
+R_i\in\mathcal{G}.
 $$
 
-compute the surface normal derived from depth:
+The coarse metric branch follows the priority rule in Section 3.1:
 
 $$
-N(D_i).
+D_{\text{cm}}
+=
+D_{\text{gt}}\ \text{where valid, otherwise calibrated DMD3C}.
 $$
 
-## 4.1 Normal Consistency
+## 4.1 Metric-Branch Rule
 
-Measure geometric consistency between the teacher-derived normal and DSINE normal:
+For metric supervision:
 
 $$
-\Delta_i^N(p)
+D_T^{\text{metric}}(p)=D_{\text{cm}}(p),
+\qquad
+C_T^{\text{metric}}(p)=C_{\text{cm}}(p).
+$$
+
+This keeps metric RMSE anchored to GT and DMD3C while the monocular branch supplies structure.
+
+## 4.2 Geometry Teacher Reliability
+
+For each geometry teacher $R_i$, compute reliability using three optional terms.
+
+If a term is unavailable for a teacher, set that penalty to zero:
+
+$$
+\Delta_i^k(p)=0
+\quad
+\text{for unavailable } k\in\{N,S,E\}.
+$$
+
+### Normal Consistency
+
+If a teacher can be converted to a metric-like depth map $\tilde{D}_i$ by SSI fitting to $D_{\text{cm}}$, compute a robust normal from the back-projected 3D point cloud.
+
+Back-project each pixel:
+
+$$
+X_i(p)
+=
+\tilde{D}_i(p)
+K^{-1}
+\begin{bmatrix}
+u\\
+v\\
+1
+\end{bmatrix}.
+$$
+
+Use symmetric finite differences in 3D:
+
+$$
+\mathbf{v}_x(p)
+=
+X_i(u+1,v)-X_i(u-1,v),
+\qquad
+\mathbf{v}_y(p)
+=
+X_i(u,v+1)-X_i(u,v-1).
+$$
+
+The teacher-derived normal is:
+
+$$
+N(\tilde{D}_i)(p)
+=
+\frac{
+\mathbf{v}_x(p)\times\mathbf{v}_y(p)
+}{
+\left\|
+\mathbf{v}_x(p)\times\mathbf{v}_y(p)
+\right\|_2+\epsilon
+}.
+$$
+
+The normal validity mask removes unstable depth discontinuities:
+
+$$
+M_N(p)
+=
+\mathbb{1}
+\left(
+\left|
+\tilde{D}_i(u+1,v)-\tilde{D}_i(u-1,v)
+\right|
+<\tau_D
+\right)
+\mathbb{1}
+\left(
+\left|
+\tilde{D}_i(u,v+1)-\tilde{D}_i(u,v-1)
+\right|
+<\tau_D
+\right).
+$$
+
+The raw normal disagreement is:
+
+$$
+\Delta_{i,\text{raw}}^N(p)
 =
 1-
 \left\langle
-N(D_i)(p),
+N(\tilde{D}_i)(p),
 N_{\text{DSINE}}(p)
 \right\rangle.
 $$
 
-## 4.2 Sparse Metric Consistency
+Normal consistency is strongest on locally planar regions. Define:
 
-Measure metric consistency at valid sparse LiDAR pixels:
+$$
+W_{\text{plane}}(p)
+=
+\exp
+\left(
+-\lambda_I|\nabla I(p)|
+\right)
+\exp
+\left(
+-\lambda_D|\nabla\tilde{D}_i(p)|
+\right).
+$$
+
+An optional curvature-aware version is:
+
+$$
+W_{\text{plane}}(p)
+=
+\exp
+\left(
+-\lambda_I|\nabla I(p)|
+\right)
+\exp
+\left(
+-\lambda_D|\nabla\tilde{D}_i(p)|
+\right)
+\exp
+\left(
+-\lambda_R|\Delta\tilde{D}_i(p)|
+\right),
+$$
+
+where $\Delta$ denotes a Laplacian / curvature approximation.
+
+The robust normal penalty is:
+
+$$
+\Delta_i^N(p)
+=
+M_N(p)\,
+W_{\text{plane}}(p)\,
+\Delta_{i,\text{raw}}^N(p).
+$$
+
+### Sparse Anchor Consistency
+
+Sparse LiDAR should be used as a metric sanity check only after the teacher has been aligned to the metric branch:
 
 $$
 \Delta_i^S(p)
 =
-M(p)
+M(p)\,
 \left|
-D_i(p)-S(p)
+\tilde{D}_i(p)-S(p)
 \right|.
 $$
 
-## 4.3 Teacher Confidence Terms
+### Edge / Structure Consistency
 
-Normal-based confidence:
-
-$$
-q_i(p)=\exp\left(-\alpha \Delta_i^N(p)\right).
-$$
-
-Sparse-depth-based confidence:
+Geometry teachers should agree with RGB or with each other at structure boundaries:
 
 $$
-r_i(p)=\exp\left(-\beta \Delta_i^S(p)\right).
+\Delta_i^E(p)
+=
+\left|
+\nabla R_i(p)
+\right|
+\cdot
+\exp
+\left(
+-\kappa
+\left|
+\nabla I(p)
+\right|
+\right).
 $$
 
-## 4.4 Teacher Weight
+This term is optional. It penalizes structure edges that are not supported by RGB edges.
 
-The final per-pixel teacher weight is:
+## 4.3 Geometry Teacher Weight
+
+Define:
 
 $$
-w_i(p)
+q_i(p)
+=
+\exp
+\left(
+-\alpha
+M_N(p)
+W_{\text{plane}}(p)
+\Delta_{i,\text{raw}}^N(p)
+\right),
+\qquad
+r_i(p)=\exp(-\beta\Delta_i^S(p)),
+\qquad
+e_i(p)=\exp(-\eta\Delta_i^E(p)).
+$$
+
+Use a teacher prior $\pi_i$ to encode empirical trust:
+
+$$
+\pi_i>0.
+$$
+
+The geometry-fusion weight is:
+
+$$
+w_i^G(p)
 =
 \frac{
-q_i(p)r_i(p)
+\pi_i q_i(p)r_i(p)e_i(p)
 }{
-\sum_{j\in\mathcal{T}}q_j(p)r_j(p)
+\sum_{j\in\mathcal{G}}
+\pi_j q_j(p)r_j(p)e_j(p)
+\ +\epsilon
 }.
 $$
 
-## 4.5 Fused Pseudo-Depth Target
+Recommended initial priors:
 
-The fused pseudo-depth target is:
+| Teacher | Prior |
+|---|---:|
+| Depth Anything V2 | $1.0$ |
+| Distill Any Depth | $1.0$ |
+| UniDepthV2 | $1.0$ |
+| Metric3D v2 | $0.5$ |
+
+The priors are tuned with validation metrics.
+
+## 4.4 Fused Geometry Target
+
+The fused geometry target is:
 
 $$
-D_T^\ast(p)
+R_G^\ast(p)
 =
-\sum_{i\in\mathcal{T}}w_i(p)D_i(p).
+\sum_{i\in\mathcal{G}}
+w_i^G(p)R_i(p).
 $$
 
-With two teachers:
+The geometry confidence map is:
 
 $$
-D_T^\ast(p)
+C_G(p)
 =
-w_{\text{M3D}}(p)D_{\text{M3D}}(p)
-+
-w_{\text{DA}}(p)\tilde{D}_{\text{DA}}(p).
+\max_{i\in\mathcal{G}}w_i^G(p).
 $$
 
-## 4.6 Optional Teacher Confidence Map
-
-A simple and stable teacher confidence map is:
+This pair is saved separately from the metric teacher:
 
 $$
-C_T(p)=\max_{i\in\mathcal{T}}w_i(p).
+\left(D_T^{\text{metric}}, C_T^{\text{metric}}\right)
+\neq
+\left(R_G^\ast, C_G\right).
 $$
 
-For a simpler baseline:
+**Interpretation.** DMD3C + GT determines metric scale. Monocular teachers determine relative layout and fine structure through $R_G^\ast$.
+
+## 4.5 Boundary Ordinal Supervision
+
+Depth discontinuities are supervised with relative ordering. Let $\mathcal{P}$ be a set of neighboring pixel pairs sampled around RGB or geometry edges:
 
 $$
-C_T(p)=1.
+\mathcal{P}
+=
+\left\{
+(p,q)\mid
+q\in\mathcal{N}(p),
+\ |\nabla I(p)|>\tau_I
+\ \text{or}\
+|\nabla R_G^\ast(p)|>\tau_G
+\right\}.
 $$
 
-**Interpretation.** A teacher receives higher supervision weight at pixel $p$ if it is more consistent with both sparse LiDAR and DSINE surface normal.
+The ordinal sign is:
+
+$$
+y_{pq}
+=
+\operatorname{sign}
+\left(
+R_G^\ast(p)-R_G^\ast(q)
+\right).
+$$
+
+The full-resolution ordinal loss is:
+
+$$
+\mathcal{L}_{\text{ord}}
+=
+\frac{1}{|\mathcal{P}|}
+\sum_{(p,q)\in\mathcal{P}}
+\log
+\left(
+1+
+\exp
+\left[
+-y_{pq}
+\left(
+\log(D_{\text{full}}(p)+\epsilon)
+-
+\log(D_{\text{full}}(q)+\epsilon)
+\right)
+\right]
+\right).
+$$
+
+This term teaches foreground/background ordering and thin-object boundaries without requiring a stable surface normal at discontinuities.
 
 ---
 
@@ -303,7 +767,13 @@ $$
 Output:
 
 $$
-(D_c,C).
+(D_{\text{full}},C_{\text{full}}).
+$$
+
+The model also produces internal coarse predictions:
+
+$$
+(D_{1/4},C_{1/4}).
 $$
 
 No normal map is predicted during inference. The normal teacher is only used during training to evaluate teacher reliability.
@@ -317,6 +787,8 @@ Ray / UV map
         ↓
 Fast Sparse Propagation at 1/4
         ↓
+D_init at 1/4
+        ↓
 RGBStem + DepthStem + RayStem
         ↓
 MobileViTv2 Encoder
@@ -325,7 +797,15 @@ Sparse-Ray Gated Injection
         ↓
 Additive LiteFPN Decoder
         ↓
-Depth Head + Confidence Head
+Coarse log-residual head
+        ↓
+D_1/4, C_1/4
+        ↓
+Guided Full-Resolution Upsampling
+        ↓
+Tiny Full-Resolution Residual Refinement
+        ↓
+D_full, C_full
 ```
 
 Main components:
@@ -333,14 +813,16 @@ Main components:
 1. **Fast Sparse Propagation**: creates a metric prior before the encoder.
 2. **MobileViTv2 Encoder**: balances CNN local bias and lightweight global context.
 3. **Sparse-Ray Gated Injection**: preserves sparse depth and ray map as metric/geometry anchors.
-4. **Additive LiteFPN Decoder**: low memory traffic, suitable for $1/4$ output.
-5. **Depth + Confidence Heads**: predict coarse metric depth and uncertainty.
+4. **Additive LiteFPN Decoder**: low memory traffic, suitable for coarse $1/4$ prediction.
+5. **Coarse Log-Residual Head**: predicts a residual over the sparse-propagated prior.
+6. **Guided Full-Resolution Upsampling**: uses RGB, sparse depth, and mask to recover full-resolution boundaries.
+7. **Tiny Full-Resolution Residual Refinement**: corrects local residual errors with a very small full-resolution head.
 
 ---
 
 ## 5.3 Fast Sparse Propagation
 
-Sparse depth should not be only concatenated directly into the encoder. First, construct a coarse dense prior:
+Sparse depth is first converted into a coarse dense prior:
 
 $$
 D_{\text{init}}
@@ -606,52 +1088,173 @@ Recommended setting:
 
 ---
 
-## 5.8 Depth Head and Confidence Head
+## 5.8 Coarse Head, Guided Upsampling, and Full-Resolution Refinement
 
-### Depth Head
+### Coarse Log-Residual Head
 
-Predict log-depth for stable training:
-
-$$
-z_D=h_D(\hat{P}_4),
-$$
+The coarse head predicts a log-residual over the sparse-propagated prior:
 
 $$
-D_c=\exp(z_D).
+\Delta z_{1/4}=h_D(\hat{P}_4).
 $$
 
-Recommended head:
-
-```text
-Conv3×3 → activation → Conv1×1 → log-depth
-```
-
-### Confidence Head
-
-Predict log variance:
+The coarse metric depth is:
 
 $$
-s=h_C(\hat{P}_4),
+D_{1/4}
+=
+D_{\text{init}}\,
+\exp(\Delta z_{1/4}).
+$$
+
+The exponential parameterization keeps depth positive and makes the residual relative to a metric prior derived from sparse LiDAR.
+
+Coarse uncertainty:
+
+$$
+s_{1/4}=h_C(\hat{P}_4),
 \qquad
-s=\log\sigma^2.
+C_{1/4}=\exp(-s_{1/4}).
 $$
 
-Confidence:
-
-$$
-C=\exp(-s).
-$$
-
-Recommended head:
+Recommended coarse heads:
 
 ```text
-Conv3×3 → activation → Conv1×1 → log-variance
+Depth:      Conv3x3 -> activation -> Conv1x1 -> Delta z_1/4
+Confidence: Conv3x3 -> activation -> Conv1x1 -> log-variance
 ```
+
+### Guided Full-Resolution Upsampling
+
+The full-resolution path uses guided upsampling:
+
+$$
+D_{\text{up}}
+=
+\operatorname{GuidedUp}
+\left(
+D_{1/4},I,S,M
+\right).
+$$
+
+A concrete form is learned convex upsampling:
+
+$$
+D_{\text{up}}(p)
+=
+\sum_{k\in\mathcal{N}(p)}
+a_k(p)\,
+D_{1/4}(k),
+$$
+
+with:
+
+$$
+\sum_{k\in\mathcal{N}(p)}a_k(p)=1,
+\qquad
+a_k(p)\ge 0.
+$$
+
+The upsampling weights are generated by a small head:
+
+$$
+a(p)
+=
+h_{\text{up}}
+\left(
+I,M,S,\operatorname{BilinearUp}(D_{1/4})
+\right).
+$$
+
+This keeps the main encoder cheap while allowing RGB and sparse depth to guide full-resolution boundaries.
+
+### Tiny Full-Resolution Residual Refinement
+
+After guided upsampling, a small residual head corrects local errors:
+
+$$
+\Delta z_{\text{full}}
+=
+h_R
+\left(
+[I,S,M,D_{\text{up}},C_{\text{up}}]
+\right),
+$$
+
+$$
+D_{\text{full}}
+=
+D_{\text{up}}\,
+\exp(\Delta z_{\text{full}}).
+$$
+
+Full-resolution confidence can be predicted directly:
+
+$$
+C_{\text{full}}
+=
+h_{C,\text{full}}
+\left(
+[I,S,M,D_{\text{up}},C_{\text{up}}]
+\right),
+$$
+
+or computed with the lightweight option:
+
+$$
+C_{\text{full}}
+=
+\operatorname{GuidedUp}(C_{1/4},I).
+$$
+
+Recommended tiny residual head:
+
+```text
+Input: RGB I, sparse S, mask M, D_up, C_up -> 7 channels
+Conv3x3, 7 -> 16
+DWConv3x3, 16 -> 16
+Conv1x1, 16 -> 8
+Conv1x1, 8 -> 1
+Output: Delta z_full
+```
+
+### Sparse Anchor Correction
+
+The final full-resolution prediction is softly corrected at real sparse LiDAR pixels:
+
+$$
+D_{\text{full}}(p)
+\leftarrow
+D_{\text{full}}(p)
++
+\lambda_M M(p)
+\left(
+S(p)-D_{\text{full}}(p)
+\right),
+$$
+
+with:
+
+$$
+\lambda_M\in[0.5,0.9].
+$$
+
+The hard-correction ablation is:
+
+$$
+D_{\text{full}}(p)
+\leftarrow
+M(p)S(p)
++
+(1-M(p))D_{\text{full}}(p).
+$$
 
 Interpretation:
 
-- high $C$: reliable prediction;
-- low $C$: far sparse anchor, hard boundary, low texture, or teacher conflict.
+- $D_{1/4}$ provides efficient global metric structure;
+- guided upsampling recovers object boundaries;
+- tiny full-resolution refinement corrects local residuals;
+- sparse anchor correction preserves real LiDAR measurements.
 
 ---
 
@@ -677,16 +1280,22 @@ Decoder:
   Additive LiteFPN
 
 Heads:
-  log-depth head
-  log-variance confidence head
+  coarse log-residual head
+  coarse log-variance confidence head
+
+Full-resolution path:
+  guided convex upsampling
+  tiny full-resolution residual head
+  sparse anchor correction
 
 Output:
-  coarse metric depth D_c
-  confidence C
+  full-resolution metric depth D_full
+  full-resolution confidence C_full
+  internal coarse depth D_1/4 and confidence C_1/4
 
 No inference teacher.
 No normal output.
-No full-resolution SPN.
+No full-resolution heavy encoder.
 No heavy Transformer decoder.
 No BEV/TPV branch at inference.
 ```
@@ -697,237 +1306,306 @@ No BEV/TPV branch at inference.
 
 ## 6.1 Training Targets
 
-Depth teachers:
+The training targets are defined at two resolutions.
+
+Full-resolution targets:
 
 $$
-D_{\text{M3D}},
+D_{\text{gt}},
 \qquad
-D_{\text{DA}}.
+S,
+\qquad
+D_{\text{cm}},
+\qquad
+C_{\text{cm}},
+\qquad
+R_G^\ast,
+\qquad
+C_G.
 $$
 
-Metric-aligned Depth Anything:
+Coarse auxiliary targets:
 
 $$
-\tilde{D}_{\text{DA}}=aD_{\text{DA}}+b.
+D_{\text{gt}}^{\downarrow},
+\qquad
+D_{\text{cm}}^{\downarrow},
+\qquad
+C_{\text{cm}}^{\downarrow}.
 $$
 
+The metric teacher is:
+
 $$
-(a,b)
+D_{\text{cm}}(p)
 =
-\arg\min_{a,b}
-\sum_{p\in\Omega_M}
-\rho
-\left(
- aD_{\text{DA}}(p)+b-S(p)
-\right).
+\begin{cases}
+D_{\text{gt}}(p),
+& p\in\Omega_{\text{gt}},
+\\[2mm]
+\widehat{D}_{\text{DMD}}(p),
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{DMD}},
+\\[2mm]
+0,
+& \text{otherwise}.
+\end{cases}
 $$
 
-Teacher set:
+The metric-teacher confidence is:
 
 $$
-\mathcal{T}=\{D_{\text{M3D}},\tilde{D}_{\text{DA}}\}.
-$$
-
-Normal teacher:
-
-$$
-N_{\text{DSINE}}.
-$$
-
-The normal teacher is only used to compute teacher reliability, not as an inference output.
-
----
-
-## 6.2 Conflict-Aware Teacher Fusion
-
-For each teacher $D_i\in\mathcal{T}$:
-
-Normal consistency:
-
-$$
-\Delta_i^N(p)
+C_{\text{cm}}(p)
 =
-1-
-\left\langle
-N(D_i)(p),
-N_{\text{DSINE}}(p)
-\right\rangle.
+\begin{cases}
+1,
+& p\in\Omega_{\text{gt}},
+\\[2mm]
+C_{\text{DMD}}(p),
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{DMD}},
+\\[2mm]
+0,
+& \text{otherwise}.
+\end{cases}
 $$
 
-Sparse consistency:
+The geometry teacher is:
 
 $$
-\Delta_i^S(p)
+R_G^\ast(p)
 =
-M(p)
-\left|
-D_i(p)-S(p)
-\right|.
+\sum_{i\in\mathcal{G}}
+w_i^G(p)R_i(p).
 $$
-
-Teacher confidence:
-
-$$
-q_i(p)=\exp(-\alpha\Delta_i^N(p)),
-$$
-
-$$
-r_i(p)=\exp(-\beta\Delta_i^S(p)).
-$$
-
-Teacher weight:
-
-$$
-w_i(p)
-=
-\frac{
-q_i(p)r_i(p)
-}{
-\sum_{j\in\mathcal{T}}q_j(p)r_j(p)
-}.
-$$
-
-Pseudo target:
-
-$$
-D_T^\ast(p)=\sum_{i\in\mathcal{T}}w_i(p)D_i(p).
-$$
-
-With two teachers:
-
-$$
-D_T^\ast(p)
-=
-w_{\text{M3D}}(p)D_{\text{M3D}}(p)
-+
-w_{\text{DA}}(p)\tilde{D}_{\text{DA}}(p).
-$$
-
-Optional teacher confidence:
-
-$$
-C_T(p)=\max_{i\in\mathcal{T}}w_i(p).
-$$
-
-Simple baseline:
-
-$$
-C_T(p)=1.
-$$
-
----
-
-## 6.3 Student Loss
 
 The student outputs:
 
 $$
-D_c,
-\qquad
-s,
+D_{1/4},C_{1/4},D_{\text{full}},C_{\text{full}}.
 $$
 
-where:
+Final supervision is applied mainly to $D_{\text{full}}$. Coarse supervision on $D_{1/4}$ is auxiliary.
 
-$$
-s(p)=\log\sigma^2(p),
-\qquad
-C(p)=\exp(-s(p)).
-$$
+---
 
-The total objective is:
-
-$$
-\boxed{
-\mathcal{L}
-=
-\lambda_{\text{gt}}\mathcal{L}_{\text{gt}}
-+
-\lambda_T\mathcal{L}_T
-+
-\lambda_S\mathcal{L}_S
-+
-\lambda_C\mathcal{L}_C
-+
-\lambda_E\mathcal{L}_E
-}
-$$
-
-No normal loss $\mathcal{L}_N$ is used in the main objective because DSINE is already used in teacher fusion through $\Delta_i^N$.
+## 6.2 Full-Resolution Metric Losses
 
 ### Ground-Truth Depth Loss
 
 $$
-\mathcal{L}_{\text{gt}}
+\mathcal{L}_{\text{gt}}^{\text{full}}
 =
 \frac{1}{|\Omega_{\text{gt}}|}
 \sum_{p\in\Omega_{\text{gt}}}
 \rho
 \left(
-D_c(p)-D_{\text{gt}}^{\downarrow}(p)
-\right).
-$$
-
-Here, $D_{\text{gt}}^{\downarrow}$ is the ground-truth depth at the resolution of $D_c$.
-
-### Teacher Distillation Loss
-
-$$
-\mathcal{L}_T
-=
-\frac{1}{|\Omega|}
-\sum_{p\in\Omega}
-C_T(p)
-\rho
-\left(
-D_c(p)-D_T^\ast(p)
-\right).
-$$
-
-If teacher confidence is not used:
-
-$$
-\mathcal{L}_T
-=
-\frac{1}{|\Omega|}
-\sum_{p\in\Omega}
-\rho
-\left(
-D_c(p)-D_T^\ast(p)
+D_{\text{full}}(p)-D_{\text{gt}}(p)
 \right).
 $$
 
 ### Sparse Consistency Loss
 
 $$
-\mathcal{L}_S
+\mathcal{L}_S^{\text{full}}
 =
 \frac{1}{|\Omega_M|}
 \sum_{p\in\Omega_M}
 \left|
-D_c(p)-S^{\downarrow}(p)
+D_{\text{full}}(p)-S(p)
 \right|.
 $$
 
-Here, $S^{\downarrow}$ and $M^{\downarrow}$ are downsampled to the resolution of $D_c$.
+Sparse loss is independent from DMD3C supervision, so real LiDAR anchors remain authoritative when DMD3C conflicts with sparse measurements.
 
-### Confidence / Uncertainty Loss
+### Coarse Metric Teacher Loss
+
+$$
+\Omega_{\text{cm}}
+=
+\left\{
+p\mid
+C_{\text{cm}}(p)>0
+\right\}.
+$$
+
+$$
+\mathcal{L}_{\text{cm}}^{\text{full}}
+=
+\frac{1}{|\Omega_{\text{cm}}|}
+\sum_{p\in\Omega_{\text{cm}}}
+C_{\text{cm}}(p)
+\rho
+\left(
+D_{\text{full}}(p)-D_{\text{cm}}(p)
+\right).
+$$
+
+This term uses DMD3C through confidence masking. High-confidence DMD3C regions provide dense metric guidance; low-confidence regions leave more authority to sparse depth, GT, and geometry structure.
+
+---
+
+## 6.3 Coarse Auxiliary Loss
+
+The coarse branch is trained with auxiliary supervision at $1/4$ resolution:
+
+$$
+\mathcal{L}_{\text{gt}}^{1/4}
+=
+\frac{1}{|\Omega_{\text{gt}}^{\downarrow}|}
+\sum_{p\in\Omega_{\text{gt}}^{\downarrow}}
+\rho
+\left(
+D_{1/4}(p)-D_{\text{gt}}^{\downarrow}(p)
+\right),
+$$
+
+$$
+\mathcal{L}_{\text{cm}}^{1/4}
+=
+\frac{1}{|\Omega_{\text{cm}}^{\downarrow}|}
+\sum_{p\in\Omega_{\text{cm}}^{\downarrow}}
+C_{\text{cm}}^{\downarrow}(p)
+\rho
+\left(
+D_{1/4}(p)-D_{\text{cm}}^{\downarrow}(p)
+\right).
+$$
+
+The auxiliary term is:
+
+$$
+\mathcal{L}_{1/4}
+=
+\lambda_{\text{gt}}^{1/4}
+\mathcal{L}_{\text{gt}}^{1/4}
++
+\lambda_{\text{cm}}^{1/4}
+\mathcal{L}_{\text{cm}}^{1/4}.
+$$
+
+This stabilizes $D_{1/4}$ while the final objective remains full-resolution.
+
+---
+
+## 6.4 Geometry SSI and Ordinal Losses
+
+### Geometry SSI Loss
+
+Let:
+
+$$
+\psi(D_{\text{full}})(p)
+=
+\log(D_{\text{full}}(p)+\epsilon).
+$$
+
+The fused geometry teacher $R_G^\ast$ is scale-shift ambiguous. Align the geometry teacher to the student's current full-resolution log-depth prediction:
+
+$$
+(\alpha_G^\star,\beta_G^\star)
+=
+\arg\min_{\alpha_G,\beta_G}
+\sum_{p\in\Omega_G}
+C_G(p)
+\rho
+\left(
+\psi(D_{\text{full}})(p)
+-
+\alpha_G R_G^\ast(p)
+-
+\beta_G
+\right),
+$$
+
+where:
+
+$$
+\Omega_G
+=
+\left\{
+p\mid
+C_G(p)>0
+\right\}.
+$$
+
+The geometry SSI loss is:
+
+$$
+\mathcal{L}_G^{\text{SSI}}
+=
+\frac{1}{|\Omega_G|}
+\sum_{p\in\Omega_G}
+C_G(p)
+\rho
+\left(
+\log(D_{\text{full}}(p)+\epsilon)
+-
+\alpha_G^\star R_G^\ast(p)
+-
+\beta_G^\star
+\right).
+$$
+
+The fitted direction is:
+
+$$
+R_G^\ast
+\rightarrow
+\log(D_{\text{full}}+\epsilon).
+$$
+
+This keeps metric scale controlled by GT, sparse depth, and DMD3C confidence masking.
+
+### Boundary Ordinal Loss
+
+For boundary pair set $\mathcal{P}$ from Section 4.5:
+
+$$
+\mathcal{L}_{\text{ord}}
+=
+\frac{1}{|\mathcal{P}|}
+\sum_{(p,q)\in\mathcal{P}}
+\log
+\left(
+1+
+\exp
+\left[
+-y_{pq}
+\left(
+\log(D_{\text{full}}(p)+\epsilon)
+-
+\log(D_{\text{full}}(q)+\epsilon)
+\right)
+\right]
+\right).
+$$
+
+This term supervises near/far ordering at boundaries, thin structures, and foreground/background discontinuities.
+
+---
+
+## 6.5 Confidence and Smoothness Losses
+
+Let:
+
+$$
+s_{\text{full}}(p)=-\log(C_{\text{full}}(p)+\epsilon).
+$$
 
 Confidence head is trained using uncertainty-weighted regression:
 
 $$
 \mathcal{L}_C
 =
-\frac{1}{|\Omega|}
-\sum_{p\in\Omega}
+\frac{1}{|\Omega_{\text{sup}}|}
+\sum_{p\in\Omega_{\text{sup}}}
 \left[
-\exp(-s(p))
+\exp(-s_{\text{full}}(p))
 \rho
 \left(
-D_c(p)-D_{\text{sup}}(p)
+D_{\text{full}}(p)-D_{\text{sup}}(p)
 \right)
 +
-\lambda_s s(p)
+\lambda_s s_{\text{full}}(p)
 \right].
 $$
 
@@ -937,17 +1615,23 @@ $$
 D_{\text{sup}}(p)
 =
 \begin{cases}
-D_{\text{gt}}^{\downarrow}(p), & p\in\Omega_{\text{gt}},\\
-D_T^\ast(p), & \text{otherwise}.
+D_{\text{gt}}(p),
+& p\in\Omega_{\text{gt}},
+\\[2mm]
+D_{\text{cm}}(p),
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{cm}},
 \end{cases}
 $$
 
-Interpretation:
+$$
+\Omega_{\text{sup}}
+=
+\Omega_{\text{gt}}
+\cup
+\Omega_{\text{cm}}.
+$$
 
-- confident region: low $s$, high $C$;
-- hard / noisy / conflict region: high $s$, low $C$.
-
-### Edge-Aware Smoothness Loss
+Edge-aware smoothness is applied at full resolution:
 
 $$
 \mathcal{L}_E
@@ -955,42 +1639,103 @@ $$
 \frac{1}{|\Omega|}
 \sum_{p\in\Omega}
 \left(
-|\partial_xD_c(p)|e^{-|\partial_xI^{\downarrow}(p)|}
+|\partial_xD_{\text{full}}(p)|e^{-|\partial_xI(p)|}
 +
-|\partial_yD_c(p)|e^{-|\partial_yI^{\downarrow}(p)|}
+|\partial_yD_{\text{full}}(p)|e^{-|\partial_yI(p)|}
 \right).
 $$
 
-Here, $I^{\downarrow}$ is the RGB image downsampled to the same resolution as $D_c$.
-
 ---
 
-## 6.4 Recommended Loss Weights
+## 6.6 Total Objective
 
-Initial setting:
+The final training objective is:
 
-| Weight | Value |
-|---|---:|
-| $\lambda_{\text{gt}}$ | 1.0 |
-| $\lambda_T$ | 0.5 |
-| $\lambda_S$ | 1.0 |
-| $\lambda_C$ | 0.05 |
-| $\lambda_E$ | 0.01 |
-| $\lambda_s$ | 0.01 |
+$$
+\boxed{
+\mathcal{L}
+=
+\lambda_{\text{gt}}
+\mathcal{L}_{\text{gt}}^{\text{full}}
++
+\lambda_S
+\mathcal{L}_S^{\text{full}}
++
+\lambda_{\text{cm}}
+\mathcal{L}_{\text{cm}}^{\text{full}}
++
+\lambda_{\text{aux}}
+\mathcal{L}_{1/4}
++
+\lambda_{\text{ssi}}
+\mathcal{L}_G^{\text{SSI}}
++
+\lambda_{\text{ord}}
+\mathcal{L}_{\text{ord}}
++
+\lambda_C
+\mathcal{L}_C
++
+\lambda_E
+\mathcal{L}_E
+}
+$$
+
+Recommended initial weights:
+
+| Weight | Value | Role |
+|---|---:|---|
+| $\lambda_{\text{gt}}$ | 1.0 | full-resolution GT supervision |
+| $\lambda_S$ | 1.0 | full-resolution sparse LiDAR anchor |
+| $\lambda_{\text{cm}}$ | 0.3--0.5 | DMD3C+GT metric teacher with confidence masking |
+| $\lambda_{\text{aux}}$ | 0.2 | coarse $1/4$ stabilization |
+| $\lambda_{\text{ssi}}$ | 0.03--0.05 | fused geometry SSI distillation |
+| $\lambda_{\text{ord}}$ | 0.03--0.05 | boundary ordinal supervision |
+| $\lambda_C$ | 0.03--0.05 | full-resolution confidence |
+| $\lambda_E$ | 0.005--0.01 | edge-aware smoothness |
+| $\lambda_s$ | 0.01 | confidence regularizer |
 
 Training schedule:
 
 | Stage | Objective |
 |---|---|
-| Epoch 0--5 | $\mathcal{L}_{\text{gt}}+\mathcal{L}_S$ |
-| Epoch 5--15 | add $\mathcal{L}_T$ |
-| Epoch 15+ | add $\mathcal{L}_C$ and optional $C_T$ weighting |
+| Epoch 0--5 | $\mathcal{L}_{\text{gt}}^{\text{full}}+\mathcal{L}_S^{\text{full}}+\lambda_{\text{aux}}\mathcal{L}_{1/4}$ |
+| Epoch 5--10 | add $\mathcal{L}_{\text{cm}}^{\text{full}}$ |
+| Epoch 10--15 | add $\mathcal{L}_G^{\text{SSI}}$ and $\mathcal{L}_{\text{ord}}$ |
+| Epoch 15+ | add $\mathcal{L}_C$ and confidence weighting |
 
 Reason:
 
-1. First learn metric scale from GT and sparse LiDAR.
-2. Then add dense teacher supervision.
-3. Finally learn confidence to avoid uncertainty collapse.
+1. Learn metric scale from GT and sparse LiDAR.
+2. Stabilize the coarse residual branch with $1/4$ auxiliary supervision.
+3. Add dense metric completion from DMD3C using confidence masking.
+4. Add fused monocular geometry through SSI and ordinal losses.
+5. Learn confidence after metric and geometry targets are stable.
+
+---
+
+## 6.7 Practical Output Names
+
+Recommended saved teacher and student outputs:
+
+| File group | Key | Meaning |
+|---|---|---|
+| `teacher_outputs/dmd3c/{split}` | `D_dmd3c` | raw DMD3C metric depth |
+| `teacher_outputs/metric_coarse/{split}` | `D_cm`, `C_cm`, `C_dmd3c` | GT+DMD3C coarse metric teacher and DMD3C confidence |
+| `teacher_outputs/geometry_raw/{teacher}/{split}` | `R_i` or raw model key | per-model relative/metric geometry output |
+| `teacher_outputs/geometry_fused/{split}` | `R_G`, `C_G`, `w_*` | fused geometry teacher |
+| `teacher_outputs/fused/{split}` | `D_teacher`, `C_teacher` | backward-compatible aliases for `D_cm`, `C_cm` |
+| `student_outputs/{split}_predictions` | `D_full`, `C_full`, `D_1_4`, `C_1_4` | final full-resolution prediction and internal coarse prediction |
+
+Conceptually:
+
+$$
+D_{\text{teacher}} \equiv D_{\text{cm}},
+\qquad
+R_G \not\equiv D_{\text{teacher}},
+\qquad
+D_{\text{out}} \equiv D_{\text{full}}.
+$$
 
 ---
 
@@ -999,13 +1744,16 @@ Reason:
 Inference uses only:
 
 $$
-(I,S,M,K)\rightarrow(D_c,C).
+(I,S,M,K)\rightarrow(D_{\text{full}},C_{\text{full}}).
 $$
 
 Not used during inference:
 
 - Metric3D;
 - Depth Anything;
+- Distill Any Depth;
+- UniDepthV2;
+- DMD3C;
 - DSINE;
 - normal output;
 - BEV / TPV branch;
@@ -1014,32 +1762,46 @@ Not used during inference:
 Final output:
 
 $$
-D_c,C\in\mathbb{R}^{\frac{H}{4}\times\frac{W}{4}}.
-$$
-
-Optional full-resolution visualization:
-
-$$
-D_{\text{out}}=\operatorname{Up}(D_c),
+D_{\text{out}}=D_{\text{full}},
 \qquad
-C_{\text{out}}=\operatorname{Up}(C).
+C_{\text{out}}=C_{\text{full}}.
+$$
+
+Output shapes:
+
+$$
+D_{\text{full}}\in\mathbb{R}^{H\times W},
+\qquad
+C_{\text{full}}\in\mathbb{R}^{H\times W}.
+$$
+
+The internal coarse maps are retained for debugging and auxiliary supervision:
+
+$$
+D_{1/4},C_{1/4}\in\mathbb{R}^{\frac{H}{4}\times\frac{W}{4}}.
 $$
 
 ---
 
 # 8. Research Gap and Contributions
 
-Recent depth completion methods have used foundation models for dense supervision or sparse LiDAR for metric prediction. However, three limitations remain.
+Recent depth completion methods have used foundation models for dense supervision or sparse LiDAR for metric prediction. However, five limitations remain.
 
 ## 8.1 Research Gap
 
 1. **Single-teacher distillation is fragile.**
    Many methods distill directly from one monocular foundation model. This improves fine-grained depth, but the teacher can suffer from local errors, scale ambiguity, and instability in object boundaries, reflective surfaces, far ranges, and low-texture regions.
 
-2. **Surface normal is underused for teacher reliability.**
-   Some methods use surface normal as an auxiliary prediction or intermediate representation, but do not explicitly use normal consistency to estimate teacher reliability per pixel.
+2. **Metric and relative teachers are often mixed incorrectly.**
+   Relative monocular teachers are valuable for layout and edges, but using them as hard metric labels can degrade RMSE. Metric supervision should remain anchored to GT, sparse LiDAR, and a depth-completion teacher such as DMD3C.
 
-3. **Real-time inference is often not central.**
+3. **Surface normal is underused for teacher reliability.**
+   Some methods use surface normal as an auxiliary prediction or intermediate representation, but do not explicitly use normal consistency to estimate geometry-teacher reliability per pixel.
+
+4. **Coarse-only output loses boundary detail.**
+   A $1/4$ depth output is efficient, but final prediction quality depends on full-resolution boundary recovery around cars, poles, pedestrians, object silhouettes, and foreground/background discontinuities.
+
+5. **Real-time inference is often not central.**
    Many high-accuracy methods rely on heavy backbones, iterative refinement, or auxiliary 3D branches, which are not ideal for real-time deployment.
 
 ## 8.2 Contributions
@@ -1048,13 +1810,21 @@ GeoDistill-RT addresses these gaps through:
 
 1. **Multi-teacher geometry distillation**
 
-   Metric3D v2, Depth Anything V2, DSINE, and sparse LiDAR are combined instead of relying on a single supervision source.
+   Depth Anything V2, Distill Any Depth, UniDepthV2, DSINE, and sparse LiDAR are combined for dense structure supervision across complementary monocular sources.
 
-2. **Conflict-aware pseudo supervision**
+2. **DMD3C-dominant metric supervision**
 
-   Sparse depth checks metric consistency, while surface normal checks geometric consistency of each depth teacher.
+   GT and DMD3C form the coarse metric teacher. Monocular geometry teachers affect metric prediction through SSI and ordinal structure losses.
 
-3. **Real-time student design**
+3. **Conflict-aware geometry pseudo supervision**
+
+   Sparse depth checks metric sanity after alignment, while surface normal and structure cues check geometric consistency of each monocular teacher.
+
+4. **Full-resolution residual output**
+
+   The student keeps a cheap $1/4$ core and produces final full-resolution depth through guided upsampling, tiny residual refinement, and sparse anchor correction.
+
+5. **Real-time student design**
 
    All teachers are offline. Inference uses only a lightweight encoder, gated fusion, and a compact decoder.
 
@@ -1062,4 +1832,18 @@ GeoDistill-RT addresses these gaps through:
 
 # 9. Conclusion
 
-GeoDistill-RT is a real-time sparse depth completion framework that uses multiple geometry teachers to build more reliable pseudo supervision. It resolves conflicts between metric depth, relative depth, surface normal, and sparse LiDAR during training, then distills the filtered supervision into a compact student model for fast teacher-free inference.
+GeoDistill-RT is a real-time sparse depth completion framework with separated metric and geometry supervision. GT plus DMD3C defines the coarse metric teacher for low RMSE, while DA2, Distill Any Depth, UniDepthV2, and DSINE provide fused relative/metric geometry for layout-aware distillation. The student keeps teacher-free inference, uses an efficient $1/4$ internal representation, and outputs full-resolution metric depth with full-resolution confidence.
+
+---
+
+# 10. Reference Notes
+
+The theory above follows these practical observations from recent teacher models:
+
+1. **DMD3C / CVPR 2025.** [DMD3C](https://openaccess.thecvf.com/content/CVPR2025/html/Liang_Distilling_Monocular_Foundation_Model_for_Fine-grained_Depth_Completion_CVPR_2025_paper.html) uses monocular foundation-model distillation for fine-grained depth completion and explicitly addresses scale ambiguity with scale-and-shift-invariant learning during real-world fine-tuning.
+
+2. **Depth Anything V2.** [DA2](https://github.com/DepthAnything/Depth-Anything-V2) provides strong relative depth and has separate metric variants, but the standard released pretrained models are primarily robust relative-depth predictors. Therefore, DA2 is best used as a dense structure teacher unless a metric variant is explicitly selected and validated.
+
+3. **Distill Any Depth.** [Distill Any Depth](https://distill-any-depth-official.github.io/) emphasizes normalized-depth distillation, local/global context, and multi-teacher monocular depth priors. This supports its role as a geometry/layout teacher.
+
+4. **UniDepthV2.** [UniDepthV2](https://github.com/lpiccinelli-eth/UniDepth) is a universal monocular metric-depth model with camera-aware design and uncertainty output. In this framework it is useful as a metric-aware geometry teacher, but its metric output should still be validated against KITTI sparse/GT before being allowed to affect $D_{\text{cm}}$.

@@ -11,9 +11,8 @@ from tqdm import tqdm
 
 from .dataset import KITTIDepthCompletionDataset
 from .losses import geort_loss
-from .metrics import average_metric_dict, depth_metrics_torch
+from .metrics import average_metric_dict, depth_metrics_by_edge_torch, depth_metrics_by_range_torch, depth_metrics_torch
 from .model_geort import GeoRTStudentS
-from .sparse_propagation import downsample_depth_with_mask
 from .utils import device_from_config, ensure_dir, load_project_config, seed_everything, setup_logger, write_jsonl
 
 
@@ -33,7 +32,9 @@ def to_device(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
 def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool) -> DataLoader:
     data_cfg = cfg["data"]
     mono_cfg = cfg.get("mono_ssi", {})
+    loss_cfg = cfg.get("loss", {})
     load_mono = training and bool(mono_cfg.get("enabled", False))
+    load_geometry = training and (float(loss_cfg.get("lambda_ssi", mono_cfg.get("weight", 0.0))) > 0.0 or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0)
     dataset = KITTIDepthCompletionDataset(
         data_root=paths["data_root"],
         split_root=paths["split_root"],
@@ -44,8 +45,16 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         depth_scale=float(data_cfg.get("depth_scale", 256.0)),
         teacher_root=paths["teacher_root"],
         load_teacher=training or split == "val",
+        load_geometry=load_geometry,
         load_mono=load_mono,
         mono_key=str(mono_cfg.get("key", "D_da_raw")),
+        min_depth=float(loss_cfg.get("min_depth", 1e-3)),
+        max_depth=float(loss_cfg.get("max_depth", cfg.get("student", {}).get("max_depth", 120.0))),
+        calibrate_metric_teacher=bool(loss_cfg.get("calibrate_metric_teacher", True)),
+        metric_conf_min=float(loss_cfg.get("metric_conf_min", 0.05)),
+        metric_conf_sparse_decay=float(loss_cfg.get("metric_conf_sparse_decay", 6.0)),
+        metric_conf_range_decay=float(loss_cfg.get("metric_conf_range_decay", 0.25)),
+        metric_conf_sparse_blend_radius=float(loss_cfg.get("metric_conf_sparse_blend_radius", 48.0)),
         return_tensors=True,
     )
     return DataLoader(
@@ -57,6 +66,80 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         drop_last=training,
         persistent_workers=int(data_cfg.get("num_workers", 2)) > 0,
     )
+
+
+def _has_any_npz(root: Path | None, candidates: list[Path]) -> bool:
+    if root is None:
+        return False
+    return any(path.exists() for path in candidates)
+
+
+def _teacher_coverage(dataset: KITTIDepthCompletionDataset) -> dict[str, float]:
+    root = dataset.teacher_root
+    total = len(dataset.samples)
+    if root is None or total == 0:
+        return {"metric": 0.0, "geometry": 0.0}
+
+    metric_count = 0
+    geometry_count = 0
+    for sample in dataset.samples:
+        sid = sample.sample_id
+        metric_paths = [
+            root / "metric_coarse" / dataset.split_name / f"{sid}.npz",
+            root / "dmd3c" / dataset.split_name / f"{sid}.npz",
+            root / "fused" / dataset.split_name / f"{sid}.npz",
+        ]
+        geometry_paths = [
+            root / "geometry_fused" / dataset.split_name / f"{sid}.npz",
+            root / "geometry_raw" / "depth_anything_v2" / dataset.split_name / f"{sid}.npz",
+            root / "geometry_raw" / "depth_anything" / dataset.split_name / f"{sid}.npz",
+            root / "depth_anything" / f"{dataset.split_name}_raw" / f"{sid}.npz",
+            root / "depth_anything" / dataset.split_name / f"{sid}.npz",
+            root / "depth_anything" / f"{dataset.split_name}_aligned" / f"{sid}.npz",
+            root / "metric3d" / dataset.split_name / f"{sid}.npz",
+            root / "dmd3c" / dataset.split_name / f"{sid}.npz",
+        ]
+        metric_count += int(_has_any_npz(root, metric_paths))
+        geometry_count += int(_has_any_npz(root, geometry_paths))
+    return {"metric": metric_count / total, "geometry": geometry_count / total}
+
+
+def preflight_teacher_coverage(cfg: dict[str, Any], dataset: KITTIDepthCompletionDataset, logger: Any) -> None:
+    checks = cfg.get("teacher_checks", {})
+    if not bool(checks.get("enabled", True)):
+        return
+    loss_cfg = cfg.get("loss", {})
+    schedule_cfg = cfg.get("schedule", {})
+    epochs = int(cfg.get("train", {}).get("epochs", 30))
+    coverage = _teacher_coverage(dataset)
+    logger.info(
+        "teacher_coverage split=%s metric=%.3f geometry=%.3f root=%s",
+        dataset.split_name,
+        coverage["metric"],
+        coverage["geometry"],
+        dataset.teacher_root,
+    )
+
+    teacher_scheduled = int(schedule_cfg.get("add_teacher_epoch", 5)) < epochs and float(loss_cfg.get("lambda_cm", 0.0)) > 0.0
+    geometry_scheduled = (
+        int(schedule_cfg.get("add_geometry_epoch", 10)) < epochs
+        and (float(loss_cfg.get("lambda_ssi", 0.0)) > 0.0 or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0)
+    )
+    min_metric = float(checks.get("min_metric_coverage", 0.95))
+    min_geometry = float(checks.get("min_geometry_coverage", 0.95))
+
+    if bool(checks.get("require_metric", True)) and teacher_scheduled and coverage["metric"] < min_metric:
+        raise RuntimeError(
+            f"Metric teacher coverage for split={dataset.split_name} is {coverage['metric']:.1%}, below {min_metric:.1%}. "
+            "Generate DMD3C/metric_coarse teacher files before student training, e.g. "
+            "`python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_dmd3c --run_fusion`."
+        )
+    if bool(checks.get("require_geometry", True)) and geometry_scheduled and coverage["geometry"] < min_geometry:
+        raise RuntimeError(
+            f"Geometry teacher coverage for split={dataset.split_name} is {coverage['geometry']:.1%}, below {min_geometry:.1%}. "
+            "Generate geometry/Depth Anything teacher files before student training, e.g. "
+            "`python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_depth_anything --run_fusion`."
+        )
 
 
 def save_checkpoint(
@@ -93,18 +176,23 @@ def append_csv(path: Path, record: dict[str, Any]) -> None:
 
 
 @torch.no_grad()
-def validate(model: GeoRTStudentS, loader: DataLoader, device: torch.device) -> dict[str, float]:
+def validate(model: GeoRTStudentS, loader: DataLoader, device: torch.device, cfg: dict[str, Any]) -> dict[str, float]:
     model.eval()
     records: list[dict[str, float]] = []
+    loss_cfg = cfg.get("loss", {})
+    min_depth = float(loss_cfg.get("min_depth", 1e-3))
+    max_depth = float(loss_cfg.get("max_depth", cfg.get("student", {}).get("max_depth", 120.0)))
+    range_bins = loss_cfg.get("range_bins", [0.0, 20.0, 40.0, 60.0, 80.0, 120.0])
     for batch in tqdm(loader, desc="val", leave=False):
         batch = to_device(batch, device)
         pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"])
-        D_c = pred["D_c"]
-        scale = max(1, batch["gt"].shape[-2] // D_c.shape[-2])
-        gt_ds, gt_mask_ds = downsample_depth_with_mask(batch["gt"], batch["gt_mask"], scale=scale)
-        if gt_mask_ds.sum().item() < 1:
+        D_eval = pred.get("D_full", pred["D_c"])
+        gt_mask = (batch["gt_mask"] > 0.5) & (batch["gt"] > min_depth) & (batch["gt"] < max_depth)
+        if gt_mask.sum().item() < 1:
             continue
-        metrics = depth_metrics_torch(D_c, gt_ds, gt_mask_ds > 0.5)
+        metrics = depth_metrics_torch(D_eval, batch["gt"], gt_mask, min_depth=min_depth, max_depth=max_depth)
+        metrics.update(depth_metrics_by_range_torch(D_eval, batch["gt"], gt_mask, bins=range_bins, min_depth=min_depth, max_depth=max_depth))
+        metrics.update(depth_metrics_by_edge_torch(D_eval, batch["gt"], gt_mask, batch["rgb"], min_depth=min_depth, max_depth=max_depth))
         records.append(metrics)
     return average_metric_dict(records) if records else {"rmse": float("inf"), "mae": float("inf"), "abs_rel": float("inf")}
 
@@ -117,6 +205,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
 
     train_loader = make_loader(cfg, paths, "train", training=True)
     val_loader = make_loader(cfg, paths, "val", training=False)
+    preflight_teacher_coverage(cfg, train_loader.dataset, logger)
     model = GeoRTStudentS.from_config(cfg).to(device)
 
     optimizer = torch.optim.AdamW(
@@ -157,10 +246,12 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
         pbar = tqdm(train_loader, desc=f"train:{epoch}")
         for batch in pbar:
             batch = to_device(batch, device)
+            geometry_available = "C_G" in batch and float(batch["C_G"].sum().detach().cpu()) >= 1.0
             if (
                 mono_enabled
                 and epoch >= mono_start_epoch
                 and not warned_missing_mono
+                and not geometry_available
                 and (
                     "D_da_raw" not in batch
                     or "da_raw_valid" not in batch
@@ -184,7 +275,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             pbar.set_postfix(loss=f"{avg_loss:.4f}")
 
         train_items = {f"train_{k}": v / max(1, count) for k, v in running.items()}
-        val_items = validate(model, val_loader, device)
+        val_items = validate(model, val_loader, device, cfg)
         rmse = float(val_items.get("rmse", float("inf")))
         is_best = rmse < best_rmse
         if is_best:

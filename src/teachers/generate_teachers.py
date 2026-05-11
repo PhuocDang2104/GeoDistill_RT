@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 
 from ..dataset import KITTIDepthCompletionDataset
-from ..teacher_fusion import fuse_teachers
+from ..teacher_fusion import build_geometry_teacher, downsample_map, fuse_teachers
 from ..utils import (
     device_from_config,
     ensure_dir,
@@ -154,6 +154,12 @@ class TeacherGenerator:
     def path_fused(self, sample_id: str) -> Path:
         return self.teacher_root / "fused" / self.split / f"{sample_id}.npz"
 
+    def path_metric_coarse(self, sample_id: str) -> Path:
+        return self.teacher_root / "metric_coarse" / self.split / f"{sample_id}.npz"
+
+    def path_geometry_fused(self, sample_id: str) -> Path:
+        return self.teacher_root / "geometry_fused" / self.split / f"{sample_id}.npz"
+
     def run(self, run_metric3d: bool, run_da: bool, run_dsine: bool, run_dmd3c: bool, run_fusion: bool, max_samples: int | None) -> None:
         dataset = self.dataset()
         total = len(dataset) if max_samples is None else min(len(dataset), max_samples)
@@ -166,6 +172,8 @@ class TeacherGenerator:
             sparse = sample["sparse"]
             mask = sample["mask"]
             K = sample["K"]
+            gt = sample["gt"]
+            gt_mask = sample["gt_mask"]
 
             if run_metric3d:
                 self._run_metric3d(sid, rgb, K)
@@ -176,7 +184,7 @@ class TeacherGenerator:
             if run_dmd3c:
                 self._run_dmd3c(sid, rgb, sparse, K)
             if run_fusion:
-                self._run_fusion(sid, sparse, mask, K)
+                self._run_fusion(sid, sparse, mask, K, gt, gt_mask)
 
     def _run_metric3d(self, sid: str, rgb: np.ndarray, K: np.ndarray) -> None:
         key = self.cfg["metric3d"].get("output_key", "D_m3d")
@@ -234,10 +242,12 @@ class TeacherGenerator:
         depth = self.dmd3c.infer(rgb, sparse, K)
         self.dmd3c.save(path, depth, key=key)
 
-    def _run_fusion(self, sid: str, sparse: np.ndarray, mask: np.ndarray, K: np.ndarray) -> None:
+    def _run_fusion(self, sid: str, sparse: np.ndarray, mask: np.ndarray, K: np.ndarray, gt: np.ndarray, gt_mask: np.ndarray) -> None:
         path = self.path_fused(sid)
+        metric_path = self.path_metric_coarse(sid)
+        geometry_path = self.path_geometry_fused(sid)
         required_keys = ["D_teacher", "C_teacher", "D_full", "C_full", "w_m3d", "w_da", "w_dmd3c"]
-        if self.skip_existing and npz_has_keys(path, required_keys):
+        if self.skip_existing and npz_has_keys(path, required_keys) and npz_has_keys(metric_path, ["D_cm", "C_cm"]) and npz_has_keys(geometry_path, ["R_G", "C_G"]):
             return
 
         m3d_key = self.cfg["metric3d"].get("output_key", "D_m3d")
@@ -294,6 +304,42 @@ class TeacherGenerator:
             "w_dmd3c": result.w_dmd3c.astype(np.float32),
         }
         save_npz_atomic(path, **payload)
+
+        gt_valid = np.isfinite(gt) & (gt > 1e-3) & (gt < 120.0) & (gt_mask > 0.5)
+        D_cm = result.D_full.astype(np.float32).copy()
+        C_cm = result.C_full.astype(np.float32).copy()
+        D_cm[gt_valid] = gt[gt_valid].astype(np.float32)
+        C_cm[gt_valid] = 1.0
+        save_npz_atomic(
+            metric_path,
+            D_cm=D_cm.astype(np.float32),
+            C_cm=np.clip(C_cm, 0.0, 1.0).astype(np.float32),
+            C_dmd3c=result.C_full.astype(np.float32),
+            D_teacher=downsample_map(D_cm, self.output_scale).astype(np.float32),
+            C_teacher=downsample_map(C_cm, self.output_scale).astype(np.float32),
+        )
+
+        raw_path = self.path_da_raw(sid)
+        raw_key = self.cfg["depth_anything"].get("output_key_raw", "D_da_raw")
+        D_da_raw = load_npz_array(raw_path, raw_key).astype(np.float32) if raw_path.exists() and npz_has_keys(raw_path, [raw_key]) else None
+        geom = build_geometry_teacher(
+            shape_hw=sparse.shape,
+            D_da_raw=D_da_raw,
+            D_da_aligned=D_da,
+            D_m3d=D_m3d,
+            D_dmd3c=D_dmd3c,
+            prior_da=float(fcfg.get("geometry_prior_da", 1.0)),
+            prior_m3d=float(fcfg.get("geometry_prior_m3d", 0.5)),
+            prior_dmd3c=float(fcfg.get("geometry_prior_dmd3c", 0.25)),
+        )
+        save_npz_atomic(
+            geometry_path,
+            R_G=geom["R_G"].astype(np.float32),
+            C_G=geom["C_G"].astype(np.float32),
+            w_da=geom["w_da"].astype(np.float32),
+            w_m3d=geom["w_m3d"].astype(np.float32),
+            w_dmd3c=geom["w_dmd3c"].astype(np.float32),
+        )
 
 
 def main() -> None:
