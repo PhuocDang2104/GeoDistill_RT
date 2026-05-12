@@ -100,7 +100,7 @@ From $K$, construct a ray map:
 ```math
 \mathbf{r}(u,v)
 =
-\operatorname{normalize}
+\mathrm{normalize}
 \left[
 \frac{u-c_x}{f_x},
 \frac{v-c_y}{f_y},
@@ -267,7 +267,7 @@ DMD3C confidence combines sparse consistency, geometry agreement, edge risk, and
 ```math
 C_{\text{DMD}}(p)
 =
-\operatorname{clip}
+\mathrm{clip}
 \left(
 C_S(p)\,
 C_G^{\text{DMD}}(p)\,
@@ -301,7 +301,7 @@ The geometry-agreement term compares DMD3C structure with the fused geometry tea
 e_G(p)
 =
 \left|
-\operatorname{Norm}
+\mathrm{Norm}
 \left(
 \log(D_{\text{DMD}}(p)+\epsilon)
 \right)
@@ -383,7 +383,7 @@ Each teacher is converted to a canonical structure representation before fusion:
 ```math
 R_i(p)
 =
-\operatorname{Norm}_{\Omega_i}
+\mathrm{Norm}_{\Omega_i}
 \left(
 \phi_i(G_i(p))
 \right),
@@ -394,15 +394,15 @@ where:
 - $\phi_i$ maps teacher output to a comparable structure signal;
 - for relative-depth teachers, $\phi_i(G_i)=G_i$ or $\log(G_i+\epsilon)$;
 - for metric-depth teachers, $\phi_i(G_i)=\log(G_i+\epsilon)$ or $1/(G_i+\epsilon)$;
-- $\operatorname{Norm}$ is a robust median/MAD or percentile normalization.
+- $\mathrm{Norm}$ is a robust median/MAD or percentile normalization.
 
 A useful robust normalization is:
 
 ```math
-\operatorname{Norm}_{\Omega}(x)(p)
+\mathrm{Norm}_{\Omega}(x)(p)
 =
-\frac{x(p)-\operatorname{median}_{q\in\Omega}x(q)}
-{\operatorname{MAD}_{q\in\Omega}x(q)+\epsilon}.
+\frac{x(p)-\mathrm{median}_{q\in\Omega}x(q)}
+{\mathrm{MAD}_{q\in\Omega}x(q)+\epsilon}.
 ```
 
 The geometry teacher branch produces structure supervision:
@@ -716,7 +716,7 @@ The ordinal sign is:
 ```math
 y_{pq}
 =
-\operatorname{sign}
+\mathrm{sign}
 \left(
 R_G^\ast(p)-R_G^\ast(q)
 \right).
@@ -931,7 +931,7 @@ F^0
 =
 \psi_0
 \left(
-\operatorname{Concat}
+\mathrm{Concat}
 [F_I^0,F_D^0,F_G^0]
 \right).
 ```
@@ -954,7 +954,7 @@ Use MobileViTv2 as the main encoder:
 ```math
 \{E_4,E_8,E_{16}\}
 =
-\operatorname{MobileViTv2Encoder}(F^0),
+\mathrm{MobileViTv2Encoder}(F^0),
 ```
 
 where:
@@ -1007,7 +1007,7 @@ P_s
 =
 \rho_s
 \left(
-\operatorname{Pool}_s
+\mathrm{Pool}_s
 [\log(S+\epsilon),M,D_{\text{init}},\mathbf{r}]
 \right).
 ```
@@ -1021,7 +1021,7 @@ G_s
 \left(
 \eta_s
 (
-\operatorname{Concat}[E_s,P_s]
+\mathrm{Concat}[E_s,P_s]
 )
 \right).
 ```
@@ -1055,11 +1055,11 @@ P_{16}=\delta_{16}(\tilde{E}_{16}),
 ```
 
 ```math
-P_8=\delta_8(\tilde{E}_8)+\operatorname{Up}_2(P_{16}),
+P_8=\delta_8(\tilde{E}_8)+\mathrm{Up}_2(P_{16}),
 ```
 
 ```math
-P_4=\delta_4(\tilde{E}_4)+\operatorname{Up}_2(P_8).
+P_4=\delta_4(\tilde{E}_4)+\mathrm{Up}_2(P_8).
 ```
 
 Smoothing:
@@ -1131,7 +1131,7 @@ The full-resolution path uses guided upsampling:
 ```math
 D_{\text{up}}
 =
-\operatorname{GuidedUp}
+\mathrm{GuidedUp}
 \left(
 D_{1/4},I,S,M
 \right).
@@ -1162,7 +1162,7 @@ a(p)
 =
 h_{\text{up}}
 \left(
-I,M,S,\operatorname{BilinearUp}(D_{1/4})
+I,M,S,\mathrm{BilinearUp}(D_{1/4})
 \right).
 ```
 
@@ -1204,7 +1204,7 @@ or computed with the lightweight option:
 ```math
 C_{\text{full}}
 =
-\operatorname{GuidedUp}(C_{1/4},I).
+\mathrm{GuidedUp}(C_{1/4},I).
 ```
 
 Recommended tiny residual head:
