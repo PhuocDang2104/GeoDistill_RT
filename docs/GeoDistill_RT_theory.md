@@ -1,4 +1,4 @@
-# GeoDistill-RT
+﻿# GeoDistill-RT
 
 ## Conflict-Aware Geometry Distillation for Real-Time Sparse Depth Completion
 
@@ -34,7 +34,7 @@ $$
 and predicts:
 
 $$
-(D_{\text{full}},C_{\text{full}}),
+(D_{\text{full}},C_{\text{full}})
 $$
 
 where:
@@ -1291,7 +1291,7 @@ Full-resolution path:
 Output:
   full-resolution metric depth D_full
   full-resolution confidence C_full
-  internal coarse depth D_1/4 and confidence C_1/4
+  internal coarse depth D_1_4 and confidence C_1_4
 
 No inference teacher.
 No normal output.
@@ -1619,7 +1619,7 @@ D_{\text{gt}}(p),
 & p\in\Omega_{\text{gt}},
 \\[2mm]
 D_{\text{cm}}(p),
-& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{cm}},
+& p\notin\Omega_{\text{gt}},\ p\in\Omega_{\text{cm}}.
 \end{cases}
 $$
 
