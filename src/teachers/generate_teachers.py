@@ -184,7 +184,7 @@ class TeacherGenerator:
             if run_dmd3c:
                 self._run_dmd3c(sid, rgb, sparse, K)
             if run_fusion:
-                self._run_fusion(sid, sparse, mask, K, gt, gt_mask)
+                self._run_fusion(sid, rgb, sparse, mask, K, gt, gt_mask)
 
     def _run_metric3d(self, sid: str, rgb: np.ndarray, K: np.ndarray) -> None:
         key = self.cfg["metric3d"].get("output_key", "D_m3d")
@@ -242,7 +242,16 @@ class TeacherGenerator:
         depth = self.dmd3c.infer(rgb, sparse, K)
         self.dmd3c.save(path, depth, key=key)
 
-    def _run_fusion(self, sid: str, sparse: np.ndarray, mask: np.ndarray, K: np.ndarray, gt: np.ndarray, gt_mask: np.ndarray) -> None:
+    def _run_fusion(
+        self,
+        sid: str,
+        rgb: np.ndarray,
+        sparse: np.ndarray,
+        mask: np.ndarray,
+        K: np.ndarray,
+        gt: np.ndarray,
+        gt_mask: np.ndarray,
+    ) -> None:
         path = self.path_fused(sid)
         metric_path = self.path_metric_coarse(sid)
         geometry_path = self.path_geometry_fused(sid)
@@ -257,8 +266,8 @@ class TeacherGenerator:
         if self.cfg.get("dmd3c", {}).get("enabled", False):
             dmd3c_path = self.path_dmd3c(sid)
             dmd3c_key = self.cfg["dmd3c"].get("output_key", "D_dmd3c")
-            if not dmd3c_path.exists():
-                self.logger.warning("Skipping fusion for %s: DMD3C enabled but missing %s", sid, dmd3c_path)
+            if not npz_has_keys(dmd3c_path, [dmd3c_key]):
+                self.logger.warning("Skipping fusion for %s: DMD3C enabled but missing %s:%s", sid, dmd3c_path, dmd3c_key)
                 return
             D_dmd3c = load_npz_array(dmd3c_path, dmd3c_key).astype(np.float32)
 
@@ -270,11 +279,23 @@ class TeacherGenerator:
             return
 
         shape_hw = sparse.shape
-        D_m3d = load_npz_array(m3d_path, m3d_key).astype(np.float32) if m3d_path.exists() else np.zeros(shape_hw, dtype=np.float32)
-        D_da = load_npz_array(da_path, da_key).astype(np.float32) if da_path.exists() else np.zeros(shape_hw, dtype=np.float32)
-        if dsine_path.exists():
+        if npz_has_keys(m3d_path, [m3d_key]):
+            D_m3d = load_npz_array(m3d_path, m3d_key).astype(np.float32)
+        else:
+            if m3d_path.exists():
+                self.logger.warning("Fusion for %s: %s missing key %s; using zeros for Metric3D.", sid, m3d_path, m3d_key)
+            D_m3d = np.zeros(shape_hw, dtype=np.float32)
+        if npz_has_keys(da_path, [da_key]):
+            D_da = load_npz_array(da_path, da_key).astype(np.float32)
+        else:
+            if da_path.exists():
+                self.logger.warning("Fusion for %s: %s missing key %s; using zeros for DA aligned.", sid, da_path, da_key)
+            D_da = np.zeros(shape_hw, dtype=np.float32)
+        if npz_has_keys(dsine_path, [dsine_key]):
             N_dsine = load_npz_array(dsine_path, dsine_key).astype(np.float32)
         else:
+            if dsine_path.exists():
+                self.logger.warning("Fusion for %s: %s missing key %s; using front-facing normal fallback.", sid, dsine_path, dsine_key)
             N_dsine = np.zeros((3, shape_hw[0], shape_hw[1]), dtype=np.float32)
             N_dsine[2] = 1.0
         fcfg = self.cfg.get("fusion", {})
@@ -285,6 +306,7 @@ class TeacherGenerator:
             sparse=sparse,
             mask=mask,
             K=K,
+            rgb=rgb,
             D_dmd3c=D_dmd3c,
             alpha_normal=float(fcfg.get("alpha_normal", 1.0)),
             beta_sparse=float(fcfg.get("beta_sparse", 1.0)),
@@ -293,12 +315,19 @@ class TeacherGenerator:
             prior_m3d=float(fcfg.get("prior_m3d", 1.0)),
             prior_da=float(fcfg.get("prior_da", 0.1)),
             prior_dmd3c=float(fcfg.get("prior_dmd3c", 2.0)),
+            conf_min=float(fcfg.get("conf_min", 0.05)),
+            sparse_conf_decay=float(fcfg.get("sparse_conf_decay", 6.0)),
+            sparse_blend_radius=float(fcfg.get("sparse_blend_radius", 48.0)),
+            range_conf_decay=float(fcfg.get("range_conf_decay", 0.25)),
+            edge_conf_decay=float(fcfg.get("edge_conf_decay", 1.0)),
+            geometry_conf_decay=float(fcfg.get("geometry_conf_decay", 0.5)),
         )
         payload = {
             "D_teacher": result.D_teacher.astype(np.float32),
             "C_teacher": result.C_teacher.astype(np.float32),
             "D_full": result.D_full.astype(np.float32),
             "C_full": result.C_full.astype(np.float32),
+            "C_dmd3c": result.C_dmd3c.astype(np.float32),
             "w_m3d": result.w_m3d.astype(np.float32),
             "w_da": result.w_da.astype(np.float32),
             "w_dmd3c": result.w_dmd3c.astype(np.float32),
@@ -314,7 +343,7 @@ class TeacherGenerator:
             metric_path,
             D_cm=D_cm.astype(np.float32),
             C_cm=np.clip(C_cm, 0.0, 1.0).astype(np.float32),
-            C_dmd3c=result.C_full.astype(np.float32),
+            C_dmd3c=result.C_dmd3c.astype(np.float32),
             D_teacher=downsample_map(D_cm, self.output_scale).astype(np.float32),
             C_teacher=downsample_map(C_cm, self.output_scale).astype(np.float32),
         )
@@ -328,9 +357,18 @@ class TeacherGenerator:
             D_da_aligned=D_da,
             D_m3d=D_m3d,
             D_dmd3c=D_dmd3c,
+            N_dsine=N_dsine,
+            sparse=sparse,
+            mask=mask,
+            K=K,
+            rgb=rgb,
             prior_da=float(fcfg.get("geometry_prior_da", 1.0)),
             prior_m3d=float(fcfg.get("geometry_prior_m3d", 0.5)),
             prior_dmd3c=float(fcfg.get("geometry_prior_dmd3c", 0.25)),
+            alpha_normal=float(fcfg.get("geometry_alpha_normal", fcfg.get("alpha_normal", 1.0))),
+            beta_sparse=float(fcfg.get("geometry_beta_sparse", fcfg.get("beta_sparse", 1.0))),
+            edge_decay=float(fcfg.get("geometry_edge_decay", fcfg.get("edge_conf_decay", 1.0))),
+            sparse_blend_radius=float(fcfg.get("sparse_blend_radius", 48.0)),
         )
         save_npz_atomic(
             geometry_path,

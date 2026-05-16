@@ -203,7 +203,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     student_root = Path(paths["student_root"])
     logger = setup_logger(student_root / "logs" / "train_student.log")
 
-    train_loader = make_loader(cfg, paths, "val", training=True)
+    train_loader = make_loader(cfg, paths, "train", training=True)
     val_loader = make_loader(cfg, paths, "val", training=False)
     preflight_teacher_coverage(cfg, train_loader.dataset, logger)
     model = GeoRTStudentS.from_config(cfg).to(device)

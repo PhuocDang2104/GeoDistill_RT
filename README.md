@@ -14,9 +14,9 @@ At inference time there is no Metric3D, Depth Anything V2, DSINE, DMD3C, normal 
 2. Depth Anything V2 predicts relative dense depth. Raw `D_da_raw` is kept as a dense structure teacher for scale-and-shift-invariant (SSI) training loss.
 3. DSINE predicts surface normals.
 4. DMD3C predicts the main metric depth-completion teacher from RGB + sparse LiDAR.
-5. Teacher fusion still computes diagnostic Metric3D / Depth Anything / DMD3C weights, but the metric target uses DMD3C wherever DMD3C is valid.
-6. Weighted fusion is only a fallback where DMD3C is invalid. Depth Anything aligned is kept for backward compatibility and diagnostics.
-7. The fused teacher target and confidence are saved at 1/4 resolution, with optional full-resolution `D_full/C_full`.
+5. Teacher fusion computes diagnostic Metric3D / Depth Anything / DMD3C weights, but the metric target uses DMD3C wherever DMD3C is valid.
+6. `C_dmd3c` combines sparse consistency, geometry agreement, RGB/depth edge risk, and range risk; weighted fusion is only a fallback where DMD3C is invalid.
+7. The teacher pipeline saves backward-compatible fused outputs plus separated `metric_coarse` and `geometry_fused` targets.
 8. GeoRT-Student-S learns coarse metric depth and confidence from GT, sparse LiDAR, DMD3C-dominant fused supervision, and optional DA raw SSI structure loss.
 
 ## Repo Structure
@@ -159,12 +159,12 @@ weights/dmd3c/dmd3c_distillation_depth_anything_v2.pth
 
 ## Generate Pseudo Labels
 
-Generate Depth Anything raw maps for SSI:
+Generate Depth Anything raw/aligned maps for SSI and geometry fusion:
 
 ```bash
 python -m src.teachers.generate_teachers \
   --config configs/teacher.yaml \
-  --split val \
+  --split train \
   --run_depth_anything
 ```
 
@@ -173,7 +173,7 @@ Generate DMD3C metric teacher:
 ```bash
 python -m src.teachers.generate_teachers \
   --config configs/teacher.yaml \
-  --split val \
+  --split train \
   --run_dmd3c
 ```
 
@@ -182,23 +182,25 @@ Regenerate DMD3C-dominant fused teacher:
 ```bash
 python -m src.teachers.generate_teachers \
   --config configs/teacher.yaml \
-  --split val \
+  --split train \
   --run_fusion \
   --overwrite
 ```
 
-Full teacher workflow:
+Full teacher workflow for one split:
 
 ```bash
 python -m src.teachers.generate_teachers \
   --config configs/teacher.yaml \
-  --split val \
+  --split train \
   --run_metric3d \
   --run_depth_anything \
   --run_dsine \
   --run_dmd3c \
   --run_fusion
 ```
+
+Run the same workflow for `val` after `train`, or use `notebooks/01_teacher_generate_pseudo.ipynb`, which is configured for both `train` and `val`.
 
 Teacher generation is restartable. Existing `.npz` files are skipped when `skip_existing: true`.
 
@@ -223,7 +225,7 @@ python -m src.eval_teacher_outputs --config configs/teacher.yaml --split val --m
 Before training with the default strict GeoRT objective, generate train-split teacher files:
 
 ```bash
-python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_dmd3c --run_depth_anything --run_fusion
+python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_metric3d --run_depth_anything --run_dsine --run_dmd3c --run_fusion
 ```
 
 ```bash
@@ -300,6 +302,7 @@ keys:
   C_teacher float32 [H/4,W/4]
   D_full float32 [H,W]
   C_full float32 [H,W]
+  C_dmd3c float32 [H,W]
   w_m3d float32 [H/4,W/4]
   w_da float32 [H/4,W/4]
   w_dmd3c float32 [H/4,W/4]
@@ -307,11 +310,41 @@ keys:
 
 `D_full/D_teacher` are DMD3C-dominant metric targets: DMD3C is used wherever valid, with conflict-aware weighted fusion only as fallback.
 
+Separated metric teacher:
+
+```text
+teacher_outputs/metric_coarse/{split}/{sample_id}.npz
+keys:
+  D_cm float32 [H,W]
+  C_cm float32 [H,W]
+  C_dmd3c float32 [H,W]
+  D_teacher float32 [H/4,W/4]
+  C_teacher float32 [H/4,W/4]
+```
+
+Separated geometry teacher:
+
+```text
+teacher_outputs/geometry_fused/{split}/{sample_id}.npz
+keys:
+  R_G float32 [H,W]
+  C_G float32 [H,W]
+  w_da float32 [H,W]
+  w_m3d float32 [H,W]
+  w_dmd3c float32 [H,W]
+```
+
 Student inference:
 
 ```text
 student_outputs/{split}_predictions/{sample_id}.npz
-keys: D_c float32 [H/4,W/4], C float32 [H/4,W/4]
+keys:
+  D_full float32 [H,W]
+  C_full float32 [H,W]
+  D_1_4 float32 [H/4,W/4]
+  C_1_4 float32 [H/4,W/4]
+  D_c float32 [H/4,W/4]
+  C float32 [H/4,W/4]
 ```
 
 ## Troubleshooting

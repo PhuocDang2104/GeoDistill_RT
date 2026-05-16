@@ -49,7 +49,8 @@ During training, the framework separates teacher supervision into two different 
 |---|---|
 | Ground-truth depth $D_{\text{gt}}$ | strongest metric anchor where available |
 | DMD3C $D_{\text{DMD}}$ | primary dense coarse metric teacher |
-| Depth Anything V2 / Distill Any Depth / UniDepthV2 | relative/metric monocular geometry teachers for layout, edge, and ordinal structure |
+| Depth Anything V2 | primary relative monocular geometry teacher for layout, edge, and ordinal structure |
+| Metric3D v2 | metric-aware diagnostic / fallback geometry source |
 | DSINE | surface-normal prior for geometric reliability |
 | Sparse LiDAR $S$ | real metric anchor available at inference and training |
 
@@ -58,7 +59,7 @@ The teachers are used **only during training**. At inference time, only the ligh
 The key idea is a separated supervision and prediction pipeline:
 
 1. the **coarse metric teacher** is built from $D_{\text{gt}}$ and DMD3C to minimize metric RMSE;
-2. the **geometry teacher** is fused from monocular models such as DA2, Distill Any Depth, and UniDepthV2;
+2. the **geometry teacher** is fused from the implemented teacher set: Depth Anything V2, Metric3D v2 diagnostics, and low-prior DMD3C structure;
 3. the student predicts an efficient $1/4$ coarse depth internally, then produces full-resolution dense depth with guided upsampling and tiny residual refinement;
 4. the geometry teacher is used through scale-and-shift-invariant, ordinal, and structure-aware losses.
 
@@ -364,9 +365,8 @@ The geometry branch is responsible for layout, ordinal depth, boundaries, and gl
 | Teacher | Output type | Recommended role |
 |---|---|---|
 | Depth Anything V2 | relative depth | strong dense structure and boundaries |
-| Distill Any Depth | relative / normalized depth | robust relative geometry from distillation |
-| UniDepthV2 | metric depth / 3D points | metric-aware geometry, camera-aware global layout |
 | Metric3D v2 | metric depth | optional diagnostic or fallback geometry source |
+| DMD3C | metric depth completion | low-prior structure candidate and metric-confidence source |
 
 Let the geometry teacher set be:
 
@@ -660,9 +660,8 @@ Recommended initial priors:
 | Teacher | Prior |
 |---|---:|
 | Depth Anything V2 | $1.0$ |
-| Distill Any Depth | $1.0$ |
-| UniDepthV2 | $1.0$ |
 | Metric3D v2 | $0.5$ |
+| DMD3C structure | $0.25$ |
 
 The priors are tuned with validation metrics.
 
@@ -1724,7 +1723,7 @@ Recommended saved teacher and student outputs:
 | `teacher_outputs/metric_coarse/{split}` | `D_cm`, `C_cm`, `C_dmd3c` | GT+DMD3C coarse metric teacher and DMD3C confidence |
 | `teacher_outputs/geometry_raw/{teacher}/{split}` | `R_i` or raw model key | per-model relative/metric geometry output |
 | `teacher_outputs/geometry_fused/{split}` | `R_G`, `C_G`, `w_*` | fused geometry teacher |
-| `teacher_outputs/fused/{split}` | `D_teacher`, `C_teacher` | backward-compatible aliases for `D_cm`, `C_cm` |
+| `teacher_outputs/fused/{split}` | `D_teacher`, `C_teacher`, `D_full`, `C_full`, `C_dmd3c` | backward-compatible aliases and full-resolution DMD3C-dominant metric target |
 | `student_outputs/{split}_predictions` | `D_full`, `C_full`, `D_1_4`, `C_1_4` | final full-resolution prediction and internal coarse prediction |
 
 Conceptually:
@@ -1751,8 +1750,6 @@ Not used during inference:
 
 - Metric3D;
 - Depth Anything;
-- Distill Any Depth;
-- UniDepthV2;
 - DMD3C;
 - DSINE;
 - normal output;
@@ -1810,7 +1807,7 @@ GeoDistill-RT addresses these gaps through:
 
 1. **Multi-teacher geometry distillation**
 
-   Depth Anything V2, Distill Any Depth, UniDepthV2, DSINE, and sparse LiDAR are combined for dense structure supervision across complementary monocular sources.
+   Depth Anything V2, Metric3D v2 diagnostics, DMD3C structure, DSINE, and sparse LiDAR are combined for dense structure supervision across complementary sources.
 
 2. **DMD3C-dominant metric supervision**
 
@@ -1832,7 +1829,7 @@ GeoDistill-RT addresses these gaps through:
 
 # 9. Conclusion
 
-GeoDistill-RT is a real-time sparse depth completion framework with separated metric and geometry supervision. GT plus DMD3C defines the coarse metric teacher for low RMSE, while DA2, Distill Any Depth, UniDepthV2, and DSINE provide fused relative/metric geometry for layout-aware distillation. The student keeps teacher-free inference, uses an efficient $1/4$ internal representation, and outputs full-resolution metric depth with full-resolution confidence.
+GeoDistill-RT is a real-time sparse depth completion framework with separated metric and geometry supervision. GT plus DMD3C defines the coarse metric teacher for low RMSE, while Depth Anything V2, Metric3D v2 diagnostics, DMD3C structure, and DSINE provide fused geometry for layout-aware distillation. The student keeps teacher-free inference, uses an efficient $1/4$ internal representation, and outputs full-resolution metric depth with full-resolution confidence.
 
 ---
 
@@ -1844,6 +1841,4 @@ The theory above follows these practical observations from recent teacher models
 
 2. **Depth Anything V2.** [DA2](https://github.com/DepthAnything/Depth-Anything-V2) provides strong relative depth and has separate metric variants, but the standard released pretrained models are primarily robust relative-depth predictors. Therefore, DA2 is best used as a dense structure teacher unless a metric variant is explicitly selected and validated.
 
-3. **Distill Any Depth.** [Distill Any Depth](https://distill-any-depth-official.github.io/) emphasizes normalized-depth distillation, local/global context, and multi-teacher monocular depth priors. This supports its role as a geometry/layout teacher.
-
-4. **UniDepthV2.** [UniDepthV2](https://github.com/lpiccinelli-eth/UniDepth) is a universal monocular metric-depth model with camera-aware design and uncertainty output. In this framework it is useful as a metric-aware geometry teacher, but its metric output should still be validated against KITTI sparse/GT before being allowed to affect $D_{\text{cm}}$.
+3. **Metric3D v2.** Metric3D v2 is kept as a metric-aware diagnostic and fallback geometry source. It is not allowed to override the GT+DMD3C metric branch.

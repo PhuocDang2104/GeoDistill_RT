@@ -51,11 +51,20 @@ dmd3c:
 fusion:
   alpha_normal: 1.0
   beta_sparse: 1.0
+  conf_min: 0.05
+  sparse_conf_decay: 6.0
+  sparse_blend_radius: 48.0
+  geometry_conf_decay: 0.5
+  edge_conf_decay: 1.0
+  range_conf_decay: 0.25
   prior_m3d: 1.0
   prior_da: 0.1
   prior_dmd3c: 2.0
   geometry_prior_da: 1.0
   geometry_prior_m3d: 0.5
   geometry_prior_dmd3c: 0.25
+  geometry_alpha_normal: 1.0
+  geometry_beta_sparse: 1.0
+  geometry_edge_decay: 1.0
   use_teacher_confidence: true
   confidence_mode: "max_weight"

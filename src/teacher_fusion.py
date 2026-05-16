@@ -15,6 +15,7 @@ class FusionResult:
     w_dmd3c: np.ndarray
     D_full: np.ndarray
     C_full: np.ndarray
+    C_dmd3c: np.ndarray
 
 
 def robust_normalize_structure(x: np.ndarray, valid: np.ndarray | None = None) -> np.ndarray:
@@ -37,6 +38,200 @@ def _resize_depth_like(depth: np.ndarray, shape_hw: tuple[int, int]) -> np.ndarr
         return depth.astype(np.float32)
     h, w = shape_hw
     return cv2.resize(depth.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR)
+
+
+def _resize_rgb_like(rgb: np.ndarray | None, shape_hw: tuple[int, int]) -> np.ndarray | None:
+    if rgb is None:
+        return None
+    arr = rgb.astype(np.float32)
+    if arr.ndim == 3 and arr.shape[0] == 3 and arr.shape[-1] != 3:
+        arr = arr.transpose(1, 2, 0)
+    if arr.ndim != 3 or arr.shape[-1] != 3:
+        return None
+    h, w = shape_hw
+    if arr.shape[:2] != shape_hw:
+        arr = cv2.resize(arr, (w, h), interpolation=cv2.INTER_LINEAR)
+    if float(np.nanmax(arr)) > 2.0:
+        arr = arr / 255.0
+    arr[~np.isfinite(arr)] = 0.0
+    return np.clip(arr, 0.0, 1.0).astype(np.float32)
+
+
+def _normalize_positive(x: np.ndarray, valid: np.ndarray | None = None, eps: float = 1e-6) -> np.ndarray:
+    arr = np.asarray(x, dtype=np.float32)
+    valid_mask = np.isfinite(arr) if valid is None else (valid & np.isfinite(arr))
+    if int(valid_mask.sum()) < 32:
+        out = np.zeros_like(arr, dtype=np.float32)
+        out[np.isfinite(arr)] = np.clip(arr[np.isfinite(arr)], 0.0, None)
+        scale = float(np.nanmax(out)) if np.isfinite(out).any() else 0.0
+    else:
+        values = np.clip(arr[valid_mask], 0.0, None)
+        scale = float(np.percentile(values, 95.0))
+    if scale <= eps or not np.isfinite(scale):
+        return np.zeros_like(arr, dtype=np.float32)
+    out = np.clip(arr, 0.0, None) / scale
+    out[~np.isfinite(out)] = 0.0
+    return np.clip(out, 0.0, 10.0).astype(np.float32)
+
+
+def _gradient_magnitude(x: np.ndarray) -> np.ndarray:
+    arr = np.asarray(x, dtype=np.float32)
+    arr = np.where(np.isfinite(arr), arr, 0.0)
+    gy, gx = np.gradient(arr)
+    return np.sqrt(gx * gx + gy * gy).astype(np.float32)
+
+
+def _image_edge(rgb: np.ndarray | None, shape_hw: tuple[int, int]) -> np.ndarray:
+    img = _resize_rgb_like(rgb, shape_hw)
+    if img is None:
+        return np.zeros(shape_hw, dtype=np.float32)
+    gray = (0.299 * img[..., 0] + 0.587 * img[..., 1] + 0.114 * img[..., 2]).astype(np.float32)
+    return _normalize_positive(_gradient_magnitude(gray))
+
+
+def _nearest_sparse_relative_error(
+    depth: np.ndarray,
+    sparse: np.ndarray,
+    mask: np.ndarray,
+    min_depth: float,
+    max_depth: float,
+    blend_radius: float,
+) -> np.ndarray:
+    valid_depth = np.isfinite(depth) & (depth > min_depth) & (depth < max_depth)
+    anchor = (mask > 0.5) & np.isfinite(sparse) & (sparse > min_depth) & (sparse < max_depth) & valid_depth
+    if int(anchor.sum()) < 1:
+        return np.zeros_like(depth, dtype=np.float32)
+
+    rel_error = np.abs(depth[anchor] - sparse[anchor]) / np.clip(sparse[anchor], min_depth, max_depth)
+    try:
+        src = np.ones(depth.shape, dtype=np.uint8)
+        src[anchor] = 0
+        dist, labels = cv2.distanceTransformWithLabels(src, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+        max_label = int(labels.max())
+        label_error = np.zeros(max_label + 1, dtype=np.float32)
+        label_error.fill(float(np.median(rel_error)))
+        anchor_labels = labels[anchor].reshape(-1)
+        for lab, err in zip(anchor_labels, rel_error.reshape(-1)):
+            lab_i = int(lab)
+            if 0 <= lab_i <= max_label:
+                label_error[lab_i] = min(label_error[lab_i], float(err))
+        dense_error = label_error[labels]
+        if blend_radius > 0:
+            far_blend = 1.0 - np.exp(-dist.astype(np.float32) / float(blend_radius))
+            dense_error = dense_error * (1.0 - far_blend)
+        dense_error[~valid_depth] = 0.0
+        return np.clip(dense_error, 0.0, 10.0).astype(np.float32)
+    except Exception:
+        out = np.zeros_like(depth, dtype=np.float32)
+        out[anchor] = rel_error.astype(np.float32)
+        return np.clip(out, 0.0, 10.0).astype(np.float32)
+
+
+def _sparse_confidence(
+    depth: np.ndarray,
+    sparse: np.ndarray,
+    mask: np.ndarray,
+    min_depth: float,
+    max_depth: float,
+    decay: float,
+    blend_radius: float,
+) -> np.ndarray:
+    rel_error = _nearest_sparse_relative_error(depth, sparse, mask, min_depth, max_depth, blend_radius)
+    conf = np.exp(-float(decay) * rel_error).astype(np.float32)
+    conf[~np.isfinite(conf)] = 0.0
+    return np.clip(conf, 0.0, 1.0).astype(np.float32)
+
+
+def _normal_confidence(
+    depth: np.ndarray,
+    N_dsine: np.ndarray | None,
+    K: np.ndarray,
+    rgb: np.ndarray | None,
+    min_depth: float,
+    max_depth: float,
+    alpha: float,
+) -> np.ndarray:
+    valid = np.isfinite(depth) & (depth > min_depth) & (depth < max_depth)
+    if N_dsine is None:
+        return valid.astype(np.float32)
+    normals_ref = _resize_normals_like(N_dsine, depth.shape)
+    N_depth = depth_to_normals(depth, K, min_depth=min_depth)
+    dot = np.sum(N_depth * normals_ref, axis=0)
+    valid_dot = valid & np.isfinite(dot)
+    if valid_dot.any() and float(np.nanmean(dot[valid_dot])) < 0.0:
+        dot = -dot
+    delta = np.clip(1.0 - np.clip(dot, -1.0, 1.0), 0.0, 2.0)
+    img_edge = _image_edge(rgb, depth.shape)
+    depth_edge = _normalize_positive(_gradient_magnitude(np.clip(depth, min_depth, max_depth)), valid)
+    plane_weight = np.exp(-img_edge).astype(np.float32) * np.exp(-depth_edge).astype(np.float32)
+    conf = np.exp(-float(alpha) * plane_weight * delta).astype(np.float32)
+    conf[~valid] = 0.0
+    conf[~np.isfinite(conf)] = 0.0
+    return np.clip(conf, 0.0, 1.0).astype(np.float32)
+
+
+def _depth_edge_confidence(
+    depth: np.ndarray,
+    rgb: np.ndarray | None,
+    min_depth: float,
+    max_depth: float,
+    decay: float,
+) -> np.ndarray:
+    valid = np.isfinite(depth) & (depth > min_depth) & (depth < max_depth)
+    img_edge = _image_edge(rgb, depth.shape)
+    depth_edge = _normalize_positive(_gradient_magnitude(np.clip(depth, min_depth, max_depth)), valid)
+    risk = img_edge * (0.5 + depth_edge)
+    conf = np.exp(-float(decay) * risk).astype(np.float32)
+    conf[~valid] = 0.0
+    return np.clip(conf, 0.0, 1.0).astype(np.float32)
+
+
+def _structure_edge_confidence(
+    structure: np.ndarray,
+    rgb: np.ndarray | None,
+    decay: float,
+    kappa: float = 4.0,
+) -> np.ndarray:
+    valid = np.isfinite(structure)
+    r_edge = _normalize_positive(_gradient_magnitude(structure), valid)
+    img_edge = _image_edge(rgb, structure.shape)
+    unsupported = r_edge * np.exp(-float(kappa) * img_edge)
+    conf = np.exp(-float(decay) * unsupported).astype(np.float32)
+    conf[~valid] = 0.0
+    return np.clip(conf, 0.0, 1.0).astype(np.float32)
+
+
+def _geometry_reference_from_metric_teachers(
+    shape_hw: tuple[int, int],
+    D_da_aligned: np.ndarray | None,
+    D_m3d: np.ndarray | None,
+    min_depth: float,
+    max_depth: float,
+    prior_da: float,
+    prior_m3d: float,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    candidates: list[tuple[np.ndarray, np.ndarray, float]] = []
+    if D_da_aligned is not None:
+        da = _resize_depth_like(D_da_aligned, shape_hw)
+        valid = np.isfinite(da) & (da > min_depth) & (da < max_depth)
+        if int(valid.sum()) >= 32:
+            candidates.append((robust_normalize_structure(np.log(np.clip(da, min_depth, max_depth)), valid), valid, float(prior_da)))
+    if D_m3d is not None:
+        m3d = _resize_depth_like(D_m3d, shape_hw)
+        valid = np.isfinite(m3d) & (m3d > min_depth) & (m3d < max_depth)
+        if int(valid.sum()) >= 32:
+            candidates.append((robust_normalize_structure(np.log(np.clip(m3d, min_depth, max_depth)), valid), valid, float(prior_m3d)))
+    if not candidates:
+        return None, None
+    scores = np.stack([prior * valid.astype(np.float32) for _, valid, prior in candidates], axis=0)
+    denom = scores.sum(axis=0, keepdims=True)
+    valid_any = denom[0] > 1e-8
+    weights = np.zeros_like(scores, dtype=np.float32)
+    weights[:, valid_any] = scores[:, valid_any] / denom[:, valid_any]
+    ref = np.zeros(shape_hw, dtype=np.float32)
+    for idx, (R, _, _) in enumerate(candidates):
+        ref += weights[idx] * R.astype(np.float32)
+    return ref.astype(np.float32), valid_any
 
 
 def _resize_normals_like(normals: np.ndarray, shape_hw: tuple[int, int]) -> np.ndarray:
@@ -101,11 +296,20 @@ def build_geometry_teacher(
     D_da_aligned: np.ndarray | None = None,
     D_m3d: np.ndarray | None = None,
     D_dmd3c: np.ndarray | None = None,
+    N_dsine: np.ndarray | None = None,
+    sparse: np.ndarray | None = None,
+    mask: np.ndarray | None = None,
+    K: np.ndarray | None = None,
+    rgb: np.ndarray | None = None,
     min_depth: float = 1e-3,
     max_depth: float = 120.0,
     prior_da: float = 1.0,
     prior_m3d: float = 0.5,
     prior_dmd3c: float = 0.25,
+    alpha_normal: float = 1.0,
+    beta_sparse: float = 1.0,
+    edge_decay: float = 1.0,
+    sparse_blend_radius: float = 48.0,
 ) -> dict[str, np.ndarray]:
     """Build a separated structure teacher R_G/C_G.
 
@@ -113,26 +317,31 @@ def build_geometry_teacher(
     converted through log-depth and robust normalization so they supervise only
     structure, not metric scale.
     """
-    candidates: list[tuple[str, np.ndarray, np.ndarray, float]] = []
+    candidates: list[tuple[str, np.ndarray, np.ndarray, float, np.ndarray | None]] = []
 
     if D_da_raw is not None:
         raw = _resize_depth_like(D_da_raw, shape_hw)
         valid = np.isfinite(raw)
-        candidates.append(("da", robust_normalize_structure(raw, valid), valid, float(prior_da)))
+        metric_like = None
+        if D_da_aligned is not None:
+            da_metric = _resize_depth_like(D_da_aligned, shape_hw)
+            if int((np.isfinite(da_metric) & (da_metric > min_depth) & (da_metric < max_depth)).sum()) >= 32:
+                metric_like = da_metric
+        candidates.append(("da", robust_normalize_structure(raw, valid), valid, float(prior_da), metric_like))
     elif D_da_aligned is not None:
         da = _resize_depth_like(D_da_aligned, shape_hw)
         valid = np.isfinite(da) & (da > min_depth) & (da < max_depth)
-        candidates.append(("da", robust_normalize_structure(np.log(np.clip(da, min_depth, max_depth)), valid), valid, float(prior_da)))
+        candidates.append(("da", robust_normalize_structure(np.log(np.clip(da, min_depth, max_depth)), valid), valid, float(prior_da), da))
 
     if D_m3d is not None:
         m3d = _resize_depth_like(D_m3d, shape_hw)
         valid = np.isfinite(m3d) & (m3d > min_depth) & (m3d < max_depth)
-        candidates.append(("m3d", robust_normalize_structure(np.log(np.clip(m3d, min_depth, max_depth)), valid), valid, float(prior_m3d)))
+        candidates.append(("m3d", robust_normalize_structure(np.log(np.clip(m3d, min_depth, max_depth)), valid), valid, float(prior_m3d), m3d))
 
     if D_dmd3c is not None:
         dmd = _resize_depth_like(D_dmd3c, shape_hw)
         valid = np.isfinite(dmd) & (dmd > min_depth) & (dmd < max_depth)
-        candidates.append(("dmd3c", robust_normalize_structure(np.log(np.clip(dmd, min_depth, max_depth)), valid), valid, float(prior_dmd3c)))
+        candidates.append(("dmd3c", robust_normalize_structure(np.log(np.clip(dmd, min_depth, max_depth)), valid), valid, float(prior_dmd3c), dmd))
 
     h, w = shape_hw
     if not candidates:
@@ -142,8 +351,17 @@ def build_geometry_teacher(
     scores = []
     maps = []
     names = []
-    for name, R, valid, prior in candidates:
+    sparse_arr = _resize_depth_like(sparse, shape_hw) if sparse is not None else None
+    mask_arr = (_resize_depth_like(mask, shape_hw) > 0.5) if mask is not None else None
+    for name, R, valid, prior, metric_like in candidates:
         score = (float(prior) * valid.astype(np.float32)).astype(np.float32)
+        score *= _structure_edge_confidence(R, rgb, decay=edge_decay)
+        if metric_like is not None and K is not None:
+            score *= _normal_confidence(metric_like, N_dsine, K, rgb, min_depth, max_depth, alpha_normal)
+            if sparse_arr is not None and mask_arr is not None:
+                score *= _sparse_confidence(metric_like, sparse_arr, mask_arr, min_depth, max_depth, beta_sparse, sparse_blend_radius)
+        score[~valid] = 0.0
+        score[~np.isfinite(score)] = 0.0
         scores.append(score)
         maps.append(R.astype(np.float32))
         names.append(name)
@@ -175,6 +393,7 @@ def fuse_teachers(
     sparse: np.ndarray,
     mask: np.ndarray,
     K: np.ndarray,
+    rgb: np.ndarray | None = None,
     D_dmd3c: np.ndarray | None = None,
     alpha_normal: float = 1.0,
     beta_sparse: float = 1.0,
@@ -185,6 +404,12 @@ def fuse_teachers(
     prior_m3d: float = 1.0,
     prior_da: float = 0.1,
     prior_dmd3c: float = 2.0,
+    conf_min: float = 0.05,
+    sparse_conf_decay: float = 6.0,
+    sparse_blend_radius: float = 48.0,
+    range_conf_decay: float = 0.25,
+    edge_conf_decay: float = 1.0,
+    geometry_conf_decay: float = 0.5,
 ) -> FusionResult:
     """DMD3C-dominant conflict-aware teacher fusion.
 
@@ -201,6 +426,7 @@ def fuse_teachers(
     sparse = _resize_depth_like(sparse, shape_hw)
     mask = _resize_depth_like(mask, shape_hw) > 0.5
     N_dsine = _resize_normals_like(N_dsine, shape_hw)
+    rgb = _resize_rgb_like(rgb, shape_hw)
 
     teacher_names = ["m3d", "da"]
     depths = [D_m3d.astype(np.float32), D_da_aligned.astype(np.float32)]
@@ -214,18 +440,11 @@ def fuse_teachers(
     scores = []
     for D, prior in zip(depths, priors):
         valid = np.isfinite(D) & (D > min_depth) & (D < max_depth)
-        N_depth = depth_to_normals(D, K, min_depth=min_depth)
-        dot = np.sum(N_depth * N_dsine, axis=0)
-        valid_dot = valid & np.isfinite(dot)
-        if valid_dot.any() and float(np.nanmean(dot[valid_dot])) < 0.0:
-            N_depth = -N_depth
-            dot = -dot
-        dot = np.clip(dot, -1.0, 1.0)
-        delta_normal = 1.0 - dot
-        delta_sparse = np.where(mask, np.abs(D - sparse), 0.0)
-        q = np.exp(-float(alpha_normal) * np.clip(delta_normal, 0.0, 2.0))
-        r = np.exp(-float(beta_sparse) * np.clip(delta_sparse, 0.0, max_depth))
-        score = (float(prior) * q * r).astype(np.float32)
+        q = _normal_confidence(D, N_dsine, K, rgb, min_depth, max_depth, alpha_normal)
+        r = _sparse_confidence(D, sparse, mask, min_depth, max_depth, beta_sparse, sparse_blend_radius)
+        edge_conf = _depth_edge_confidence(D, rgb, min_depth, max_depth, edge_conf_decay)
+        range_conf = np.exp(-float(range_conf_decay) * np.clip(D, 0.0, max_depth) / float(max_depth)).astype(np.float32)
+        score = (float(prior) * q * r * edge_conf * range_conf).astype(np.float32)
         score[~valid] = 0.0
         score[~np.isfinite(score)] = 0.0
         scores.append(score)
@@ -250,10 +469,41 @@ def fuse_teachers(
         raise ValueError(f"Unsupported confidence_mode: {confidence_mode}")
 
     D_full = D_weighted.copy()
+    C_dmd3c = np.zeros(shape_hw, dtype=np.float32)
     if D_dmd3c_resized is not None:
         dmd_valid = np.isfinite(D_dmd3c_resized) & (D_dmd3c_resized > min_depth) & (D_dmd3c_resized < max_depth)
+        c_sparse = _sparse_confidence(
+            D_dmd3c_resized,
+            sparse,
+            mask,
+            min_depth,
+            max_depth,
+            sparse_conf_decay,
+            sparse_blend_radius,
+        )
+        geom_ref, geom_valid = _geometry_reference_from_metric_teachers(
+            shape_hw,
+            D_da_aligned,
+            D_m3d,
+            min_depth,
+            max_depth,
+            prior_da=max(prior_da, 1e-6),
+            prior_m3d=max(prior_m3d, 1e-6),
+        )
+        if geom_ref is None or geom_valid is None:
+            c_geom = np.ones(shape_hw, dtype=np.float32)
+        else:
+            dmd_structure = robust_normalize_structure(np.log(np.clip(D_dmd3c_resized, min_depth, max_depth)), dmd_valid)
+            geom_error = np.abs(dmd_structure - geom_ref)
+            c_geom = np.ones(shape_hw, dtype=np.float32)
+            c_geom[geom_valid] = np.exp(-float(geometry_conf_decay) * np.clip(geom_error[geom_valid], 0.0, 10.0)).astype(np.float32)
+        c_edge = _depth_edge_confidence(D_dmd3c_resized, rgb, min_depth, max_depth, edge_conf_decay)
+        c_range = np.exp(-float(range_conf_decay) * np.clip(D_dmd3c_resized, 0.0, max_depth) / float(max_depth)).astype(np.float32)
+        C_dmd3c = c_sparse * c_geom * c_edge * c_range
+        C_dmd3c = np.clip(C_dmd3c, float(conf_min), 1.0).astype(np.float32)
+        C_dmd3c[~dmd_valid] = 0.0
         D_full[dmd_valid] = D_dmd3c_resized[dmd_valid]
-        C_full[dmd_valid] = 1.0
+        C_full[dmd_valid] = C_dmd3c[dmd_valid]
     D_full = np.clip(D_full, 0.0, max_depth).astype(np.float32)
     C_full = np.clip(C_full, 0.0, 1.0).astype(np.float32)
 
@@ -273,4 +523,5 @@ def fuse_teachers(
         w_dmd3c=w_dmd3c.astype(np.float32),
         D_full=D_full,
         C_full=C_full,
+        C_dmd3c=C_dmd3c.astype(np.float32),
     )
