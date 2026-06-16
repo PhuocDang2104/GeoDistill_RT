@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,9 @@ from .utils import (
     safe_sample_id,
     scale_intrinsics,
 )
+
+
+LOGGER = logging.getLogger("geort")
 
 
 @dataclass(frozen=True)
@@ -244,6 +248,7 @@ class KITTIDepthCompletionDataset(Dataset):
         self.metric_conf_range_decay = float(metric_conf_range_decay)
         self.metric_conf_sparse_blend_radius = float(metric_conf_sparse_blend_radius)
         self.return_tensors = return_tensors
+        self._warned_dmd_geometry_fallback = False
 
         lines = read_split(self.split_root, split_file)
         self.samples = [self._parse_line(line) for line in lines]
@@ -389,24 +394,26 @@ class KITTIDepthCompletionDataset(Dataset):
         R: np.ndarray | None = None
         C: np.ndarray | None = None
         valid: np.ndarray | None = None
+        source: str | None = None
 
         path = self.teacher_root / "geometry_fused" / self.split_name / f"{sample_id}.npz"
         R = _load_first_npz_key(path, ("R_G", "R_G_star", "R_fused", "R_teacher"), image_hw, cv2.INTER_LINEAR)
         if R is not None:
             C = _load_first_npz_key(path, ("C_G", "C_geometry", "C_teacher"), image_hw, cv2.INTER_LINEAR)
             valid = np.isfinite(R)
+            source = "geometry_fused"
 
         if R is None:
             fallbacks = [
-                (Path("geometry_raw") / "depth_anything_v2" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw"),
-                (Path("geometry_raw") / "depth_anything" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw"),
-                (Path("depth_anything") / f"{self.split_name}_raw", ("D_da_raw", "R_i", "depth"), "raw"),
-                (Path("depth_anything") / self.split_name, ("D_da_raw", "R_i", "depth"), "raw"),
-                (Path("depth_anything") / f"{self.split_name}_aligned", ("D_da_aligned", "D_full", "D_teacher"), "log_metric"),
-                (Path("metric3d") / self.split_name, ("D_m3d",), "log_metric"),
-                (Path("dmd3c") / self.split_name, ("D_dmd3c", "D_dmd", "D"), "log_metric"),
+                (Path("geometry_raw") / "depth_anything_v2" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw", "depth_anything_v2"),
+                (Path("geometry_raw") / "depth_anything" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw", "depth_anything"),
+                (Path("depth_anything") / f"{self.split_name}_raw", ("D_da_raw", "R_i", "depth"), "raw", "depth_anything_raw"),
+                (Path("depth_anything") / self.split_name, ("D_da_raw", "R_i", "depth"), "raw", "depth_anything"),
+                (Path("depth_anything") / f"{self.split_name}_aligned", ("D_da_aligned", "D_full", "D_teacher"), "log_metric", "depth_anything_aligned"),
+                (Path("metric3d") / self.split_name, ("D_m3d",), "log_metric", "metric3d"),
+                (Path("dmd3c") / self.split_name, ("D_dmd3c", "D_dmd", "D"), "log_metric", "dmd3c"),
             ]
-            for rel, keys, transform in fallbacks:
+            for rel, keys, transform, candidate_source in fallbacks:
                 arr = _load_first_npz_key(self.teacher_root / rel / f"{sample_id}.npz", keys, image_hw, cv2.INTER_LINEAR)
                 if arr is None:
                     continue
@@ -417,10 +424,17 @@ class KITTIDepthCompletionDataset(Dataset):
                     valid = np.isfinite(arr)
                     R = arr
                 C = valid.astype(np.float32)
+                source = candidate_source
                 break
 
         if R is None:
             return zeros, zeros
+        if source == "dmd3c" and not self._warned_dmd_geometry_fallback:
+            LOGGER.warning(
+                "Main geometry teachers are missing for split=%s; using DMD3C-only geometry fallback for at least one sample.",
+                self.split_name,
+            )
+            self._warned_dmd_geometry_fallback = True
 
         R = _robust_normalize(R, valid)
         if C is None:

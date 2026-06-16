@@ -1,6 +1,6 @@
-paths_file: "configs/paths.yaml"
+paths_file: "configs/runtime/paths_train_fusion_shard_1.yaml"
 
-device: "cuda"
+device: "cpu"
 output_scale: 4
 save_dtype: "float32"
 skip_existing: true

@@ -16,11 +16,13 @@ env/
 *.log
 *.tmp
 *.bak
+*.zip
 
 data/depth_selection/**
 !data/depth_selection/
 !data/depth_selection/splits/
 !data/depth_selection/splits/*.txt
+data/kitti_depth_completion/
 
 teacher_outputs/**
 student_outputs/**
@@ -31,3 +33,4 @@ third_party/**
 !student_outputs/**/.gitkeep
 !weights/**/.gitkeep
 !third_party/**/.gitkeep
+.cache

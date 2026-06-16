@@ -19,73 +19,6 @@ class ConvBNAct(nn.Sequential):
         )
 
 
-class InvertedResidual(nn.Module):
-    def __init__(self, channels: int, expand_ratio: float = 2.0) -> None:
-        super().__init__()
-        hidden = int(channels * expand_ratio)
-        self.block = nn.Sequential(
-            ConvBNAct(channels, hidden, kernel=1),
-            ConvBNAct(hidden, hidden, kernel=3, groups=hidden),
-            nn.Conv2d(hidden, channels, kernel_size=1, bias=False),
-            nn.BatchNorm2d(channels),
-        )
-        self.act = nn.SiLU(inplace=True)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.act(x + self.block(x))
-
-
-class LinearAttention2d(nn.Module):
-    """Small MobileViTv2-like linear attention block for fallback encoder."""
-
-    def __init__(self, channels: int) -> None:
-        super().__init__()
-        self.q = nn.Conv2d(channels, 1, kernel_size=1)
-        self.k = nn.Conv2d(channels, channels, kernel_size=1)
-        self.v = nn.Conv2d(channels, channels, kernel_size=1)
-        self.proj = nn.Sequential(nn.Conv2d(channels, channels, kernel_size=1, bias=False), nn.BatchNorm2d(channels))
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, C, H, W = x.shape
-        q = torch.softmax(self.q(x).reshape(B, 1, H * W), dim=-1)  # [B,1,HW]
-        k = self.k(x).reshape(B, C, H * W)
-        v = self.v(x).reshape(B, C, H * W)
-        context = torch.sum(q * k, dim=-1, keepdim=True)  # [B,C,1]
-        out = (F.silu(v) * context).reshape(B, C, H, W)
-        return x + self.proj(out)
-
-
-class LiteMobileViTBlock(nn.Module):
-    def __init__(self, channels: int) -> None:
-        super().__init__()
-        self.local = nn.Sequential(ConvBNAct(channels, channels, kernel=3, groups=channels), ConvBNAct(channels, channels, kernel=1))
-        self.attn = LinearAttention2d(channels)
-        self.ffn = InvertedResidual(channels, expand_ratio=2.0)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.local(x)
-        x = self.attn(x)
-        return self.ffn(x)
-
-
-class FallbackMobileViTEncoder(nn.Module):
-    """Fallback encoder returning E4/E8/E16 with requested channels."""
-
-    def __init__(self, in_ch: int, e4: int, e8: int, e16: int) -> None:
-        super().__init__()
-        self.stem = ConvBNAct(in_ch, 32, stride=2)  # [B,32,H/2,W/2]
-        self.stage4 = nn.Sequential(ConvBNAct(32, e4, stride=2), InvertedResidual(e4), LiteMobileViTBlock(e4))
-        self.stage8 = nn.Sequential(ConvBNAct(e4, e8, stride=2), InvertedResidual(e8), LiteMobileViTBlock(e8))
-        self.stage16 = nn.Sequential(ConvBNAct(e8, e16, stride=2), InvertedResidual(e16), LiteMobileViTBlock(e16))
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        x = self.stem(x)
-        E4 = self.stage4(x)  # [B,e4,H/4,W/4]
-        E8 = self.stage8(E4)  # [B,e8,H/8,W/8]
-        E16 = self.stage16(E8)  # [B,e16,H/16,W/16]
-        return E4, E8, E16
-
-
 class TimmMobileViTEncoder(nn.Module):
     def __init__(self, model_name: str, in_ch: int, e4: int, e8: int, e16: int) -> None:
         super().__init__()
@@ -140,10 +73,18 @@ class SparseRayInjection(nn.Module):
 class GuidedConvexUpsample(nn.Module):
     """Full-resolution guided convex upsampling over a 3x3 local window."""
 
-    def __init__(self, guide_channels: int = 6, hidden: int = 24, kernel_size: int = 3, max_depth: float = 120.0) -> None:
+    def __init__(
+        self,
+        guide_channels: int = 6,
+        hidden: int = 24,
+        kernel_size: int = 3,
+        max_depth: float = 120.0,
+        value_scale: float = 120.0,
+    ) -> None:
         super().__init__()
         self.kernel_size = int(kernel_size)
         self.max_depth = float(max_depth)
+        self.value_scale = float(value_scale)
         self.weight_head = nn.Sequential(
             ConvBNAct(guide_channels, hidden, kernel=3),
             nn.Conv2d(hidden, self.kernel_size * self.kernel_size, kernel_size=1),
@@ -152,11 +93,9 @@ class GuidedConvexUpsample(nn.Module):
     def forward(self, value_coarse: torch.Tensor, rgb: torch.Tensor, sparse: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         h, w = rgb.shape[-2:]
         value_up = F.interpolate(value_coarse, size=(h, w), mode="bilinear", align_corners=False)
-        sparse_norm = torch.log1p(sparse.clamp_min(0.0)) / torch.log(torch.tensor(self.max_depth + 1.0, device=sparse.device, dtype=sparse.dtype))
-        if bool((value_up.detach().amax() > 2.0).item()):
-            value_norm = (value_up / self.max_depth).clamp(0.0, 1.0)
-        else:
-            value_norm = value_up.clamp(0.0, 1.0)
+        log_max = torch.log(torch.tensor(self.max_depth + 1.0, device=sparse.device, dtype=sparse.dtype))
+        sparse_norm = torch.log1p(sparse.clamp(0.0, self.max_depth)) / log_max
+        value_norm = (value_up / max(self.value_scale, 1e-6)).clamp(0.0, 1.0)
         guide = torch.cat([rgb, sparse_norm, mask, value_norm], dim=1)
         weights = torch.softmax(self.weight_head(guide), dim=1)
         patches = F.unfold(value_up, kernel_size=self.kernel_size, padding=self.kernel_size // 2)
@@ -173,6 +112,7 @@ class GeoRTConfig:
     e16_channels: int = 128
     sparse_scale: int = 4
     sparse_k: int = 4
+    sparse_mode: str = "local"
     max_depth: float = 120.0
     sparse_anchor_lambda: float = 0.7
 
@@ -202,12 +142,14 @@ class GeoRTStudentS(nn.Module):
         e16_channels: int = 128,
         sparse_scale: int = 4,
         sparse_k: int = 4,
+        sparse_mode: str = "local",
         max_depth: float = 120.0,
         sparse_anchor_lambda: float = 0.7,
     ) -> None:
         super().__init__()
         self.sparse_scale = int(sparse_scale)
         self.sparse_k = int(sparse_k)
+        self.sparse_mode = str(sparse_mode)
         self.max_depth = float(max_depth)
         self.sparse_anchor_lambda = float(sparse_anchor_lambda)
         self.eps = 1e-3
@@ -217,10 +159,7 @@ class GeoRTStudentS(nn.Module):
         self.ray_stem = nn.Sequential(ConvBNAct(5, 12), ConvBNAct(12, 12))
         self.fusion = nn.Sequential(ConvBNAct(24 + 16 + 12, fusion_channels), ConvBNAct(fusion_channels, fusion_channels))
 
-        try:
-            self.encoder = TimmMobileViTEncoder(encoder, fusion_channels, e4_channels, e8_channels, e16_channels)
-        except Exception:
-            self.encoder = FallbackMobileViTEncoder(fusion_channels, e4_channels, e8_channels, e16_channels)
+        self.encoder = TimmMobileViTEncoder(encoder, fusion_channels, e4_channels, e8_channels, e16_channels)
 
         self.inject4 = SparseRayInjection(e4_channels)
         self.inject8 = SparseRayInjection(e8_channels)
@@ -235,7 +174,20 @@ class GeoRTStudentS(nn.Module):
 
         self.depth_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
         self.conf_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
-        self.guided_up = GuidedConvexUpsample(guide_channels=6, hidden=24, kernel_size=3, max_depth=self.max_depth)
+        self.depth_up = GuidedConvexUpsample(
+            guide_channels=6,
+            hidden=24,
+            kernel_size=3,
+            max_depth=self.max_depth,
+            value_scale=self.max_depth,
+        )
+        self.conf_up = GuidedConvexUpsample(
+            guide_channels=6,
+            hidden=16,
+            kernel_size=3,
+            max_depth=self.max_depth,
+            value_scale=1.0,
+        )
         self.full_residual = nn.Sequential(
             ConvBNAct(7, 16, kernel=3),
             ConvBNAct(16, 16, kernel=3, groups=16),
@@ -256,6 +208,7 @@ class GeoRTStudentS(nn.Module):
             e16_channels=int(model_cfg.get("e16_channels", 128)),
             sparse_scale=int(sparse_cfg.get("scale", 4)),
             sparse_k=int(sparse_cfg.get("k", 4)),
+            sparse_mode=str(sparse_cfg.get("mode", "local")),
             max_depth=float(student_cfg.get("max_depth", model_cfg.get("max_depth", 120.0))),
             sparse_anchor_lambda=float(student_cfg.get("sparse_anchor_lambda", 0.7)),
         )
@@ -269,11 +222,21 @@ class GeoRTStudentS(nn.Module):
         uv: torch.Tensor,
     ) -> dict[str, torch.Tensor]:
         # D_init: [B,1,H/4,W/4], metric prior from sparse LiDAR only.
-        D_init = fast_sparse_propagation(rgb, sparse, mask, ray, scale=self.sparse_scale, k=self.sparse_k)
+        D_init = fast_sparse_propagation(
+            rgb,
+            sparse,
+            mask,
+            ray,
+            scale=self.sparse_scale,
+            k=self.sparse_k,
+            mode=self.sparse_mode,
+        )
         D_init_full = F.interpolate(D_init, size=rgb.shape[-2:], mode="bilinear", align_corners=False)
 
-        log_sparse = torch.log(sparse.clamp_min(self.eps)) * mask
-        depth_in = torch.cat([log_sparse, mask, D_init_full], dim=1)  # [B,3,H,W]
+        log_max = torch.log(torch.tensor(self.max_depth + 1.0, device=rgb.device, dtype=rgb.dtype))
+        log_sparse = torch.log1p(sparse.clamp(0.0, self.max_depth)) / log_max * mask
+        D_init_feat = torch.log1p(D_init_full.clamp(0.0, self.max_depth)) / log_max
+        depth_in = torch.cat([log_sparse, mask, D_init_feat], dim=1)  # [B,3,H,W]
         geom_in = torch.cat([ray, uv], dim=1)  # [B,5,H,W]
 
         F_rgb = self.rgb_stem(rgb)  # [B,24,H,W]
@@ -282,7 +245,7 @@ class GeoRTStudentS(nn.Module):
         fused = self.fusion(torch.cat([F_rgb, F_depth, F_ray], dim=1))  # [B,C,H,W]
 
         E4, E8, E16 = self.encoder(fused)
-        prior_full = torch.cat([log_sparse, mask, D_init_full, ray], dim=1)  # [B,6,H,W]
+        prior_full = torch.cat([log_sparse, mask, D_init_feat, ray], dim=1)  # [B,6,H,W]
         E4 = self.inject4(E4, prior_full)
         E8 = self.inject8(E8, prior_full)
         E16 = self.inject16(E16, prior_full)
@@ -299,8 +262,8 @@ class GeoRTStudentS(nn.Module):
         s_1_4 = F.softplus(self.conf_head(P4))
         C_1_4 = torch.exp(-s_1_4).clamp(1e-4, 1.0)
 
-        D_up = self.guided_up(D_1_4, rgb, sparse, mask).clamp(self.eps, self.max_depth)
-        C_up = self.guided_up(C_1_4, rgb, sparse, mask).clamp(1e-4, 1.0)
+        D_up = self.depth_up(D_1_4, rgb, sparse, mask).clamp(self.eps, self.max_depth)
+        C_up = self.conf_up(C_1_4, rgb, sparse, mask).clamp(1e-4, 1.0)
 
         sparse_scaled = sparse.clamp(0.0, self.max_depth) / self.max_depth
         D_up_scaled = D_up / self.max_depth
