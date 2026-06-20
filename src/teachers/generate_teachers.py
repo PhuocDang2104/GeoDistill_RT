@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+import cv2
 import numpy as np
 from tqdm import tqdm
 
@@ -18,11 +19,64 @@ from ..utils import (
     resolve_repo_path,
     save_npz_atomic,
     setup_logger,
+    as_save_dtype,
 )
 from .depth_anything_wrapper import DepthAnythingV2Wrapper
 from .dmd3c_wrapper import DMD3CWrapper
 from .dsine_wrapper import DSINEWrapper
 from .metric3d_wrapper import Metric3DWrapper
+
+
+def _resize_to_shape(array: np.ndarray, shape_hw: tuple[int, int]) -> np.ndarray:
+    arr = np.asarray(array, dtype=np.float32)
+    if arr.shape == shape_hw:
+        return arr.astype(np.float32)
+    h, w = shape_hw
+    return cv2.resize(arr, (w, h), interpolation=cv2.INTER_LINEAR).astype(np.float32)
+
+
+def _valid_depth(depth: np.ndarray, min_depth: float = 1e-3, max_depth: float = 120.0) -> np.ndarray:
+    return np.isfinite(depth) & (depth > min_depth) & (depth < max_depth)
+
+
+def _calibrate_depth_to_gt(
+    depth: np.ndarray,
+    gt: np.ndarray,
+    gt_mask: np.ndarray,
+    min_depth: float = 1e-3,
+    max_depth: float = 120.0,
+    min_points: int = 128,
+) -> tuple[np.ndarray, float, float, int, bool]:
+    """Fit gamma * depth + delta to GT on valid GT pixels."""
+    depth = np.asarray(depth, dtype=np.float32)
+    gt = np.asarray(gt, dtype=np.float32)
+    gt_valid = (gt_mask > 0.5) & _valid_depth(gt, min_depth, max_depth)
+    valid = gt_valid & _valid_depth(depth, min_depth, max_depth)
+    count = int(valid.sum())
+    if count < int(min_points):
+        return depth.astype(np.float32), 1.0, 0.0, count, False
+
+    x = depth[valid].astype(np.float64)
+    y = gt[valid].astype(np.float64)
+    residual = np.abs(x - y)
+    if residual.size >= 512:
+        keep = residual <= np.percentile(residual, 90.0)
+        x = x[keep]
+        y = y[keep]
+    if x.size < int(min_points):
+        return depth.astype(np.float32), 1.0, 0.0, count, False
+
+    A = np.stack([x, np.ones_like(x)], axis=1)
+    try:
+        gamma, delta = np.linalg.lstsq(A, y, rcond=None)[0]
+    except np.linalg.LinAlgError:
+        return depth.astype(np.float32), 1.0, 0.0, count, False
+    if not np.isfinite(gamma) or not np.isfinite(delta) or gamma <= 0.05 or gamma > 20.0:
+        return depth.astype(np.float32), 1.0, 0.0, count, False
+
+    calibrated = gamma * depth.astype(np.float32) + np.float32(delta)
+    calibrated[~np.isfinite(calibrated)] = 0.0
+    return calibrated.astype(np.float32), float(gamma), float(delta), count, True
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,13 +110,16 @@ class TeacherGenerator:
         self.logger = setup_logger(self.teacher_root / "logs" / f"generate_{split}.log")
         self.device = device_from_config(str(cfg.get("device", "cuda")))
         self.output_scale = int(cfg.get("output_scale", 4))
-        self.save_dtype = str(cfg.get("save_dtype", "float16"))
+        self.save_dtype = str(cfg.get("save_dtype", "float32"))
         self.skip_existing = bool(cfg.get("skip_existing", True))
         self.force_da_align = False
         self._metric3d: Metric3DWrapper | None = None
         self._depth_anything: DepthAnythingV2Wrapper | None = None
         self._dsine: DSINEWrapper | None = None
         self._dmd3c: DMD3CWrapper | None = None
+
+    def _save_array(self, array: np.ndarray) -> np.ndarray:
+        return as_save_dtype(np.asarray(array), self.save_dtype)
 
     def dataset(self) -> KITTIDepthCompletionDataset:
         split_file = self.paths[f"{self.split}_split"]
@@ -323,29 +380,69 @@ class TeacherGenerator:
             geometry_conf_decay=float(fcfg.get("geometry_conf_decay", 0.5)),
         )
         payload = {
-            "D_teacher": result.D_teacher.astype(np.float32),
-            "C_teacher": result.C_teacher.astype(np.float32),
-            "D_full": result.D_full.astype(np.float32),
-            "C_full": result.C_full.astype(np.float32),
-            "C_dmd3c": result.C_dmd3c.astype(np.float32),
-            "w_m3d": result.w_m3d.astype(np.float32),
-            "w_da": result.w_da.astype(np.float32),
-            "w_dmd3c": result.w_dmd3c.astype(np.float32),
+            "D_teacher": self._save_array(result.D_teacher),
+            "C_teacher": self._save_array(result.C_teacher),
+            "D_full": self._save_array(result.D_full),
+            "C_full": self._save_array(result.C_full),
+            "C_dmd3c": self._save_array(result.C_dmd3c),
+            "w_m3d": self._save_array(result.w_m3d),
+            "w_da": self._save_array(result.w_da),
+            "w_dmd3c": self._save_array(result.w_dmd3c),
         }
         save_npz_atomic(path, **payload)
 
         gt_valid = np.isfinite(gt) & (gt > 1e-3) & (gt < 120.0) & (gt_mask > 0.5)
-        D_cm = result.D_full.astype(np.float32).copy()
+        D_metric_raw = result.D_full.astype(np.float32).copy()
+        D_metric_calibrated = D_metric_raw.copy()
+        if D_dmd3c is not None:
+            D_dmd3c_raw = _resize_to_shape(D_dmd3c, sparse.shape)
+        else:
+            D_dmd3c_raw = np.zeros(sparse.shape, dtype=np.float32)
+        D_dmd3c_calibrated, calib_gamma, calib_delta, calib_count, calib_applied = _calibrate_depth_to_gt(
+            D_dmd3c_raw,
+            gt,
+            gt_mask,
+            min_depth=1e-3,
+            max_depth=120.0,
+        )
+        dmd_valid = _valid_depth(D_dmd3c_raw, 1e-3, 120.0)
+        D_metric_calibrated[dmd_valid] = D_dmd3c_calibrated[dmd_valid]
+        valid_metric = _valid_depth(D_metric_calibrated, 1e-3, 120.0)
+
+        D_cm = np.where(valid_metric, D_metric_calibrated, 0.0).astype(np.float32)
         C_cm = result.C_full.astype(np.float32).copy()
+        C_cm[~valid_metric] = 0.0
         D_cm[gt_valid] = gt[gt_valid].astype(np.float32)
         C_cm[gt_valid] = 1.0
+        if calib_applied:
+            self.logger.info(
+                "Calibrated DMD3C for %s using %d GT pixels: gamma=%.6f delta=%.6f",
+                sid,
+                calib_count,
+                calib_gamma,
+                calib_delta,
+            )
+        else:
+            self.logger.warning(
+                "DMD3C calibration skipped for %s: valid_gt_overlap=%d, using raw DMD3C for metric_coarse.",
+                sid,
+                calib_count,
+            )
         save_npz_atomic(
             metric_path,
-            D_cm=D_cm.astype(np.float32),
-            C_cm=np.clip(C_cm, 0.0, 1.0).astype(np.float32),
-            C_dmd3c=result.C_dmd3c.astype(np.float32),
-            D_teacher=downsample_map(D_cm, self.output_scale).astype(np.float32),
-            C_teacher=downsample_map(C_cm, self.output_scale).astype(np.float32),
+            D_cm=self._save_array(D_cm),
+            C_cm=self._save_array(np.clip(C_cm, 0.0, 1.0)),
+            C_dmd3c=self._save_array(result.C_dmd3c),
+            D_metric_raw=self._save_array(D_metric_raw),
+            D_metric_calibrated=self._save_array(D_metric_calibrated),
+            D_dmd3c_raw=self._save_array(D_dmd3c_raw),
+            D_dmd3c_calibrated=self._save_array(D_dmd3c_calibrated),
+            dmd3c_calibration_gamma=np.array(calib_gamma, dtype=np.float32),
+            dmd3c_calibration_delta=np.array(calib_delta, dtype=np.float32),
+            dmd3c_calibration_count=np.array(calib_count, dtype=np.int32),
+            dmd3c_calibration_applied=np.array(calib_applied, dtype=np.bool_),
+            D_teacher=self._save_array(downsample_map(D_cm, self.output_scale)),
+            C_teacher=self._save_array(downsample_map(C_cm, self.output_scale)),
         )
 
         raw_path = self.path_da_raw(sid)
@@ -372,11 +469,11 @@ class TeacherGenerator:
         )
         save_npz_atomic(
             geometry_path,
-            R_G=geom["R_G"].astype(np.float32),
-            C_G=geom["C_G"].astype(np.float32),
-            w_da=geom["w_da"].astype(np.float32),
-            w_m3d=geom["w_m3d"].astype(np.float32),
-            w_dmd3c=geom["w_dmd3c"].astype(np.float32),
+            R_G=self._save_array(geom["R_G"]),
+            C_G=self._save_array(geom["C_G"]),
+            w_da=self._save_array(geom["w_da"]),
+            w_m3d=self._save_array(geom["w_m3d"]),
+            w_dmd3c=self._save_array(geom["w_dmd3c"]),
         )
 
 

@@ -318,9 +318,19 @@ keys:
   D_cm float32 [H,W]
   C_cm float32 [H,W]
   C_dmd3c float32 [H,W]
+  D_metric_raw float32 [H,W]
+  D_metric_calibrated float32 [H,W]
+  D_dmd3c_raw float32 [H,W]
+  D_dmd3c_calibrated float32 [H,W]
+  dmd3c_calibration_gamma float
+  dmd3c_calibration_delta float
+  dmd3c_calibration_count int
+  dmd3c_calibration_applied bool
   D_teacher float32 [H/4,W/4]
   C_teacher float32 [H/4,W/4]
 ```
+
+`D_cm` is the default training target: GT where valid, otherwise generation-time calibrated DMD3C where DMD3C is valid, with weighted fusion fallback only where DMD3C is invalid.
 
 Separated geometry teacher:
 

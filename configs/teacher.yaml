@@ -2,7 +2,7 @@ paths_file: "configs/paths.yaml"
 
 device: "cuda"
 output_scale: 4
-save_dtype: "float16"
+save_dtype: "float32"
 skip_existing: true
 max_samples: null
 

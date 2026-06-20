@@ -1720,7 +1720,7 @@ Recommended saved teacher and student outputs:
 | File group | Key | Meaning |
 |---|---|---|
 | `teacher_outputs/dmd3c/{split}` | `D_dmd3c` | raw DMD3C metric depth |
-| `teacher_outputs/metric_coarse/{split}` | `D_cm`, `C_cm`, `C_dmd3c` | GT+DMD3C coarse metric teacher and DMD3C confidence |
+| `teacher_outputs/metric_coarse/{split}` | `D_cm`, `C_cm`, `C_dmd3c`, `D_dmd3c_raw`, `D_dmd3c_calibrated` | GT + generation-time calibrated DMD3C coarse metric teacher, plus raw/calibrated DMD3C audit maps |
 | `teacher_outputs/geometry_raw/{teacher}/{split}` | `R_i` or raw model key | per-model relative/metric geometry output |
 | `teacher_outputs/geometry_fused/{split}` | `R_G`, `C_G`, `w_*` | fused geometry teacher |
 | `teacher_outputs/fused/{split}` | `D_teacher`, `C_teacher`, `D_full`, `C_full`, `C_dmd3c` | backward-compatible aliases and full-resolution DMD3C-dominant metric target |
