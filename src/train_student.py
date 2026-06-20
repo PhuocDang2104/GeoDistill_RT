@@ -3,11 +3,15 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import os
 from pathlib import Path
 from typing import Any
 
 import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
 from .dataset import KITTIDepthCompletionDataset
@@ -36,7 +40,7 @@ def to_device(batch: dict[str, Any], device: torch.device, channels_last: bool =
     return out
 
 
-def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool) -> DataLoader:
+def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool, distributed: bool = False) -> DataLoader:
     data_cfg = cfg["data"]
     mono_cfg = cfg.get("mono_ssi", {})
     loss_cfg = cfg.get("loss", {})
@@ -64,10 +68,12 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         metric_conf_sparse_blend_radius=float(loss_cfg.get("metric_conf_sparse_blend_radius", 48.0)),
         return_tensors=True,
     )
+    sampler = DistributedSampler(dataset, shuffle=training) if distributed else None
     return DataLoader(
         dataset,
         batch_size=int(cfg["train"]["batch_size"]) if training else 1,
-        shuffle=training,
+        shuffle=training and sampler is None,
+        sampler=sampler,
         num_workers=int(data_cfg.get("num_workers", 2)),
         pin_memory=torch.cuda.is_available(),
         drop_last=training,
@@ -82,7 +88,51 @@ def _has_any_npz(root: Path | None, candidates: list[Path]) -> bool:
 
 
 def _unwrap_model(model: torch.nn.Module) -> torch.nn.Module:
-    return getattr(model, "_orig_mod", model)
+    while True:
+        if hasattr(model, "_orig_mod"):
+            model = getattr(model, "_orig_mod")
+            continue
+        if isinstance(model, DistributedDataParallel):
+            model = model.module
+            continue
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module
+            continue
+        return model
+
+
+def _use_data_parallel(train_cfg: dict[str, Any], device: torch.device) -> bool:
+    value = train_cfg.get("data_parallel", "auto")
+    if isinstance(value, str):
+        enabled = value.lower() in {"1", "true", "yes", "on", "auto"}
+    else:
+        enabled = bool(value)
+    return enabled and device.type == "cuda" and torch.cuda.device_count() > 1
+
+
+def _distributed_requested(train_cfg: dict[str, Any]) -> bool:
+    value = train_cfg.get("distributed", "auto")
+    if isinstance(value, str):
+        enabled = value.lower() in {"1", "true", "yes", "on", "auto"}
+    else:
+        enabled = bool(value)
+    return enabled and int(os.environ.get("WORLD_SIZE", "1")) > 1
+
+
+def _init_distributed(train_cfg: dict[str, Any]) -> tuple[bool, int, int, int]:
+    if not _distributed_requested(train_cfg):
+        return False, 0, 0, 1
+    backend = str(train_cfg.get("distributed_backend", "gloo")).lower()
+    if not dist.is_available():
+        raise RuntimeError("Distributed training was requested but torch.distributed is unavailable.")
+    if not dist.is_initialized():
+        dist.init_process_group(backend=backend)
+    rank = dist.get_rank()
+    world_size = dist.get_world_size()
+    local_rank = int(os.environ.get("LOCAL_RANK", rank))
+    if torch.cuda.is_available():
+        torch.cuda.set_device(local_rank)
+    return True, local_rank, rank, world_size
 
 
 def _amp_dtype(cfg: dict[str, Any], device: torch.device, logger: Any) -> torch.dtype:
@@ -311,11 +361,19 @@ def validate(
 
 def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     train_cfg = cfg.get("train", {})
+    distributed, local_rank, rank, world_size = _init_distributed(train_cfg)
+    is_main = rank == 0
     deterministic = bool(train_cfg.get("deterministic", True))
-    seed_everything(int(cfg.get("seed", 42)), deterministic=deterministic)
-    device = device_from_config(str(cfg.get("device", "cuda")))
+    seed_everything(int(cfg.get("seed", 42)) + rank, deterministic=deterministic)
+    if distributed and torch.cuda.is_available():
+        device = torch.device("cuda", local_rank)
+    else:
+        device = device_from_config(str(cfg.get("device", "cuda")))
     student_root = Path(paths["student_root"])
-    logger = setup_logger(student_root / "logs" / "train_student.log")
+    log_name = "train_student.log" if is_main else f"train_student_rank{rank}.log"
+    logger = setup_logger(student_root / "logs" / log_name)
+    if distributed:
+        logger.info("Using distributed training backend=%s rank=%d/%d local_rank=%d.", dist.get_backend(), rank, world_size, local_rank)
     matmul_precision = str(train_cfg.get("float32_matmul_precision", "high"))
     try:
         torch.set_float32_matmul_precision(matmul_precision)
@@ -324,8 +382,8 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     if device.type == "cuda" and not deterministic:
         torch.backends.cudnn.benchmark = True
 
-    train_loader = make_loader(cfg, paths, "train", training=True)
-    val_loader = make_loader(cfg, paths, "val", training=False)
+    train_loader = make_loader(cfg, paths, "train", training=True, distributed=distributed)
+    val_loader = make_loader(cfg, paths, "val", training=False) if is_main else None
     preflight_teacher_coverage(cfg, train_loader.dataset, logger)
     model = GeoRTStudentS.from_config(cfg).to(device)
     channels_last = bool(train_cfg.get("channels_last", True)) and device.type == "cuda"
@@ -359,6 +417,17 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             except Exception as exc:
                 logger.warning("torch.compile failed; continuing eager. Error: %s", exc)
 
+    if distributed:
+        logger.info("Wrapping model with DistributedDataParallel.")
+        ddp_kwargs = {"find_unused_parameters": bool(train_cfg.get("find_unused_parameters", True))}
+        if device.type == "cuda":
+            model = DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank, **ddp_kwargs)
+        else:
+            model = DistributedDataParallel(model, **ddp_kwargs)
+    elif _use_data_parallel(train_cfg, device):
+        logger.info("Using DataParallel across %d CUDA devices.", torch.cuda.device_count())
+        model = torch.nn.DataParallel(model)
+
     optimizer = _make_optimizer(model, cfg, device, logger)
     epochs = int(train_cfg.get("epochs", 30))
     scheduler = _make_scheduler(optimizer, cfg, steps_per_epoch=len(train_loader), epochs=epochs)
@@ -380,10 +449,12 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     mono_start_epoch = int(mono_cfg.get("start_epoch", 5))
     warned_missing_mono = False
     for epoch in range(start_epoch, epochs):
+        if distributed and isinstance(train_loader.sampler, DistributedSampler):
+            train_loader.sampler.set_epoch(epoch)
         model.train()
         running: dict[str, float] = {}
         count = 0
-        pbar = tqdm(train_loader, desc=f"train:{epoch}")
+        pbar = tqdm(train_loader, desc=f"train:{epoch}", disable=not is_main)
         for batch in pbar:
             batch = to_device(batch, device, channels_last=channels_last)
             geometry_available = "C_G" in batch and float(batch["C_G"].sum().detach().cpu()) >= 1.0
@@ -417,26 +488,41 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             for key, value in items.items():
                 running[key] = running.get(key, 0.0) + float(value)
             avg_loss = running["loss"] / count
-            pbar.set_postfix(loss=f"{avg_loss:.4f}")
+            if is_main:
+                pbar.set_postfix(loss=f"{avg_loss:.4f}")
 
         train_items = {f"train_{k}": v / max(1, count) for k, v in running.items()}
-        val_items = validate(model, val_loader, device, cfg, channels_last=channels_last)
-        rmse = float(val_items.get("rmse", float("inf")))
-        is_best = rmse < best_rmse
-        if is_best:
-            best_rmse = rmse
+        if distributed:
+            for key, value in train_items.items():
+                reduced = torch.tensor(float(value), device=device)
+                dist.all_reduce(reduced, op=dist.ReduceOp.SUM)
+                train_items[key] = float(reduced.item()) / float(world_size)
+        if distributed:
+            dist.barrier()
+        if is_main:
+            assert val_loader is not None
+            val_items = validate(_unwrap_model(model), val_loader, device, cfg, channels_last=channels_last)
+            rmse = float(val_items.get("rmse", float("inf")))
+            is_best = rmse < best_rmse
+            if is_best:
+                best_rmse = rmse
 
-        record: dict[str, Any] = {"epoch": epoch, **train_items, **{f"val_{k}": v for k, v in val_items.items()}, "best_rmse": best_rmse}
-        append_csv(log_csv, record)
-        write_jsonl(log_jsonl, record)
-        logger.info("epoch=%d train_loss=%.6f val_rmse=%.6f best=%.6f", epoch, train_items.get("train_loss", 0.0), rmse, best_rmse)
+            record: dict[str, Any] = {"epoch": epoch, **train_items, **{f"val_{k}": v for k, v in val_items.items()}, "best_rmse": best_rmse}
+            append_csv(log_csv, record)
+            write_jsonl(log_jsonl, record)
+            logger.info("epoch=%d train_loss=%.6f val_rmse=%.6f best=%.6f", epoch, train_items.get("train_loss", 0.0), rmse, best_rmse)
 
-        save_every = int(cfg.get("outputs", {}).get("save_every", 1))
-        save_checkpoint(ckpt_dir / "last.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
-        if save_every > 0 and (epoch + 1) % save_every == 0:
-            save_checkpoint(ckpt_dir / f"epoch_{epoch:03d}.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
-        if is_best:
-            save_checkpoint(ckpt_dir / "best.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+            save_every = int(cfg.get("outputs", {}).get("save_every", 1))
+            save_checkpoint(ckpt_dir / "last.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+            if save_every > 0 and (epoch + 1) % save_every == 0:
+                save_checkpoint(ckpt_dir / f"epoch_{epoch:03d}.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+            if is_best:
+                save_checkpoint(ckpt_dir / "best.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+        if distributed:
+            dist.barrier()
+
+    if distributed:
+        dist.destroy_process_group()
 
 
 def main() -> None:

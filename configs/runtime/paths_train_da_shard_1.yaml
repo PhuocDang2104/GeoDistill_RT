@@ -1,0 +1,14 @@
+project_root: "/workspace"
+
+data_root: "/workspace/data/kitti_depth_completion"
+split_root: "/workspace/data/kitti_depth_completion/splits"
+
+third_party_root: "/workspace/third_party"
+weights_root: "/workspace/weights"
+
+teacher_root: "/workspace/teacher_outputs"
+student_root: "/workspace/student_outputs"
+
+train_split: "runtime/train_da_shard_1.txt"
+val_split: "val.txt"
+test_split: "test.txt"

@@ -6,7 +6,7 @@ device: "cuda"
 data:
   image_size: [352, 1216]
   output_scale: 4
-  num_workers: 2
+  num_workers: 4
   depth_scale: 256.0
 
 model:
@@ -28,8 +28,8 @@ sparse_propagation:
 
 train:
   epochs: 30
-  batch_size: 2
-  lr: 0.0001
+  batch_size: 12
+  lr: 0.0002
   weight_decay: 0.00001
   amp: true
   amp_dtype: "float16"
@@ -39,11 +39,15 @@ train:
   warmup_epochs: 1.0
   min_lr_ratio: 0.05
   channels_last: true
+  data_parallel: false
+  distributed: "auto"
+  distributed_backend: "gloo"
+  find_unused_parameters: true
   compile: false
   compile_mode: "reduce-overhead"
-  deterministic: true
+  deterministic: false
   float32_matmul_precision: "high"
-  resume: null
+  resume: "student_outputs/checkpoints/last.pth"
 
 loss:
   lambda_gt: 1.0

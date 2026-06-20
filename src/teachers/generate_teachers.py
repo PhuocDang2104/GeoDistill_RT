@@ -11,6 +11,7 @@ from tqdm import tqdm
 from ..dataset import KITTIDepthCompletionDataset
 from ..teacher_fusion import build_geometry_teacher, downsample_map, fuse_teachers
 from ..utils import (
+    as_save_dtype,
     device_from_config,
     ensure_dir,
     load_npz_array,
@@ -217,9 +218,17 @@ class TeacherGenerator:
     def path_geometry_fused(self, sample_id: str) -> Path:
         return self.teacher_root / "geometry_fused" / self.split / f"{sample_id}.npz"
 
-    def run(self, run_metric3d: bool, run_da: bool, run_dsine: bool, run_dmd3c: bool, run_fusion: bool, max_samples: int | None) -> None:
+    def run(
+        self,
+        run_metric3d: bool,
+        run_da: bool,
+        run_dsine: bool,
+        run_dmd3c: bool,
+        run_fusion: bool,
+        max_samples: int | None,
+    ) -> None:
         dataset = self.dataset()
-        total = len(dataset) if max_samples is None else min(len(dataset), max_samples)
+        total = len(dataset) if max_samples is None else min(len(dataset), int(max_samples))
         self.logger.info("Generating teachers for split=%s samples=%d", self.split, total)
 
         for idx in tqdm(range(total), desc=f"teachers:{self.split}"):
@@ -312,13 +321,24 @@ class TeacherGenerator:
         path = self.path_fused(sid)
         metric_path = self.path_metric_coarse(sid)
         geometry_path = self.path_geometry_fused(sid)
-        required_keys = ["D_teacher", "C_teacher", "D_full", "C_full", "w_m3d", "w_da", "w_dmd3c"]
-        if self.skip_existing and npz_has_keys(path, required_keys) and npz_has_keys(metric_path, ["D_cm", "C_cm"]) and npz_has_keys(geometry_path, ["R_G", "C_G"]):
+        fcfg = self.cfg.get("fusion", {})
+        minimal_outputs = bool(fcfg.get("minimal_outputs", False))
+        save_fused = bool(fcfg.get("save_fused", not minimal_outputs))
+        save_metric_diagnostics = bool(fcfg.get("save_metric_diagnostics", not minimal_outputs))
+        save_geometry_weights = bool(fcfg.get("save_geometry_weights", not minimal_outputs))
+
+        required_fused = ["D_teacher", "C_teacher", "D_full", "C_full", "w_m3d", "w_da", "w_dmd3c"]
+        fused_ready = (not save_fused) or npz_has_keys(path, required_fused)
+        metric_ready = npz_has_keys(metric_path, ["D_cm", "C_cm"])
+        geometry_ready = npz_has_keys(geometry_path, ["R_G", "C_G"])
+        if self.skip_existing and fused_ready and metric_ready and geometry_ready:
             return
 
         m3d_key = self.cfg["metric3d"].get("output_key", "D_m3d")
         da_key = self.cfg["depth_anything"].get("output_key_aligned", "D_da_aligned")
         dsine_key = self.cfg["dsine"].get("output_key", "N_dsine")
+        shape_hw = sparse.shape
+
         D_dmd3c = None
         if self.cfg.get("dmd3c", {}).get("enabled", False):
             dmd3c_path = self.path_dmd3c(sid)
@@ -335,7 +355,6 @@ class TeacherGenerator:
             self.logger.warning("Skipping fusion for %s: missing one of %s", sid, [str(p) for p in [m3d_path, da_path, dsine_path]])
             return
 
-        shape_hw = sparse.shape
         if npz_has_keys(m3d_path, [m3d_key]):
             D_m3d = load_npz_array(m3d_path, m3d_key).astype(np.float32)
         else:
@@ -355,7 +374,7 @@ class TeacherGenerator:
                 self.logger.warning("Fusion for %s: %s missing key %s; using front-facing normal fallback.", sid, dsine_path, dsine_key)
             N_dsine = np.zeros((3, shape_hw[0], shape_hw[1]), dtype=np.float32)
             N_dsine[2] = 1.0
-        fcfg = self.cfg.get("fusion", {})
+
         result = fuse_teachers(
             D_m3d=D_m3d,
             D_da_aligned=D_da,
@@ -379,17 +398,19 @@ class TeacherGenerator:
             edge_conf_decay=float(fcfg.get("edge_conf_decay", 1.0)),
             geometry_conf_decay=float(fcfg.get("geometry_conf_decay", 0.5)),
         )
-        payload = {
-            "D_teacher": self._save_array(result.D_teacher),
-            "C_teacher": self._save_array(result.C_teacher),
-            "D_full": self._save_array(result.D_full),
-            "C_full": self._save_array(result.C_full),
-            "C_dmd3c": self._save_array(result.C_dmd3c),
-            "w_m3d": self._save_array(result.w_m3d),
-            "w_da": self._save_array(result.w_da),
-            "w_dmd3c": self._save_array(result.w_dmd3c),
-        }
-        save_npz_atomic(path, **payload)
+
+        if save_fused:
+            save_npz_atomic(
+                path,
+                D_teacher=self._save_array(result.D_teacher),
+                C_teacher=self._save_array(result.C_teacher),
+                D_full=self._save_array(result.D_full),
+                C_full=self._save_array(result.C_full),
+                C_dmd3c=self._save_array(result.C_dmd3c),
+                w_m3d=self._save_array(result.w_m3d),
+                w_da=self._save_array(result.w_da),
+                w_dmd3c=self._save_array(result.w_dmd3c),
+            )
 
         gt_valid = np.isfinite(gt) & (gt > 1e-3) & (gt < 120.0) & (gt_mask > 0.5)
         D_metric_raw = result.D_full.astype(np.float32).copy()
@@ -428,22 +449,28 @@ class TeacherGenerator:
                 sid,
                 calib_count,
             )
-        save_npz_atomic(
-            metric_path,
-            D_cm=self._save_array(D_cm),
-            C_cm=self._save_array(np.clip(C_cm, 0.0, 1.0)),
-            C_dmd3c=self._save_array(result.C_dmd3c),
-            D_metric_raw=self._save_array(D_metric_raw),
-            D_metric_calibrated=self._save_array(D_metric_calibrated),
-            D_dmd3c_raw=self._save_array(D_dmd3c_raw),
-            D_dmd3c_calibrated=self._save_array(D_dmd3c_calibrated),
-            dmd3c_calibration_gamma=np.array(calib_gamma, dtype=np.float32),
-            dmd3c_calibration_delta=np.array(calib_delta, dtype=np.float32),
-            dmd3c_calibration_count=np.array(calib_count, dtype=np.int32),
-            dmd3c_calibration_applied=np.array(calib_applied, dtype=np.bool_),
-            D_teacher=self._save_array(downsample_map(D_cm, self.output_scale)),
-            C_teacher=self._save_array(downsample_map(C_cm, self.output_scale)),
-        )
+
+        metric_payload = {
+            "D_cm": self._save_array(D_cm),
+            "C_cm": self._save_array(np.clip(C_cm, 0.0, 1.0)),
+            "dmd3c_calibration_gamma": np.array(calib_gamma, dtype=np.float32),
+            "dmd3c_calibration_delta": np.array(calib_delta, dtype=np.float32),
+            "dmd3c_calibration_count": np.array(calib_count, dtype=np.int32),
+            "dmd3c_calibration_applied": np.array(calib_applied, dtype=np.bool_),
+        }
+        if save_metric_diagnostics:
+            metric_payload.update(
+                {
+                    "C_dmd3c": self._save_array(result.C_dmd3c),
+                    "D_metric_raw": self._save_array(D_metric_raw),
+                    "D_metric_calibrated": self._save_array(D_metric_calibrated),
+                    "D_dmd3c_raw": self._save_array(D_dmd3c_raw),
+                    "D_dmd3c_calibrated": self._save_array(D_dmd3c_calibrated),
+                    "D_teacher": self._save_array(downsample_map(D_cm, self.output_scale)),
+                    "C_teacher": self._save_array(downsample_map(C_cm, self.output_scale)),
+                }
+            )
+        save_npz_atomic(metric_path, **metric_payload)
 
         raw_path = self.path_da_raw(sid)
         raw_key = self.cfg["depth_anything"].get("output_key_raw", "D_da_raw")
@@ -467,14 +494,19 @@ class TeacherGenerator:
             edge_decay=float(fcfg.get("geometry_edge_decay", fcfg.get("edge_conf_decay", 1.0))),
             sparse_blend_radius=float(fcfg.get("sparse_blend_radius", 48.0)),
         )
-        save_npz_atomic(
-            geometry_path,
-            R_G=self._save_array(geom["R_G"]),
-            C_G=self._save_array(geom["C_G"]),
-            w_da=self._save_array(geom["w_da"]),
-            w_m3d=self._save_array(geom["w_m3d"]),
-            w_dmd3c=self._save_array(geom["w_dmd3c"]),
-        )
+        geometry_payload = {
+            "R_G": self._save_array(geom["R_G"]),
+            "C_G": self._save_array(geom["C_G"]),
+        }
+        if save_geometry_weights:
+            geometry_payload.update(
+                {
+                    "w_da": self._save_array(geom["w_da"]),
+                    "w_m3d": self._save_array(geom["w_m3d"]),
+                    "w_dmd3c": self._save_array(geom["w_dmd3c"]),
+                }
+            )
+        save_npz_atomic(geometry_path, **geometry_payload)
 
 
 def main() -> None:
@@ -488,6 +520,7 @@ def main() -> None:
     run_dmd3c = args.run_all or args.run_dmd3c
     run_fusion = args.run_all or args.run_fusion
     max_samples = args.max_samples if args.max_samples is not None else cfg.get("max_samples")
+
     generator = TeacherGenerator(cfg, paths, args.split)
     generator.force_da_align = bool(args.realign_depth_anything)
     generator.run(run_metric3d, run_da, run_dsine, run_dmd3c, run_fusion, max_samples)

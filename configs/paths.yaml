@@ -1,14 +1,14 @@
-project_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT"
+project_root: "/workspace"
 
-data_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/data/depth_selection"
-split_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/data/depth_selection/splits"
+data_root: "/workspace/data/kitti_depth_completion"
+split_root: "/workspace/data/kitti_depth_completion/splits"
 
-third_party_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/third_party"
-weights_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/weights"
+third_party_root: "/workspace/third_party"
+weights_root: "/workspace/weights"
 
-teacher_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/teacher_outputs"
-student_root: "/content/drive/MyDrive/DEPTH-FUSION | Workspace/monocular_sparse_fusion/GeoRT/student_outputs"
+teacher_root: "/workspace/teacher_outputs"
+student_root: "/workspace/student_outputs"
 
-train_split: "train.txt"
-val_split: "val.txt"
+train_split: "train_10k.txt"
+val_split: "val_1k.txt"
 test_split: "test.txt"

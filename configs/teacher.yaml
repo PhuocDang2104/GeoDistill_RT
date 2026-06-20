@@ -35,7 +35,7 @@ dsine:
   enabled: true
   repo_dir: "third_party/DSINE"
   weights_dir: "weights/dsine"
-  config_file: "weights/dsine/dsine.txt"
+  config_file: "third_party/DSINE/projects/dsine/experiments/exp001_cvpr2024/dsine.txt"
   output_key: "N_dsine"
 
 dmd3c:
@@ -49,6 +49,10 @@ dmd3c:
   image_std: [79.2382, 80.5267, 82.1483]
 
 fusion:
+  minimal_outputs: true
+  save_fused: false
+  save_metric_diagnostics: false
+  save_geometry_weights: false
   alpha_normal: 1.0
   beta_sparse: 1.0
   conf_min: 0.05

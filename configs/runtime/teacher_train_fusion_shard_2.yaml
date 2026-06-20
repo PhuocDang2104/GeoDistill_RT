@@ -1,0 +1,74 @@
+paths_file: "configs/runtime/paths_train_fusion_shard_2.yaml"
+
+device: "cpu"
+output_scale: 4
+save_dtype: "float32"
+skip_existing: true
+max_samples: null
+
+metric3d:
+  enabled: true
+  repo_dir: "third_party/Metric3D"
+  weights_dir: "weights/metric3d"
+  model_name: "metric3dv2"
+  output_key: "D_m3d"
+  input_size: [616, 1064]
+  canonical_focal: 1000.0
+
+depth_anything:
+  enabled: true
+  repo_dir: "third_party/Depth-Anything-V2"
+  weights_dir: "weights/depth_anything_v2"
+  encoder: "vitl"
+  input_size: 518
+  output_key_raw: "D_da_raw"
+  output_key_aligned: "D_da_aligned"
+  align:
+    mode: "inverse_depth"
+    robust: true
+    min_valid_points: 50
+    loss: "huber"
+    min_depth: 0.1
+    max_depth: 120.0
+
+dsine:
+  enabled: true
+  repo_dir: "third_party/DSINE"
+  weights_dir: "weights/dsine"
+  config_file: "third_party/DSINE/projects/dsine/experiments/exp001_cvpr2024/dsine.txt"
+  output_key: "N_dsine"
+
+dmd3c:
+  enabled: true
+  repo_dir: "third_party/DMD3C"
+  weights_dir: "weights/dmd3c"
+  checkpoint: null
+  output_key: "D_dmd3c"
+  image_size: [352, 1216]
+  image_mean: [90.9950, 96.2278, 94.3213]
+  image_std: [79.2382, 80.5267, 82.1483]
+
+fusion:
+  minimal_outputs: true
+  save_fused: false
+  save_metric_diagnostics: false
+  save_geometry_weights: false
+  alpha_normal: 1.0
+  beta_sparse: 1.0
+  conf_min: 0.05
+  sparse_conf_decay: 6.0
+  sparse_blend_radius: 48.0
+  geometry_conf_decay: 0.5
+  edge_conf_decay: 1.0
+  range_conf_decay: 0.25
+  prior_m3d: 1.0
+  prior_da: 0.1
+  prior_dmd3c: 2.0
+  geometry_prior_da: 1.0
+  geometry_prior_m3d: 0.5
+  geometry_prior_dmd3c: 0.25
+  geometry_alpha_normal: 1.0
+  geometry_beta_sparse: 1.0
+  geometry_edge_decay: 1.0
+  use_teacher_confidence: true
+  confidence_mode: "max_weight"

@@ -12,6 +12,41 @@ import torch.nn.functional as F
 from ..utils import ensure_dir, save_npz_atomic
 
 
+def _evict_foreign_modules(prefixes: tuple[str, ...], repo_dir: Path) -> None:
+    repo_text = str(repo_dir)
+    for name, module in list(sys.modules.items()):
+        if not any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes):
+            continue
+        module_file = getattr(module, "__file__", None)
+        if module_file is not None and str(Path(module_file).resolve()).startswith(repo_text):
+            continue
+        del sys.modules[name]
+
+
+def _prioritize_repo_paths(paths: tuple[Path, ...], repo_dir: Path) -> None:
+    target_paths = tuple(path.resolve() for path in paths)
+    target_texts = {str(path) for path in target_paths}
+    sibling_root = repo_dir.parent.resolve()
+    kept: list[str] = []
+    for entry in sys.path:
+        if not entry:
+            kept.append(entry)
+            continue
+        try:
+            entry_path = Path(entry).resolve()
+        except OSError:
+            kept.append(entry)
+            continue
+        if entry_path == sibling_root or sibling_root in entry_path.parents:
+            if entry_path not in target_paths:
+                continue
+        if str(entry_path) not in target_texts:
+            kept.append(entry)
+    sys.path[:] = kept
+    for path in reversed(target_paths):
+        sys.path.insert(0, str(path))
+
+
 class DMD3CWrapper:
     """Real DMD3C / BP-Net teacher wrapper.
 
@@ -52,10 +87,8 @@ class DMD3CWrapper:
                 f"DMD3C official repo not found at {self.repo_dir}. "
                 "Clone https://github.com/Sharpiless/DMD3C into third_party/DMD3C."
             )
-        if str(self.repo_dir) not in sys.path:
-            sys.path.insert(0, str(self.repo_dir))
-        if str(self.repo_dir / "exts") not in sys.path:
-            sys.path.insert(0, str(self.repo_dir / "exts"))
+        _prioritize_repo_paths((self.repo_dir, self.repo_dir / "exts"), self.repo_dir)
+        _evict_foreign_modules(("models",), self.repo_dir)
 
         try:
             import BpOps  # noqa: F401
