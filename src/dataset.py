@@ -217,6 +217,7 @@ class KITTIDepthCompletionDataset(Dataset):
         teacher_root: str | Path | None = None,
         load_teacher: bool = False,
         load_geometry: bool = False,
+        geometry_fallback: bool = True,
         load_mono: bool = False,
         mono_key: str = "D_da_raw",
         min_depth: float = 1e-3,
@@ -238,6 +239,7 @@ class KITTIDepthCompletionDataset(Dataset):
         self.teacher_root = Path(teacher_root) if teacher_root is not None else None
         self.load_teacher = load_teacher
         self.load_geometry = load_geometry
+        self.geometry_fallback = bool(geometry_fallback)
         self.load_mono = load_mono
         self.mono_key = mono_key
         self.min_depth = float(min_depth)
@@ -385,7 +387,7 @@ class KITTIDepthCompletionDataset(Dataset):
         return D_cm.astype(np.float32), C_cm.astype(np.float32)
 
     def _load_geometry_teacher(self, sample_id: str, image_hw: tuple[int, int]) -> tuple[np.ndarray, np.ndarray]:
-        """Load R_G/C_G. Falls back to DA raw as structure-only supervision."""
+        """Load canonical R_G/C_G; optional fallbacks are legacy-only."""
         h, w = image_hw
         zeros = np.zeros((h, w), dtype=np.float32)
         if self.teacher_root is None:
@@ -403,7 +405,7 @@ class KITTIDepthCompletionDataset(Dataset):
             valid = np.isfinite(R)
             source = "geometry_fused"
 
-        if R is None:
+        if R is None and self.geometry_fallback:
             fallbacks = [
                 (Path("geometry_raw") / "depth_anything_v2" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw", "depth_anything_v2"),
                 (Path("geometry_raw") / "depth_anything" / self.split_name, ("R_da", "D_da_raw", "R_i", "depth"), "raw", "depth_anything"),
@@ -436,11 +438,20 @@ class KITTIDepthCompletionDataset(Dataset):
             )
             self._warned_dmd_geometry_fallback = True
 
-        R = _robust_normalize(R, valid)
+        # geometry_fused is already a canonical confidence-weighted consensus.
+        # Re-normalizing it here changes the boundary scale and silently makes
+        # inspected cache values differ from the values used for training.
+        if source == "geometry_fused":
+            R = np.where(np.isfinite(R), R, 0.0).astype(np.float32)
+        else:
+            R = _robust_normalize(R, valid)
         if C is None:
             C = np.isfinite(R).astype(np.float32)
         C = np.clip(np.where(np.isfinite(C), C, 0.0), 0.0, 1.0).astype(np.float32)
-        C[~np.isfinite(R)] = 0.0
+        if valid is not None:
+            C[~valid] = 0.0
+        else:
+            C[~np.isfinite(R)] = 0.0
         return R.astype(np.float32), C.astype(np.float32)
 
     def load_sample_np(self, index: int) -> dict[str, Any]:

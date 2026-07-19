@@ -37,11 +37,24 @@ def depth_metrics_torch(
     rmse = torch.sqrt(masked_mean(diff * diff, mask)).item()
     mae = masked_mean(abs_diff, mask).item()
     abs_rel = masked_mean(abs_diff / target, mask).item()
+    # KITTI convention reports inverse-depth errors in 1/km while depth is in metres.
+    inv_diff = 1000.0 / pred - 1000.0 / target
+    irmse = torch.sqrt(masked_mean(inv_diff * inv_diff, mask)).item()
+    imae = masked_mean(inv_diff.abs(), mask).item()
     ratio = torch.maximum(pred / target, target / pred)
     a1 = masked_mean((ratio < 1.25).float(), mask).item()
     a2 = masked_mean((ratio < 1.25**2).float(), mask).item()
     a3 = masked_mean((ratio < 1.25**3).float(), mask).item()
-    return {"rmse": rmse, "mae": mae, "abs_rel": abs_rel, "delta1": a1, "delta2": a2, "delta3": a3}
+    return {
+        "rmse": rmse,
+        "mae": mae,
+        "irmse": irmse,
+        "imae": imae,
+        "abs_rel": abs_rel,
+        "delta1": a1,
+        "delta2": a2,
+        "delta3": a3,
+    }
 
 
 def _range_key(lo: float, hi: float) -> str:

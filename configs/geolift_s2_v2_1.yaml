@@ -1,0 +1,108 @@
+paths_file: "configs/paths_colab_geolift.yaml"
+
+seed: 42
+device: "cuda"
+
+data:
+  image_size: [352, 1216]
+  output_scale: 4
+  num_workers: 2
+  depth_scale: 256.0
+
+model:
+  name: "GeoLift-S2-v2.1"
+  architecture: "geolift_s2"
+  encoder: "mobilevitv2_0.75"
+  fusion_channels: 32
+  fpn_channels: 24
+
+student:
+  max_depth: 120.0
+
+sparse_propagation:
+  scale: 4
+  radius: 7
+  mode: "local_normalized"
+
+train:
+  epochs: 30
+  batch_size: 4
+  lr: 0.0002
+  weight_decay: 0.00001
+  amp: true
+  amp_dtype: "float16"
+  fused_adamw: true
+  grad_clip_norm: 1.0
+  scheduler: "cosine"
+  warmup_epochs: 1.0
+  min_lr_ratio: 0.05
+  channels_last: true
+  data_parallel: false
+  distributed: false
+  find_unused_parameters: false
+  compile: false
+  deterministic: false
+  float32_matmul_precision: "high"
+  resume: null
+
+loss:
+  lambda_gt: 1.0
+  lambda_S: 0.2
+  lambda_cm: 0.4
+  lambda_boundary: 0.1
+  lambda_cycle: 0.02
+  lambda_G: 0.03
+  lambda_ssi: 0.03
+  lambda_ord_in: 1.0
+  lambda_ord: 0.03
+  lambda_C: 0.02
+  lambda_C_calib: 0.5
+  lambda_plane: 0.0
+  confidence_tau: 0.2
+  multiscale_weights:
+    D16: 0.1
+    D8: 0.2
+    D4: 0.4
+    D2: 0.7
+    D1: 1.0
+  calibrate_metric_teacher: false
+  require_dense_metric_teacher: true
+  require_geometry_teacher: true
+  geometry_fallback: false
+  min_dense_metric_pixels: 1024
+  metric_conf_min: 0.05
+  metric_conf_sparse_decay: 6.0
+  metric_conf_range_decay: 0.25
+  metric_conf_sparse_blend_radius: 48.0
+  min_depth: 0.001
+  max_depth: 120.0
+  range_bins: [0.0, 20.0, 40.0, 60.0, 80.0, 120.0]
+  range_weights: [1.0, 1.2, 1.5, 2.0, 2.5]
+  geometry_conf_threshold: 0.05
+  geometry_min_valid_pixels: 512
+
+mono_ssi:
+  enabled: false
+  weight: 0.03
+  key: "D_da_raw"
+  min_valid_pixels: 128
+
+schedule:
+  add_teacher_epoch: 3
+  add_geometry_epoch: 5
+  add_confidence_epoch: 8
+  teacher_ramp_epochs: 3
+  geometry_ramp_epochs: 3
+  confidence_ramp_epochs: 2
+
+teacher_checks:
+  enabled: true
+  require_metric: true
+  require_geometry: true
+  require_geometry_fused: true
+  min_metric_coverage: 0.95
+  min_geometry_coverage: 0.95
+
+outputs:
+  save_every: 1
+  save_visuals: true

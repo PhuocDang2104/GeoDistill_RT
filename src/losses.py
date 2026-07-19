@@ -20,6 +20,11 @@ def mean_valid(value: torch.Tensor, mask: torch.Tensor, eps: float = 1e-6) -> to
     return (value * mask_f).sum() / mask_f.sum().clamp_min(eps)
 
 
+def weighted_mean(value: torch.Tensor, weight: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
+    weight_f = weight.to(dtype=value.dtype).clamp_min(0.0)
+    return (value * weight_f).sum() / weight_f.sum().clamp_min(eps)
+
+
 def match_prediction_size(x: torch.Tensor, target_hw: tuple[int, int], mode: str = "nearest") -> torch.Tensor:
     if x.shape[-2:] == target_hw:
         return x
@@ -255,6 +260,239 @@ def _tensor_mean_or_zero(value: torch.Tensor, mask: torch.Tensor) -> torch.Tenso
     return value[mask].mean()
 
 
+def _valid_downsample_to(
+    depth: torch.Tensor,
+    mask: torch.Tensor,
+    target_hw: tuple[int, int],
+) -> tuple[torch.Tensor, torch.Tensor]:
+    if depth.shape[-2:] == target_hw:
+        return depth, mask.float()
+    sh = depth.shape[-2] // target_hw[0]
+    sw = depth.shape[-1] // target_hw[1]
+    if sh == sw and sh >= 1 and depth.shape[-2] % target_hw[0] == 0 and depth.shape[-1] % target_hw[1] == 0:
+        weight = mask.float()
+        denominator = F.avg_pool2d(weight, kernel_size=sh, stride=sh)
+        numerator = F.avg_pool2d(depth.float() * weight, kernel_size=sh, stride=sh)
+        return numerator / denominator.clamp_min(1e-6), denominator
+    weight = F.interpolate(mask.float(), size=target_hw, mode="area")
+    numerator = F.interpolate(depth * mask.float(), size=target_hw, mode="area")
+    return numerator / weight.clamp_min(1e-6), (weight > 0.0).float()
+
+
+def _log_huber_loss(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    valid = mask & torch.isfinite(target) & (target > 0.0)
+    residual = torch.log(pred.clamp_min(1e-3)) - torch.log(target.clamp_min(1e-3))
+    return mean_valid(huber(residual, delta=0.1), valid)
+
+
+def _log_gradient_loss(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    log_p = torch.log(pred.clamp_min(1e-3))
+    log_t = torch.log(target.clamp_min(1e-3))
+    mx = mask[:, :, :, 1:] & mask[:, :, :, :-1]
+    my = mask[:, :, 1:, :] & mask[:, :, :-1, :]
+    gx = (log_p[:, :, :, 1:] - log_p[:, :, :, :-1]) - (log_t[:, :, :, 1:] - log_t[:, :, :, :-1])
+    gy = (log_p[:, :, 1:, :] - log_p[:, :, :-1, :]) - (log_t[:, :, 1:, :] - log_t[:, :, :-1, :])
+    return mean_valid(huber(gx, delta=0.05), mx) + mean_valid(huber(gy, delta=0.05), my)
+
+
+def geolift_loss(
+    pred: dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
+    loss_cfg: dict[str, Any],
+    schedule_cfg: dict[str, Any],
+    epoch: int,
+    mono_ssi_cfg: dict[str, Any] | None = None,
+) -> tuple[torch.Tensor, dict[str, float]]:
+    """T2/T3 objective for GeoLift-S2 v2.1.
+
+    Metric and relative teachers are optional during warm-up, but strict teacher
+    checks remain active once their scheduled phase starts.
+    """
+    min_depth = float(loss_cfg.get("min_depth", 1e-3))
+    max_depth = float(loss_cfg.get("max_depth", 120.0))
+    depth1 = pred["D1"]
+    confidence1 = pred["C1"].clamp(1e-4, 1.0)
+    gt = batch["gt"].float()
+    gt_mask = (
+        (batch["gt_mask"] > 0.5)
+        & torch.isfinite(gt)
+        & (gt > min_depth)
+        & (gt < max_depth)
+    )
+    sparse = batch["sparse"].float()
+    sparse_mask = (
+        (batch["mask"] > 0.5)
+        & torch.isfinite(sparse)
+        & (sparse > min_depth)
+        & (sparse < max_depth)
+    )
+
+    if "D_cm" in batch:
+        metric_teacher = match_prediction_size(batch["D_cm"].float(), depth1.shape[-2:], mode="bilinear")
+        metric_conf = match_prediction_size(batch.get("C_cm", torch.ones_like(metric_teacher)).float(), depth1.shape[-2:], mode="bilinear")
+    elif "D_teacher" in batch:
+        metric_teacher = match_prediction_size(batch["D_teacher"].float(), depth1.shape[-2:], mode="bilinear")
+        metric_conf = match_prediction_size(batch.get("C_teacher", torch.ones_like(metric_teacher)).float(), depth1.shape[-2:], mode="bilinear")
+    else:
+        metric_teacher = torch.zeros_like(depth1)
+        metric_conf = torch.zeros_like(depth1)
+    metric_conf = metric_conf.clamp(0.0, 1.0)
+    metric_mask = (
+        (metric_conf > 0.0)
+        & torch.isfinite(metric_teacher)
+        & (metric_teacher > min_depth)
+        & (metric_teacher < max_depth)
+    )
+    metric_non_gt = metric_mask & ~gt_mask
+
+    scale_weights_cfg = loss_cfg.get("multiscale_weights", {"D16": 0.1, "D8": 0.2, "D4": 0.4, "D2": 0.7, "D1": 1.0})
+    scale_weights = {name: float(scale_weights_cfg.get(name, default)) for name, default in (("D16", 0.1), ("D8", 0.2), ("D4", 0.4), ("D2", 0.7), ("D1", 1.0))}
+    metric_supervision = depth1.new_tensor(0.0)
+    teacher_supervision = depth1.new_tensor(0.0)
+    per_scale: dict[str, torch.Tensor] = {}
+
+    add_teacher_epoch = int(schedule_cfg.get("add_teacher_epoch", 3))
+    add_geometry_epoch = int(schedule_cfg.get("add_geometry_epoch", 5))
+    add_conf_epoch = int(schedule_cfg.get("add_confidence_epoch", 8))
+    teacher_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_cm", 0.4)), epoch, add_teacher_epoch, int(schedule_cfg.get("teacher_ramp_epochs", 3))
+    )
+    geometry_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_G", loss_cfg.get("lambda_ssi", (mono_ssi_cfg or {}).get("weight", 0.0)))),
+        epoch,
+        add_geometry_epoch,
+        int(schedule_cfg.get("geometry_ramp_epochs", 3)),
+    )
+    ordinal_weight = geometry_weight * float(loss_cfg.get("lambda_ord_in", 1.0))
+    confidence_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_C", 0.05)), epoch, add_conf_epoch, int(schedule_cfg.get("confidence_ramp_epochs", 2))
+    )
+
+    if epoch >= add_teacher_epoch and bool(loss_cfg.get("require_dense_metric_teacher", True)):
+        if int(metric_non_gt.sum().detach().cpu()) < int(loss_cfg.get("min_dense_metric_pixels", 1024)):
+            raise RuntimeError(
+                "GeoLift T2 requires dense D_cm/C_cm after add_teacher_epoch, but this batch has too few non-GT teacher pixels."
+            )
+
+    for name in ("D16", "D8", "D4", "D2", "D1"):
+        value = pred[name]
+        gt_s, gt_valid_s = _valid_downsample_to(gt, gt_mask, value.shape[-2:])
+        scale_gt = _log_huber_loss(value, gt_s, gt_valid_s > 0.0)
+        per_scale[f"gt_{name}"] = scale_gt
+        metric_supervision = metric_supervision + scale_weights[name] * scale_gt
+        if epoch >= add_teacher_epoch:
+            teacher_s, teacher_valid_s = _valid_downsample_to(metric_teacher, metric_conf * metric_mask.float(), value.shape[-2:])
+            teacher_supervision = teacher_supervision + scale_weights[name] * weighted_mean(
+                huber(torch.log(value.clamp_min(min_depth)) - torch.log(teacher_s.clamp_min(min_depth)), delta=0.1),
+                teacher_valid_s,
+            )
+
+    # The sparse loss must use the pre-anchor prediction; D_full is exactly anchored by design.
+    sparse_loss = mean_valid((pred["D_pre_anchor"] - sparse).abs(), sparse_mask)
+    range_loss = range_balanced_loss(
+        depth1,
+        gt,
+        gt_mask,
+        loss_cfg.get("range_bins", [0.0, 20.0, 40.0, 60.0, 80.0, 120.0]),
+        loss_cfg.get("range_weights", [1.0, 1.2, 1.5, 2.0, 2.5]),
+    )
+    gt2, gt2_mask = _valid_downsample_to(gt, gt_mask, pred["D2"].shape[-2:])
+    boundary_loss = _log_gradient_loss(depth1, gt, gt_mask) + _log_gradient_loss(pred["D2"], gt2, gt2_mask > 0.0)
+
+    cycle_loss = depth1.new_tensor(0.0)
+    for child_name, parent_name in (("D1", "D2"), ("D2", "D4"), ("D4", "D8"), ("D8", "D16")):
+        child = pred[child_name]
+        parent = pred[parent_name]
+        child_down = F.interpolate(child, size=parent.shape[-2:], mode="area")
+        cycle_loss = cycle_loss + (torch.log(child_down.clamp_min(min_depth)) - torch.log(parent.clamp_min(min_depth))).abs().mean()
+    cycle_loss = cycle_loss / 4.0
+
+    ssi_loss = depth1.new_tensor(0.0)
+    ordinal_loss = depth1.new_tensor(0.0)
+    geometry_pixels = depth1.new_tensor(0.0)
+    if epoch >= add_geometry_epoch:
+        if "R_G" in batch and "C_G" in batch:
+            relative = match_prediction_size(batch["R_G"].float(), depth1.shape[-2:], mode="bilinear")
+            relative_conf = match_prediction_size(batch["C_G"].float(), depth1.shape[-2:], mode="bilinear")
+            geometry_pixels = ((relative_conf > float(loss_cfg.get("geometry_conf_threshold", 0.05))) & torch.isfinite(relative)).float().sum()
+            if bool(loss_cfg.get("require_geometry_teacher", True)) and int(geometry_pixels.detach().cpu()) < int(loss_cfg.get("geometry_min_valid_pixels", 512)):
+                raise RuntimeError("GeoLift geometry distillation is active, but R_G/C_G is missing or invalid for this batch.")
+            ssi_loss, alpha = geometry_ssi_loss(
+                depth1,
+                relative,
+                relative_conf,
+                conf_threshold=float(loss_cfg.get("geometry_conf_threshold", 0.05)),
+                min_valid_pixels=int(loss_cfg.get("geometry_min_valid_pixels", 512)),
+            )
+            ordinal_loss = boundary_ordinal_loss(depth1, relative, relative_conf, batch["rgb"], alpha=alpha)
+        elif mono_ssi_cfg and bool(mono_ssi_cfg.get("enabled", False)) and str(mono_ssi_cfg.get("key", "D_da_raw")) in batch:
+            key = str(mono_ssi_cfg.get("key", "D_da_raw"))
+            relative = match_prediction_size(batch[key].float(), depth1.shape[-2:], mode="bilinear")
+            relative_conf = match_prediction_size(batch.get("da_raw_valid", torch.ones_like(relative)).float(), depth1.shape[-2:])
+            geometry_pixels = ((relative_conf > 0.5) & torch.isfinite(relative)).float().sum()
+            ssi_loss, _ = geometry_ssi_loss(
+                depth1, relative, relative_conf, min_valid_pixels=int(mono_ssi_cfg.get("min_valid_pixels", 128))
+            )
+        elif bool(loss_cfg.get("require_geometry_teacher", True)) and (geometry_weight > 0.0 or ordinal_weight > 0.0):
+            raise RuntimeError("GeoLift relative distillation is scheduled, but no DA/R_G teacher map is present.")
+
+    confidence_loss = depth1.new_tensor(0.0)
+    confidence_calib = depth1.new_tensor(0.0)
+    if epoch >= add_conf_epoch:
+        supervised_depth = torch.where(gt_mask, gt, metric_teacher)
+        supervised_mask = gt_mask | metric_mask
+        log_residual = (torch.log(depth1.clamp_min(min_depth)) - torch.log(supervised_depth.clamp_min(min_depth))).abs()
+        uncertainty = -torch.log(confidence1.clamp_min(1e-6))
+        confidence_loss = mean_valid(confidence1 * log_residual + uncertainty, supervised_mask)
+        target_confidence = torch.exp(-log_residual.detach() / float(loss_cfg.get("confidence_tau", 0.2))).clamp(0.0, 1.0)
+        confidence_calib = mean_valid((confidence1 - target_confidence).abs(), supervised_mask)
+        confidence_loss = confidence_loss + float(loss_cfg.get("lambda_C_calib", 0.5)) * confidence_calib
+
+    plane_loss = depth1.new_tensor(0.0)
+    if "slope_a" in batch and "slope_b" in batch:
+        # Optional T3 hook. The supplied T2 cache intentionally leaves this off.
+        for stage in ("8", "4", "2", "1"):
+            target_a = match_prediction_size(batch["slope_a"].float(), pred[f"slope_a_{stage}"].shape[-2:], mode="bilinear")
+            target_b = match_prediction_size(batch["slope_b"].float(), pred[f"slope_b_{stage}"].shape[-2:], mode="bilinear")
+            plane_loss = plane_loss + F.smooth_l1_loss(pred[f"slope_a_{stage}"], target_a.expand_as(pred[f"slope_a_{stage}"]))
+            plane_loss = plane_loss + F.smooth_l1_loss(pred[f"slope_b_{stage}"], target_b.expand_as(pred[f"slope_b_{stage}"]))
+        plane_loss = plane_loss / 8.0
+
+    total = (
+        float(loss_cfg.get("lambda_gt", 1.0)) * metric_supervision
+        + float(loss_cfg.get("lambda_S", 0.2)) * sparse_loss
+        + teacher_weight * teacher_supervision
+        + float(loss_cfg.get("lambda_boundary", 0.1)) * boundary_loss
+        + float(loss_cfg.get("lambda_cycle", 0.02)) * cycle_loss
+        + geometry_weight * (ssi_loss + float(loss_cfg.get("lambda_ord_in", 1.0)) * ordinal_loss)
+        + confidence_weight * confidence_loss
+        + float(loss_cfg.get("lambda_plane", 0.0)) * plane_loss
+    )
+    items = {
+        "loss": float(total.detach().cpu()),
+        "L_metric_multiscale": float(metric_supervision.detach().cpu()),
+        "L_teacher_multiscale": float(teacher_supervision.detach().cpu()),
+        "L_sparse_pre_anchor": float(sparse_loss.detach().cpu()),
+        "L_range": float(range_loss.detach().cpu()),
+        "L_boundary": float(boundary_loss.detach().cpu()),
+        "L_cycle": float(cycle_loss.detach().cpu()),
+        "L_ssi": float(ssi_loss.detach().cpu()),
+        "L_ord": float(ordinal_loss.detach().cpu()),
+        "L_C": float(confidence_loss.detach().cpu()),
+        "L_C_calib": float(confidence_calib.detach().cpu()),
+        "L_plane": float(plane_loss.detach().cpu()),
+        "w_cm": teacher_weight,
+        "w_ssi": geometry_weight,
+        "w_ord": ordinal_weight,
+        "w_C": confidence_weight,
+        "cm_valid_ratio": float(metric_mask.float().mean().detach().cpu()),
+        "cm_non_gt_ratio": float(metric_non_gt.float().mean().detach().cpu()),
+        "geom_valid_ratio": float((geometry_pixels / max(1, depth1.numel())).detach().cpu()),
+    }
+    items.update({name: float(value.detach().cpu()) for name, value in per_scale.items()})
+    return total, items
+
+
 def geort_loss(
     pred: dict[str, torch.Tensor],
     batch: dict[str, torch.Tensor],
@@ -264,6 +502,8 @@ def geort_loss(
     mono_ssi_cfg: dict[str, Any] | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute the theory-aligned full-resolution GeoRT objective."""
+    if "D16" in pred:
+        return geolift_loss(pred, batch, loss_cfg, schedule_cfg, epoch, mono_ssi_cfg)
     D_full = pred.get("D_full", pred["D_c"])
     C_full = pred.get("C_full")
     D_1_4 = pred.get("D_1_4", pred["D_c"])

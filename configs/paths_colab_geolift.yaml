@@ -1,0 +1,8 @@
+data_root: "/content/geolift_data/kitti"
+split_root: "/content/geolift_data/splits"
+train_split: "train_800.txt"
+val_split: "val_200.txt"
+test_split: "test_1000.txt"
+teacher_root: "/content/geolift_data/teacher_outputs"
+student_root: "/content/drive/MyDrive/GeoLift_RT_runs/v2_1"
+

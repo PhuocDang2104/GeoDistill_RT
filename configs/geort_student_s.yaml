@@ -12,7 +12,7 @@ data:
 model:
   name: "GeoRT-Student-S"
   encoder: "mobilevitv2_0.75"
-  fusion_channels: 48
+  fusion_channels: 32
   e4_channels: 48
   e8_channels: 72
   e16_channels: 128

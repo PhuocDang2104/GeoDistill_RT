@@ -4,6 +4,7 @@ import argparse
 import csv
 import math
 import os
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,7 @@ from tqdm import tqdm
 from .dataset import KITTIDepthCompletionDataset
 from .losses import geort_loss
 from .metrics import average_metric_dict, depth_metrics_by_edge_torch, depth_metrics_by_range_torch, depth_metrics_torch
-from .model_geort import GeoRTStudentS
+from .model_factory import build_student
 from .utils import device_from_config, ensure_dir, load_project_config, seed_everything, setup_logger, write_jsonl
 
 
@@ -45,7 +46,10 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
     mono_cfg = cfg.get("mono_ssi", {})
     loss_cfg = cfg.get("loss", {})
     load_mono = training and bool(mono_cfg.get("enabled", False))
-    load_geometry = training and (float(loss_cfg.get("lambda_ssi", mono_cfg.get("weight", 0.0))) > 0.0 or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0)
+    load_geometry = training and (
+        float(loss_cfg.get("lambda_G", loss_cfg.get("lambda_ssi", mono_cfg.get("weight", 0.0)))) > 0.0
+        or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0
+    )
     dataset = KITTIDepthCompletionDataset(
         data_root=paths["data_root"],
         split_root=paths["split_root"],
@@ -57,6 +61,7 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         teacher_root=paths["teacher_root"],
         load_teacher=training or split == "val",
         load_geometry=load_geometry,
+        geometry_fallback=bool(loss_cfg.get("geometry_fallback", True)),
         load_mono=load_mono,
         mono_key=str(mono_cfg.get("key", "D_da_raw")),
         min_depth=float(loss_cfg.get("min_depth", 1e-3)),
@@ -209,10 +214,11 @@ def _teacher_coverage(dataset: KITTIDepthCompletionDataset) -> dict[str, float]:
     root = dataset.teacher_root
     total = len(dataset.samples)
     if root is None or total == 0:
-        return {"metric": 0.0, "geometry": 0.0, "geometry_main": 0.0, "geometry_dmd_only": 0.0}
+        return {"metric": 0.0, "geometry": 0.0, "geometry_fused": 0.0, "geometry_main": 0.0, "geometry_dmd_only": 0.0}
 
     metric_count = 0
     geometry_count = 0
+    geometry_fused_count = 0
     geometry_main_count = 0
     geometry_dmd_only_count = 0
     for sample in dataset.samples:
@@ -222,8 +228,9 @@ def _teacher_coverage(dataset: KITTIDepthCompletionDataset) -> dict[str, float]:
             root / "dmd3c" / dataset.split_name / f"{sid}.npz",
             root / "fused" / dataset.split_name / f"{sid}.npz",
         ]
+        geometry_fused_path = root / "geometry_fused" / dataset.split_name / f"{sid}.npz"
         geometry_paths = [
-            root / "geometry_fused" / dataset.split_name / f"{sid}.npz",
+            geometry_fused_path,
             root / "geometry_raw" / "depth_anything_v2" / dataset.split_name / f"{sid}.npz",
             root / "geometry_raw" / "depth_anything" / dataset.split_name / f"{sid}.npz",
             root / "depth_anything" / f"{dataset.split_name}_raw" / f"{sid}.npz",
@@ -235,6 +242,7 @@ def _teacher_coverage(dataset: KITTIDepthCompletionDataset) -> dict[str, float]:
             root / "dmd3c" / dataset.split_name / f"{sid}.npz",
         ]
         metric_count += int(_has_any_npz(root, metric_paths))
+        geometry_fused_count += int(geometry_fused_path.exists())
         has_main_geometry = _has_any_npz(root, geometry_paths)
         has_dmd_geometry = _has_any_npz(root, dmd_geometry_paths)
         geometry_main_count += int(has_main_geometry)
@@ -243,6 +251,7 @@ def _teacher_coverage(dataset: KITTIDepthCompletionDataset) -> dict[str, float]:
     return {
         "metric": metric_count / total,
         "geometry": geometry_count / total,
+        "geometry_fused": geometry_fused_count / total,
         "geometry_main": geometry_main_count / total,
         "geometry_dmd_only": geometry_dmd_only_count / total,
     }
@@ -257,10 +266,11 @@ def preflight_teacher_coverage(cfg: dict[str, Any], dataset: KITTIDepthCompletio
     epochs = int(cfg.get("train", {}).get("epochs", 30))
     coverage = _teacher_coverage(dataset)
     logger.info(
-        "teacher_coverage split=%s metric=%.3f geometry=%.3f geometry_main=%.3f geometry_dmd_only=%.3f root=%s",
+        "teacher_coverage split=%s metric=%.3f geometry=%.3f geometry_fused=%.3f geometry_main=%.3f geometry_dmd_only=%.3f root=%s",
         dataset.split_name,
         coverage["metric"],
         coverage["geometry"],
+        coverage["geometry_fused"],
         coverage["geometry_main"],
         coverage["geometry_dmd_only"],
         dataset.teacher_root,
@@ -269,7 +279,10 @@ def preflight_teacher_coverage(cfg: dict[str, Any], dataset: KITTIDepthCompletio
     teacher_scheduled = int(schedule_cfg.get("add_teacher_epoch", 5)) < epochs and float(loss_cfg.get("lambda_cm", 0.0)) > 0.0
     geometry_scheduled = (
         int(schedule_cfg.get("add_geometry_epoch", 10)) < epochs
-        and (float(loss_cfg.get("lambda_ssi", 0.0)) > 0.0 or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0)
+        and (
+            float(loss_cfg.get("lambda_G", loss_cfg.get("lambda_ssi", 0.0))) > 0.0
+            or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0
+        )
     )
     min_metric = float(checks.get("min_metric_coverage", 0.95))
     min_geometry = float(checks.get("min_geometry_coverage", 0.95))
@@ -285,6 +298,11 @@ def preflight_teacher_coverage(cfg: dict[str, Any], dataset: KITTIDepthCompletio
             f"Geometry teacher coverage for split={dataset.split_name} is {coverage['geometry']:.1%}, below {min_geometry:.1%}. "
             "Generate geometry/Depth Anything teacher files before student training, e.g. "
             "`python -m src.teachers.generate_teachers --config configs/teacher.yaml --split train --run_depth_anything --run_fusion`."
+        )
+    if bool(checks.get("require_geometry_fused", False)) and geometry_scheduled and coverage["geometry_fused"] < min_geometry:
+        raise RuntimeError(
+            f"Fused geometry coverage for split={dataset.split_name} is {coverage['geometry_fused']:.1%}, below {min_geometry:.1%}. "
+            "Expected canonical geometry_fused/<split>/<sample_id>.npz files containing R_G and C_G; DA/DMD fallback is not accepted."
         )
     if geometry_scheduled and coverage["geometry_main"] < min_geometry and coverage["geometry"] >= min_geometry:
         logger.warning(
@@ -347,7 +365,7 @@ def validate(
     range_bins = loss_cfg.get("range_bins", [0.0, 20.0, 40.0, 60.0, 80.0, 120.0])
     for batch in tqdm(loader, desc="val", leave=False):
         batch = to_device(batch, device, channels_last=channels_last)
-        pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"])
+        pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
         D_eval = pred.get("D_full", pred["D_c"])
         gt_mask = (batch["gt_mask"] > 0.5) & (batch["gt"] > min_depth) & (batch["gt"] < max_depth)
         if gt_mask.sum().item() < 1:
@@ -385,7 +403,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     train_loader = make_loader(cfg, paths, "train", training=True, distributed=distributed)
     val_loader = make_loader(cfg, paths, "val", training=False) if is_main else None
     preflight_teacher_coverage(cfg, train_loader.dataset, logger)
-    model = GeoRTStudentS.from_config(cfg).to(device)
+    model = build_student(cfg).to(device)
     channels_last = bool(train_cfg.get("channels_last", True)) and device.type == "cuda"
     if channels_last:
         model = model.to(memory_format=torch.channels_last)
@@ -473,7 +491,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
                 warned_missing_mono = True
             optimizer.zero_grad(set_to_none=True)
             with torch.amp.autocast(device_type=device.type, enabled=amp_enabled, dtype=autocast_dtype):
-                pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"])
+                pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
                 loss, items = geort_loss(pred, batch, cfg["loss"], cfg["schedule"], epoch, mono_cfg)
             scaler.scale(loss).backward()
             if grad_clip_norm > 0.0:
@@ -518,6 +536,18 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
                 save_checkpoint(ckpt_dir / f"epoch_{epoch:03d}.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
             if is_best:
                 save_checkpoint(ckpt_dir / "best.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+            backup_root_value = cfg.get("outputs", {}).get("backup_root")
+            if backup_root_value:
+                backup_root = Path(str(backup_root_value))
+                backup_ckpt = ensure_dir(backup_root / "checkpoints")
+                backup_logs = ensure_dir(backup_root / "logs")
+                shutil.copy2(ckpt_dir / "last.pth", backup_ckpt / "last.pth")
+                if (ckpt_dir / "best.pth").exists():
+                    shutil.copy2(ckpt_dir / "best.pth", backup_ckpt / "best.pth")
+                for log_path in (log_csv, log_jsonl, student_root / "logs" / log_name):
+                    if log_path.exists():
+                        shutil.copy2(log_path, backup_logs / log_path.name)
+                logger.info("Backed up epoch %d checkpoint/logs to %s", epoch, backup_root)
         if distributed:
             dist.barrier()
 

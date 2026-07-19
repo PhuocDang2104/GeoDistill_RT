@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import torch
@@ -19,6 +20,37 @@ class ConvBNAct(nn.Sequential):
         )
 
 
+class EfficientFusion(nn.Sequential):
+    """Reduce concatenated modalities, then mix them depthwise-separably."""
+
+    def __init__(self, in_ch: int, out_ch: int) -> None:
+        super().__init__(
+            ConvBNAct(in_ch, out_ch, kernel=1),
+            ConvBNAct(out_ch, out_ch, kernel=3, groups=out_ch),
+            ConvBNAct(out_ch, out_ch, kernel=1),
+        )
+
+
+class DepthwiseSeparableBlock(nn.Sequential):
+    """Spatial mixing with a depthwise 3x3 followed by channel mixing."""
+
+    def __init__(self, in_ch: int, out_ch: int, stride: int = 1) -> None:
+        super().__init__(
+            ConvBNAct(in_ch, in_ch, kernel=3, stride=stride, groups=in_ch),
+            ConvBNAct(in_ch, out_ch, kernel=1),
+        )
+
+
+class LightStem(nn.Sequential):
+    """Keep the input contract while removing the expensive wide 3x3 layer."""
+
+    def __init__(self, in_ch: int, out_ch: int) -> None:
+        super().__init__(
+            ConvBNAct(in_ch, out_ch, kernel=3),
+            DepthwiseSeparableBlock(out_ch, out_ch),
+        )
+
+
 class TimmMobileViTEncoder(nn.Module):
     def __init__(self, model_name: str, in_ch: int, e4: int, e8: int, e16: int) -> None:
         super().__init__()
@@ -33,27 +65,43 @@ class TimmMobileViTEncoder(nn.Module):
         model = None
         for name in names:
             try:
-                model = timm.create_model(name, pretrained=False, features_only=True, in_chans=in_ch)
+                model = timm.create_model(name, pretrained=False, in_chans=in_ch)
                 break
             except Exception as exc:
                 last_error = exc
         if model is None:
             raise RuntimeError(f"Could not create timm MobileViTv2 encoder: {last_error}")
-        self.model = model
-        reductions = list(self.model.feature_info.reduction())
-        channels = list(self.model.feature_info.channels())
-        self.indices = []
+        if not hasattr(model, "stem") or not hasattr(model, "stages") or not isinstance(model.feature_info, list):
+            raise RuntimeError(f"Unsupported timm encoder structure for early exit: {type(model).__name__}")
+
+        feature_info = {int(item["reduction"]): item for item in model.feature_info}
+        requested = [(4, e4), (8, e8), (16, e16)]
+        missing = [reduction for reduction, _ in requested if reduction not in feature_info]
+        if missing:
+            raise RuntimeError(f"timm model lacks reductions {missing}; available={sorted(feature_info)}")
+
+        self.stem = model.stem
+        self.output_stage_indices = []
         self.proj = nn.ModuleList()
-        for reduction, out_ch in [(4, e4), (8, e8), (16, e16)]:
-            if reduction not in reductions:
-                raise RuntimeError(f"timm model lacks reduction {reduction}; reductions={reductions}")
-            idx = reductions.index(reduction)
-            self.indices.append(idx)
-            self.proj.append(nn.Conv2d(channels[idx], out_ch, kernel_size=1))
+        for reduction, out_ch in requested:
+            info = feature_info[reduction]
+            module_name = str(info["module"])
+            if not module_name.startswith("stages."):
+                raise RuntimeError(f"Reduction {reduction} is not a stage output: {module_name}")
+            self.output_stage_indices.append(int(module_name.split(".")[1]))
+            self.proj.append(nn.Conv2d(int(info["num_chs"]), out_ch, kernel_size=1))
+        last_stage = max(self.output_stage_indices)
+        self.stages = nn.ModuleList(list(model.stages)[: last_stage + 1])
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        feats = self.model(x)
-        out = [proj(feats[idx]) for idx, proj in zip(self.indices, self.proj)]
+        x = self.stem(x)
+        stage_outputs: dict[int, torch.Tensor] = {}
+        requested = set(self.output_stage_indices)
+        for index, stage in enumerate(self.stages):
+            x = stage(x)
+            if index in requested:
+                stage_outputs[index] = x
+        out = [proj(stage_outputs[index]) for index, proj in zip(self.output_stage_indices, self.proj)]
         return out[0], out[1], out[2]
 
 
@@ -103,10 +151,62 @@ class GuidedConvexUpsample(nn.Module):
         return (patches * weights[:, None]).sum(dim=2)
 
 
+class AdaptiveSparseAnchor(nn.Module):
+    """Learn sensor anchoring from confidence, discrepancy, density and RGB edges.
+
+    The last layer is initialized so the module exactly starts from the former
+    fixed correction coefficient. It can then learn to reject inconsistent or
+    misaligned sparse samples during training.
+    """
+
+    def __init__(self, lambda_min: float = 0.5, lambda_init: float = 0.7, hidden: int = 8) -> None:
+        super().__init__()
+        if not 0.0 <= lambda_min < 1.0:
+            raise ValueError("lambda_min must be in [0, 1)")
+        if not lambda_min <= lambda_init < 1.0:
+            raise ValueError("lambda_init must be in [lambda_min, 1)")
+        self.lambda_min = float(lambda_min)
+        self.head = nn.Sequential(
+            ConvBNAct(4, hidden, kernel=1),
+            nn.Conv2d(hidden, 1, kernel_size=1),
+        )
+        normalized_init = (float(lambda_init) - self.lambda_min) / (1.0 - self.lambda_min)
+        bias = math.log(normalized_init / (1.0 - normalized_init))
+        nn.init.zeros_(self.head[-1].weight)
+        nn.init.constant_(self.head[-1].bias, bias)
+
+    @staticmethod
+    def _rgb_edge(rgb: torch.Tensor) -> torch.Tensor:
+        gray = rgb.mean(dim=1, keepdim=True)
+        dx = F.pad((gray[..., :, 1:] - gray[..., :, :-1]).abs(), (0, 1, 0, 0))
+        dy = F.pad((gray[..., 1:, :] - gray[..., :-1, :]).abs(), (0, 0, 0, 1))
+        return (dx + dy).clamp(0.0, 1.0)
+
+    def forward(
+        self,
+        depth: torch.Tensor,
+        confidence: torch.Tensor,
+        sparse: torch.Tensor,
+        mask: torch.Tensor,
+        rgb: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        sparse_safe = sparse.clamp_min(1e-3)
+        discrepancy = ((sparse_safe - depth).abs() / sparse_safe).clamp(0.0, 2.0) * mask
+        density = F.avg_pool2d(mask.float(), kernel_size=5, stride=1, padding=2)
+        edge = self._rgb_edge(rgb)
+        features = torch.cat([confidence, discrepancy, density, edge], dim=1)
+        learned = torch.sigmoid(self.head(features))
+        anchor_lambda = mask * (self.lambda_min + (1.0 - self.lambda_min) * learned)
+        anchored = depth + anchor_lambda * (sparse_safe - depth)
+        sensor_confidence = mask
+        confidence_out = (1.0 - mask) * confidence + mask * torch.maximum(confidence, sensor_confidence)
+        return anchored, confidence_out, anchor_lambda
+
+
 @dataclass
 class GeoRTConfig:
     encoder: str = "mobilevitv2_0.75"
-    fusion_channels: int = 48
+    fusion_channels: int = 32
     e4_channels: int = 48
     e8_channels: int = 72
     e16_channels: int = 128
@@ -136,7 +236,7 @@ class GeoRTStudentS(nn.Module):
     def __init__(
         self,
         encoder: str = "mobilevitv2_0.75",
-        fusion_channels: int = 48,
+        fusion_channels: int = 32,
         e4_channels: int = 48,
         e8_channels: int = 72,
         e16_channels: int = 128,
@@ -154,10 +254,10 @@ class GeoRTStudentS(nn.Module):
         self.sparse_anchor_lambda = float(sparse_anchor_lambda)
         self.eps = 1e-3
 
-        self.rgb_stem = nn.Sequential(ConvBNAct(3, 24), ConvBNAct(24, 24))
-        self.depth_stem = nn.Sequential(ConvBNAct(3, 16), ConvBNAct(16, 16))
-        self.ray_stem = nn.Sequential(ConvBNAct(5, 12), ConvBNAct(12, 12))
-        self.fusion = nn.Sequential(ConvBNAct(24 + 16 + 12, fusion_channels), ConvBNAct(fusion_channels, fusion_channels))
+        self.rgb_stem = LightStem(3, 24)
+        self.depth_stem = LightStem(3, 16)
+        self.ray_stem = LightStem(5, 12)
+        self.fusion = EfficientFusion(24 + 16 + 12, fusion_channels)
 
         self.encoder = TimmMobileViTEncoder(encoder, fusion_channels, e4_channels, e8_channels, e16_channels)
 
@@ -169,11 +269,11 @@ class GeoRTStudentS(nn.Module):
         self.lat16 = nn.Conv2d(e16_channels, fpn_ch, kernel_size=1)
         self.lat8 = nn.Conv2d(e8_channels, fpn_ch, kernel_size=1)
         self.lat4 = nn.Conv2d(e4_channels, fpn_ch, kernel_size=1)
-        self.smooth8 = ConvBNAct(fpn_ch, fpn_ch, kernel=3)
-        self.smooth4 = ConvBNAct(fpn_ch, fpn_ch, kernel=3)
+        self.smooth8 = DepthwiseSeparableBlock(fpn_ch, fpn_ch)
+        self.smooth4 = DepthwiseSeparableBlock(fpn_ch, fpn_ch)
 
-        self.depth_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
-        self.conf_head = nn.Sequential(ConvBNAct(fpn_ch, fpn_ch, kernel=3), nn.Conv2d(fpn_ch, 1, kernel_size=1))
+        self.depth_head = nn.Sequential(DepthwiseSeparableBlock(fpn_ch, fpn_ch), nn.Conv2d(fpn_ch, 1, kernel_size=1))
+        self.conf_head = nn.Sequential(DepthwiseSeparableBlock(fpn_ch, fpn_ch), nn.Conv2d(fpn_ch, 1, kernel_size=1))
         self.depth_up = GuidedConvexUpsample(
             guide_channels=6,
             hidden=24,
@@ -194,6 +294,10 @@ class GeoRTStudentS(nn.Module):
             ConvBNAct(16, 8, kernel=1),
             nn.Conv2d(8, 1, kernel_size=1),
         )
+        self.sparse_anchor = AdaptiveSparseAnchor(
+            lambda_min=min(0.5, self.sparse_anchor_lambda),
+            lambda_init=self.sparse_anchor_lambda,
+        )
 
     @classmethod
     def from_config(cls, cfg: dict) -> "GeoRTStudentS":
@@ -202,7 +306,7 @@ class GeoRTStudentS(nn.Module):
         student_cfg = cfg.get("student", {})
         return cls(
             encoder=model_cfg.get("encoder", "mobilevitv2_0.75"),
-            fusion_channels=int(model_cfg.get("fusion_channels", 48)),
+            fusion_channels=int(model_cfg.get("fusion_channels", 32)),
             e4_channels=int(model_cfg.get("e4_channels", 48)),
             e8_channels=int(model_cfg.get("e8_channels", 72)),
             e16_channels=int(model_cfg.get("e16_channels", 128)),
@@ -220,7 +324,9 @@ class GeoRTStudentS(nn.Module):
         mask: torch.Tensor,
         ray: torch.Tensor,
         uv: torch.Tensor,
+        K: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
+        del K  # Kept for a common factory/trainer call signature.
         # D_init: [B,1,H/4,W/4], metric prior from sparse LiDAR only.
         D_init = fast_sparse_propagation(
             rgb,
@@ -269,10 +375,16 @@ class GeoRTStudentS(nn.Module):
         D_up_scaled = D_up / self.max_depth
         refine_in = torch.cat([rgb, sparse_scaled, mask, D_up_scaled, C_up], dim=1)
         delta_z_full = self.full_residual(refine_in).clamp(min=-0.5, max=0.5)
-        D_full = (D_up * torch.exp(delta_z_full)).clamp(self.eps, self.max_depth)
-        D_full = D_full + self.sparse_anchor_lambda * mask * (sparse.clamp(self.eps, self.max_depth) - D_full)
+        D_pre_anchor = (D_up * torch.exp(delta_z_full)).clamp(self.eps, self.max_depth)
+        D_full, C_full, anchor_lambda = self.sparse_anchor(
+            D_pre_anchor,
+            C_up.clamp(1e-4, 1.0),
+            sparse.clamp(self.eps, self.max_depth),
+            mask,
+            rgb,
+        )
         D_full = D_full.clamp(self.eps, self.max_depth)
-        C_full = C_up.clamp(1e-4, 1.0)
+        C_full = C_full.clamp(1e-4, 1.0)
 
         return {
             "D_full": D_full,
@@ -283,6 +395,8 @@ class GeoRTStudentS(nn.Module):
             "D_up": D_up,
             "delta_z_1_4": delta_z_1_4,
             "delta_z_full": delta_z_full,
+            "D_pre_anchor": D_pre_anchor,
+            "anchor_lambda": anchor_lambda,
             "D_c": D_1_4,
             "C": C_1_4,
             "log_var": -torch.log(C_1_4.clamp_min(1e-6)),

@@ -2,6 +2,34 @@
 
 This guide outlines the most efficient methods for pulling datasets from Google Drive into a Google Colab environment, avoiding common I/O bottlenecks and download limits.
 
+> Final fused-geometry notebook: [`../notebooks/GeoLift_RT_v2_1_Geometry_Inspect_Final_Train.ipynb`](../notebooks/GeoLift_RT_v2_1_Geometry_Inspect_Final_Train.ipynb). Baseline metric+DA notebook: [`../notebooks/GeoLift_RT_v2_1_Colab_Train_Test.ipynb`](../notebooks/GeoLift_RT_v2_1_Colab_Train_Test.ipynb).
+>
+> The two public archives below are **train-split teacher caches**, not the KITTI RGB/sparse/GT dataset. `metric_coarse_train.tar` supplies metric KD and `depth_anything_train_raw.tar` supplies DA2 relative geometry. Full RSGD additionally requires a DSINE cache.
+
+## GeoLift-S2 v2.1: nguồn dữ liệu đã chốt
+
+| Nguồn | Dung lượng hiển thị trên Drive | Nội dung dùng |
+|---|---:|---|
+| `1ZtRVY67l3QkdgegSxDYtf6Cq_l-_BjQW` | 27 GB | `metric_coarse_train.tar`, metric teacher |
+| `1DOtv8E_zW-pOkms2XUqro9vVfMnkqzbB` | 14 GB | `depth_anything_train_raw.tar`, DA relative teacher |
+| `1gcaq8rFOOTEUBiGxF05ZBzomi1n2AX1q` | 32.28 GB | `geometry_fused_train.tar`, fused `R_G/C_G` teacher |
+| [KITTI Depth Completion](https://www.cvlibs.net/datasets/kitti/eval_depth_all.php) | theo archive chính thức | RGB, sparse LiDAR, GT train/val và 1.000 test anonymous |
+
+Notebook [`GeoLift_RT_v2_1_Colab_Train_Test.ipynb`](../notebooks/GeoLift_RT_v2_1_Colab_Train_Test.ipynb) không ghép tùy ý KITTI với teacher. Nó lấy giao ID giữa hai teacher cache, chọn 1.000 mẫu seed cố định thành 800 train + 200 validation, rồi trích đúng KITTI frame tương ứng. `test_1000` được lấy từ `data_depth_selection.zip` chính thức.
+
+Notebook final lấy **giao của cả ba archive**. `geometry_fused_train.tar` đã được inspect trực tiếp với contract:
+
+```text
+geometry_fused/train/<raw_id>.npz
+keys: R_G, C_G
+shape mẫu: 374×1238, float32
+C_G: [0,1]
+```
+
+Lưu ý tên trong archive có thể là `..._sync_image_03_0000000915`, trong khi dataset dùng `..._sync_image_0000000915_image_03`. Script extraction canonicalize thứ tự này cho metric/DA/geometry trước khi lấy giao ID; không được chỉ đổi tên thư mục rồi kỳ vọng loader tự tìm thấy.
+
+KITTI anonymous test có đúng 1.000 ảnh nhưng không có ground truth công khai. Vì vậy notebook xuất 1.000 PNG để nộp benchmark; metric local được tính trên 200 validation có GT.
+
 ## 1. The Optimal Method: Zipped Files + `gdown`
 Never read unzipped data directly from a mounted Google Drive (`/content/drive/`) during model training. The FUSE filesystem overhead will severely throttle training speed. 
 
