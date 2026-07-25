@@ -17,12 +17,16 @@ env/
 *.tmp
 *.bak
 *.zip
+*.tar
+*.tar.gz
+*.tgz
 
 data/depth_selection/**
 !data/depth_selection/
 !data/depth_selection/splits/
 !data/depth_selection/splits/*.txt
 data/kitti_depth_completion/
+data/teacher_subset_2000/
 
 teacher_outputs/**
 student_outputs/**
