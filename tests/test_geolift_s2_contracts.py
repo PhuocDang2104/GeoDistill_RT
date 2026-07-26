@@ -10,6 +10,7 @@ import torch.nn.functional as F
 
 from scripts.extract_geolift_teachers import _index, canonical_sample_id
 from src.dataset import KITTIDepthCompletionDataset
+from src.losses import boundary_ordinal_loss, depth_bin_weight, geolift_loss, scheduled_linear_value
 from src.model_geolift_s2 import (
     GeoLiftStudentS2,
     affine_inverse_depth_transport,
@@ -99,6 +100,113 @@ class CompactSparsePriorContractTest(unittest.TestCase):
         self.assertTrue(torch.isfinite(depth).all())
         self.assertTrue(torch.equal(depth[valid == 0], torch.zeros_like(depth[valid == 0])))
         self.assertTrue(((density >= 0.0) & (density <= 1.0)).all())
+
+
+class BalancedAblationLossContractTest(unittest.TestCase):
+    def test_sparse_weight_decays_only_after_warmup(self) -> None:
+        self.assertAlmostEqual(scheduled_linear_value(0.2, 0.05, 2, 3, 5), 0.2)
+        self.assertAlmostEqual(scheduled_linear_value(0.2, 0.05, 3, 3, 5), 0.17)
+        self.assertAlmostEqual(scheduled_linear_value(0.2, 0.05, 7, 3, 5), 0.05)
+
+    def test_metric_kd_depth_bin_weights(self) -> None:
+        depth = torch.tensor([[[[10.0, 30.0, 50.0, 70.0, 100.0]]]])
+        actual = depth_bin_weight(depth, [0, 20, 40, 60, 80, 120], [1.0, 1.0, 1.25, 1.5, 2.0])
+        expected = torch.tensor([[[[1.0, 1.0, 1.25, 1.5, 2.0]]]])
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_temperature_ordinal_rewards_correct_far_pair_order(self) -> None:
+        x = torch.arange(8, dtype=torch.float32).view(1, 1, 1, 8).expand(1, 1, 4, 8)
+        relative = 0.2 * x
+        confidence = torch.ones_like(relative)
+        rgb = torch.zeros(1, 3, 4, 8)
+        good_depth = torch.exp(2.0 + 0.2 * x)
+        bad_depth = torch.exp(2.0 - 0.2 * x)
+        kwargs = {
+            "conf_threshold": 0.4,
+            "geom_tau": 0.05,
+            "temperature": 0.1,
+            "offsets": [1, 2, 4],
+            "require_geometry_edge": True,
+            "return_stats": True,
+        }
+        good_loss, good_accuracy, pair_ratio = boundary_ordinal_loss(
+            good_depth, relative, confidence, rgb, **kwargs
+        )
+        bad_loss, bad_accuracy, _ = boundary_ordinal_loss(
+            bad_depth, relative, confidence, rgb, **kwargs
+        )
+        self.assertLess(float(good_loss), float(bad_loss))
+        self.assertEqual(float(good_accuracy), 1.0)
+        self.assertEqual(float(bad_accuracy), 0.0)
+        self.assertGreater(float(pair_ratio), 0.0)
+
+    def test_combined_ablation_weights_enter_geolift_total(self) -> None:
+        height, width = 32, 64
+        base = torch.linspace(8.0, 80.0, height * width).view(1, 1, height, width)
+        predictions = {
+            name: F.interpolate(base, scale_factor=1 / scale, mode="area").clone().requires_grad_()
+            for name, scale in (("D16", 16), ("D8", 8), ("D4", 4), ("D2", 2), ("D1", 1))
+        }
+        predictions["D_pre_anchor"] = (base + 0.5).clone().requires_grad_()
+        predictions["C1"] = torch.full_like(base, 0.8, requires_grad=True)
+        gt_mask = torch.zeros_like(base)
+        gt_mask[..., ::4, ::4] = 1.0
+        sparse_mask = torch.zeros_like(base)
+        sparse_mask[..., ::8, ::8] = 1.0
+        relative = torch.log(base)
+        batch = {
+            "rgb": torch.zeros(1, 3, height, width),
+            "gt": base,
+            "gt_mask": gt_mask,
+            "sparse": base * sparse_mask,
+            "mask": sparse_mask,
+            "D_cm": base + 0.25,
+            "C_cm": torch.ones_like(base),
+            "R_G": relative,
+            "C_G": torch.ones_like(base),
+        }
+        loss_cfg = {
+            "lambda_gt": 1.0,
+            "lambda_S": 0.2,
+            "lambda_S_final": 0.05,
+            "lambda_range": 0.005,
+            "lambda_cm": 0.4,
+            "lambda_boundary": 1.0,
+            "lambda_cycle": 0.02,
+            "lambda_G": 0.03,
+            "lambda_ord_in": 1.0,
+            "lambda_C": 0.0,
+            "multiscale_weights": {"D16": 0.2, "D8": 0.35, "D4": 0.5, "D2": 0.7, "D1": 1.0},
+            "range_bins": [0, 20, 40, 60, 80, 120],
+            "range_weights": [1, 1.2, 1.5, 2, 2.5],
+            "metric_kd_range_weights": [1, 1, 1.25, 1.5, 2],
+            "geometry_conf_threshold": 0.4,
+            "geometry_min_valid_pixels": 1,
+            "min_dense_metric_pixels": 1,
+            "ordinal_temperature": 0.05,
+            "ordinal_offsets": [1, 4, 8],
+            "ordinal_geom_tau": 0.01,
+            "ordinal_require_geometry_edge": True,
+        }
+        schedule_cfg = {
+            "add_teacher_epoch": 3,
+            "add_geometry_epoch": 5,
+            "add_confidence_epoch": 8,
+            "add_range_epoch": 3,
+            "sparse_decay_start_epoch": 3,
+            "teacher_ramp_epochs": 3,
+            "geometry_ramp_epochs": 3,
+            "confidence_ramp_epochs": 2,
+            "range_ramp_epochs": 5,
+            "sparse_decay_epochs": 5,
+        }
+        total, items = geolift_loss(predictions, batch, loss_cfg, schedule_cfg, epoch=5)
+        self.assertTrue(torch.isfinite(total))
+        self.assertAlmostEqual(items["w_sparse"], 0.11)
+        self.assertAlmostEqual(items["w_range"], 0.003)
+        self.assertGreater(items["ord_pair_ratio"], 0.0)
+        total.backward()
+        self.assertTrue(torch.isfinite(predictions["D1"].grad).all())
 
 
 class GeoLiftInitializationContractTest(unittest.TestCase):

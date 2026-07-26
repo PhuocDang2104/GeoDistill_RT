@@ -182,7 +182,11 @@ def boundary_ordinal_loss(
     conf_threshold: float = 0.05,
     rgb_tau: float = 0.04,
     geom_tau: float = 0.20,
-) -> torch.Tensor:
+    temperature: float = 1.0,
+    offsets: list[int] | tuple[int, ...] = (1,),
+    require_geometry_edge: bool = False,
+    return_stats: bool = False,
+) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Ordinal boundary supervision with SSI-fit orientation correction."""
     log_d = torch.log(D_full.clamp_min(1e-3))
     if alpha is None:
@@ -194,30 +198,48 @@ def boundary_ordinal_loss(
 
     total = D_full.new_tensor(0.0)
     denom = D_full.new_tensor(0.0)
+    correct = D_full.new_tensor(0.0)
+    selected_pairs = D_full.new_tensor(0.0)
+    possible_pairs = D_full.new_tensor(0.0)
+    temperature = max(float(temperature), 1e-4)
+    clean_offsets = sorted({int(offset) for offset in offsets if int(offset) > 0}) or [1]
 
-    dR_x = R[..., :, 1:] - R[..., :, :-1]
-    dD_x = log_d[..., :, 1:] - log_d[..., :, :-1]
-    dI_x = (rgb[..., :, 1:] - rgb[..., :, :-1]).abs().mean(dim=1, keepdim=True)
-    C_x = torch.minimum(C_G[..., :, 1:], C_G[..., :, :-1]).clamp(0.0, 1.0)
-    y_x = torch.sign(dR_x)
-    m_x = ((dI_x > rgb_tau) | (dR_x.abs() > geom_tau)) & (C_x > conf_threshold) & (y_x.abs() > 0)
-    w_x = C_x * m_x.float()
-    total = total + (F.softplus(-y_x * dD_x) * w_x).sum()
-    denom = denom + w_x.sum()
+    for offset in clean_offsets:
+        for axis in ("x", "y"):
+            if axis == "x":
+                if offset >= D_full.shape[-1]:
+                    continue
+                dR = R[..., :, offset:] - R[..., :, :-offset]
+                dD = log_d[..., :, offset:] - log_d[..., :, :-offset]
+                dI = (rgb[..., :, offset:] - rgb[..., :, :-offset]).abs().mean(dim=1, keepdim=True)
+                conf = torch.minimum(C_G[..., :, offset:], C_G[..., :, :-offset]).clamp(0.0, 1.0)
+            else:
+                if offset >= D_full.shape[-2]:
+                    continue
+                dR = R[..., offset:, :] - R[..., :-offset, :]
+                dD = log_d[..., offset:, :] - log_d[..., :-offset, :]
+                dI = (rgb[..., offset:, :] - rgb[..., :-offset, :]).abs().mean(dim=1, keepdim=True)
+                conf = torch.minimum(C_G[..., offset:, :], C_G[..., :-offset, :]).clamp(0.0, 1.0)
 
-    dR_y = R[..., 1:, :] - R[..., :-1, :]
-    dD_y = log_d[..., 1:, :] - log_d[..., :-1, :]
-    dI_y = (rgb[..., 1:, :] - rgb[..., :-1, :]).abs().mean(dim=1, keepdim=True)
-    C_y = torch.minimum(C_G[..., 1:, :], C_G[..., :-1, :]).clamp(0.0, 1.0)
-    y_y = torch.sign(dR_y)
-    m_y = ((dI_y > rgb_tau) | (dR_y.abs() > geom_tau)) & (C_y > conf_threshold) & (y_y.abs() > 0)
-    w_y = C_y * m_y.float()
-    total = total + (F.softplus(-y_y * dD_y) * w_y).sum()
-    denom = denom + w_y.sum()
+            label = torch.sign(dR)
+            geometry_edge = dR.abs() > geom_tau
+            edge = geometry_edge if require_geometry_edge else ((dI > rgb_tau) | geometry_edge)
+            pair_mask = edge & (conf > conf_threshold) & (label.abs() > 0) & torch.isfinite(dD)
+            weight = conf * pair_mask.float()
+            signed_margin = label * dD
+            total = total + (F.softplus(-signed_margin / temperature) * weight).sum()
+            denom = denom + weight.sum()
+            correct = correct + ((signed_margin > 0).to(weight.dtype) * weight).sum()
+            selected_pairs = selected_pairs + pair_mask.float().sum()
+            possible_pairs = possible_pairs + pair_mask.new_tensor(pair_mask.numel(), dtype=D_full.dtype)
 
     if float(denom.detach().cpu()) < 1.0:
-        return D_full.new_tensor(0.0)
-    return total / denom.clamp_min(1e-6)
+        zero = D_full.new_tensor(0.0)
+        return (zero, zero, zero) if return_stats else zero
+    loss = total / denom.clamp_min(1e-6)
+    accuracy = correct / denom.clamp_min(1e-6)
+    pair_ratio = selected_pairs / possible_pairs.clamp_min(1.0)
+    return (loss, accuracy, pair_ratio) if return_stats else loss
 
 
 def scheduled_weight(target: float, epoch: int, start_epoch: int, ramp_epochs: int) -> float:
@@ -227,6 +249,33 @@ def scheduled_weight(target: float, epoch: int, start_epoch: int, ramp_epochs: i
         return float(target)
     progress = min(1.0, max(0.0, (epoch - start_epoch + 1) / float(ramp_epochs)))
     return float(target) * progress
+
+
+def scheduled_linear_value(initial: float, final: float, epoch: int, start_epoch: int, ramp_epochs: int) -> float:
+    """Linearly move an already-active weight from initial to final."""
+    if epoch < start_epoch:
+        return float(initial)
+    if ramp_epochs <= 0:
+        return float(final)
+    progress = min(1.0, max(0.0, (epoch - start_epoch + 1) / float(ramp_epochs)))
+    return float(initial) + (float(final) - float(initial)) * progress
+
+
+def depth_bin_weight(
+    depth: torch.Tensor,
+    bins: list[float] | tuple[float, ...],
+    weights: list[float] | tuple[float, ...],
+) -> torch.Tensor:
+    """Build a piecewise-constant weight map from metric depth bins."""
+    result = torch.ones_like(depth)
+    if len(bins) < 2 or not weights:
+        return result
+    for idx in range(len(bins) - 1):
+        lo = float(bins[idx])
+        hi = float(bins[idx + 1])
+        weight = float(weights[min(idx, len(weights) - 1)])
+        result = torch.where((depth >= lo) & (depth < hi), result.new_tensor(weight), result)
+    return result
 
 
 def range_balanced_loss(
@@ -367,6 +416,21 @@ def geolift_loss(
     confidence_weight = scheduled_weight(
         float(loss_cfg.get("lambda_C", 0.05)), epoch, add_conf_epoch, int(schedule_cfg.get("confidence_ramp_epochs", 2))
     )
+    sparse_weight = scheduled_linear_value(
+        float(loss_cfg.get("lambda_S", 0.2)),
+        float(loss_cfg.get("lambda_S_final", loss_cfg.get("lambda_S", 0.2))),
+        epoch,
+        int(schedule_cfg.get("sparse_decay_start_epoch", 10**9)),
+        int(schedule_cfg.get("sparse_decay_epochs", 0)),
+    )
+    range_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_range", 0.0)),
+        epoch,
+        int(schedule_cfg.get("add_range_epoch", 0)),
+        int(schedule_cfg.get("range_ramp_epochs", 0)),
+    )
+    boundary_weight = float(loss_cfg.get("lambda_boundary", 0.1))
+    metric_kd_range_weights = loss_cfg.get("metric_kd_range_weights", [])
 
     if epoch >= add_teacher_epoch and bool(loss_cfg.get("require_dense_metric_teacher", True)):
         if int(metric_non_gt.sum().detach().cpu()) < int(loss_cfg.get("min_dense_metric_pixels", 1024)):
@@ -382,9 +446,16 @@ def geolift_loss(
         metric_supervision = metric_supervision + scale_weights[name] * scale_gt
         if epoch >= add_teacher_epoch:
             teacher_s, teacher_valid_s = _valid_downsample_to(metric_teacher, metric_conf * metric_mask.float(), value.shape[-2:])
+            teacher_pixel_weight = teacher_valid_s
+            if metric_kd_range_weights:
+                teacher_pixel_weight = teacher_pixel_weight * depth_bin_weight(
+                    teacher_s,
+                    loss_cfg.get("range_bins", [0.0, 20.0, 40.0, 60.0, 80.0, 120.0]),
+                    metric_kd_range_weights,
+                )
             teacher_supervision = teacher_supervision + scale_weights[name] * weighted_mean(
                 huber(torch.log(value.clamp_min(min_depth)) - torch.log(teacher_s.clamp_min(min_depth)), delta=0.1),
-                teacher_valid_s,
+                teacher_pixel_weight,
             )
 
     # The sparse loss must use the pre-anchor prediction; D_full is exactly anchored by design.
@@ -409,6 +480,8 @@ def geolift_loss(
 
     ssi_loss = depth1.new_tensor(0.0)
     ordinal_loss = depth1.new_tensor(0.0)
+    ordinal_accuracy = depth1.new_tensor(0.0)
+    ordinal_pair_ratio = depth1.new_tensor(0.0)
     geometry_pixels = depth1.new_tensor(0.0)
     if epoch >= add_geometry_epoch:
         if "R_G" in batch and "C_G" in batch:
@@ -424,7 +497,20 @@ def geolift_loss(
                 conf_threshold=float(loss_cfg.get("geometry_conf_threshold", 0.05)),
                 min_valid_pixels=int(loss_cfg.get("geometry_min_valid_pixels", 512)),
             )
-            ordinal_loss = boundary_ordinal_loss(depth1, relative, relative_conf, batch["rgb"], alpha=alpha)
+            ordinal_loss, ordinal_accuracy, ordinal_pair_ratio = boundary_ordinal_loss(
+                depth1,
+                relative,
+                relative_conf,
+                batch["rgb"],
+                alpha=alpha,
+                conf_threshold=float(loss_cfg.get("geometry_conf_threshold", 0.05)),
+                rgb_tau=float(loss_cfg.get("ordinal_rgb_tau", 0.04)),
+                geom_tau=float(loss_cfg.get("ordinal_geom_tau", 0.20)),
+                temperature=float(loss_cfg.get("ordinal_temperature", 1.0)),
+                offsets=loss_cfg.get("ordinal_offsets", [1]),
+                require_geometry_edge=bool(loss_cfg.get("ordinal_require_geometry_edge", False)),
+                return_stats=True,
+            )
         elif mono_ssi_cfg and bool(mono_ssi_cfg.get("enabled", False)) and str(mono_ssi_cfg.get("key", "D_da_raw")) in batch:
             key = str(mono_ssi_cfg.get("key", "D_da_raw"))
             relative = match_prediction_size(batch[key].float(), depth1.shape[-2:], mode="bilinear")
@@ -460,9 +546,10 @@ def geolift_loss(
 
     total = (
         float(loss_cfg.get("lambda_gt", 1.0)) * metric_supervision
-        + float(loss_cfg.get("lambda_S", 0.2)) * sparse_loss
+        + sparse_weight * sparse_loss
         + teacher_weight * teacher_supervision
-        + float(loss_cfg.get("lambda_boundary", 0.1)) * boundary_loss
+        + range_weight * range_loss
+        + boundary_weight * boundary_loss
         + float(loss_cfg.get("lambda_cycle", 0.02)) * cycle_loss
         + geometry_weight * (ssi_loss + float(loss_cfg.get("lambda_ord_in", 1.0)) * ordinal_loss)
         + confidence_weight * confidence_loss
@@ -478,10 +565,15 @@ def geolift_loss(
         "L_cycle": float(cycle_loss.detach().cpu()),
         "L_ssi": float(ssi_loss.detach().cpu()),
         "L_ord": float(ordinal_loss.detach().cpu()),
+        "ord_accuracy": float(ordinal_accuracy.detach().cpu()),
+        "ord_pair_ratio": float(ordinal_pair_ratio.detach().cpu()),
         "L_C": float(confidence_loss.detach().cpu()),
         "L_C_calib": float(confidence_calib.detach().cpu()),
         "L_plane": float(plane_loss.detach().cpu()),
         "w_cm": teacher_weight,
+        "w_sparse": sparse_weight,
+        "w_range": range_weight,
+        "w_boundary": boundary_weight,
         "w_ssi": geometry_weight,
         "w_ord": ordinal_weight,
         "w_C": confidence_weight,
