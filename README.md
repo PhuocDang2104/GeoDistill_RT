@@ -222,6 +222,17 @@ python -m src.eval_teacher_outputs --config configs/teacher.yaml --split val --m
 
 ## Train Student
 
+For promoted experiments, use the canonical runner instead of calling train/infer/profile separately. The first audited run creates an immutable protocol lock; later comparable runs must reuse it:
+
+```bash
+python scripts/run_standard_experiment.py \
+  --config /path/to/resolved_config.yaml \
+  --protocol-lock /persistent/path/kitti_geolift_tar2000_v1.json \
+  --create-protocol-lock
+```
+
+The canonical per-run source of truth is `RUN_ROOT/experiment_record.json`. See [`docs/GeoLift-RT_Issue_Tracker.md`](docs/GeoLift-RT_Issue_Tracker.md) for the protocol contract, open issues, and promotion gate.
+
 Before training with the default strict GeoRT objective, generate train-split teacher files:
 
 ```bash

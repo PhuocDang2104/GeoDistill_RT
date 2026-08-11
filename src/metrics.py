@@ -16,6 +16,78 @@ def masked_mean(value: torch.Tensor, mask: torch.Tensor, eps: float = 1e-6) -> t
     return (value * mask_f).sum() / mask_f.sum().clamp_min(eps)
 
 
+class GlobalDepthMetricAccumulator:
+    """Accumulate KITTI depth metrics over all valid pixels, not per-image means."""
+
+    def __init__(self, min_depth: float = 1e-3, max_depth: float = 120.0) -> None:
+        self.min_depth = float(min_depth)
+        self.max_depth = float(max_depth)
+        self.sq = 0.0
+        self.abs = 0.0
+        self.inv_sq = 0.0
+        self.inv_abs = 0.0
+        self.abs_rel = 0.0
+        self.delta1 = 0.0
+        self.delta2 = 0.0
+        self.delta3 = 0.0
+        self.count = 0
+
+    def update(
+        self,
+        pred: torch.Tensor,
+        target: torch.Tensor,
+        mask: torch.Tensor | None = None,
+    ) -> None:
+        pred = pred.detach().float()
+        target = target.detach().float()
+        valid = valid_mask(target, self.min_depth, self.max_depth)
+        if mask is not None:
+            valid = valid & mask.detach().bool()
+        count = int(valid.sum().item())
+        if count < 1:
+            return
+        prediction = pred.clamp(self.min_depth, self.max_depth)[valid]
+        truth = target.clamp(self.min_depth, self.max_depth)[valid]
+        diff = prediction - truth
+        inv_diff = 1000.0 / prediction - 1000.0 / truth
+        ratio = torch.maximum(prediction / truth, truth / prediction)
+        self.sq += float((diff * diff).sum().cpu())
+        self.abs += float(diff.abs().sum().cpu())
+        self.inv_sq += float((inv_diff * inv_diff).sum().cpu())
+        self.inv_abs += float(inv_diff.abs().sum().cpu())
+        self.abs_rel += float((diff.abs() / truth).sum().cpu())
+        self.delta1 += float((ratio < 1.25).sum().cpu())
+        self.delta2 += float((ratio < 1.25**2).sum().cpu())
+        self.delta3 += float((ratio < 1.25**3).sum().cpu())
+        self.count += count
+
+    def compute(self) -> dict[str, float]:
+        if self.count < 1:
+            return {
+                "rmse": float("inf"),
+                "mae": float("inf"),
+                "irmse": float("inf"),
+                "imae": float("inf"),
+                "abs_rel": float("inf"),
+                "delta1": 0.0,
+                "delta2": 0.0,
+                "delta3": 0.0,
+                "valid_pixels": 0,
+            }
+        count = float(self.count)
+        return {
+            "rmse": math.sqrt(self.sq / count),
+            "mae": self.abs / count,
+            "irmse": math.sqrt(self.inv_sq / count),
+            "imae": self.inv_abs / count,
+            "abs_rel": self.abs_rel / count,
+            "delta1": self.delta1 / count,
+            "delta2": self.delta2 / count,
+            "delta3": self.delta3 / count,
+            "valid_pixels": self.count,
+        }
+
+
 def depth_metrics_torch(
     pred: torch.Tensor,
     target: torch.Tensor,

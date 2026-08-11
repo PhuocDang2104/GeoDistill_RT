@@ -5,6 +5,7 @@ import csv
 import math
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,13 @@ from tqdm import tqdm
 
 from .dataset import KITTIDepthCompletionDataset
 from .losses import geort_loss
-from .metrics import average_metric_dict, depth_metrics_by_edge_torch, depth_metrics_by_range_torch, depth_metrics_torch
+from .metrics import (
+    GlobalDepthMetricAccumulator,
+    average_metric_dict,
+    depth_metrics_by_edge_torch,
+    depth_metrics_by_range_torch,
+    depth_metrics_torch,
+)
 from .model_factory import build_student
 from .utils import device_from_config, ensure_dir, load_project_config, seed_everything, setup_logger, write_jsonl
 
@@ -341,9 +348,27 @@ def save_checkpoint(
 
 def append_csv(path: Path, record: dict[str, Any]) -> None:
     ensure_dir(path.parent)
+    if path.exists():
+        with open(path, "r", newline="", encoding="utf-8") as stream:
+            reader = csv.DictReader(stream)
+            existing_fields = list(reader.fieldnames or [])
+            existing_rows = list(reader)
+        merged_fields = existing_fields + [key for key in record if key not in existing_fields]
+        if merged_fields != existing_fields:
+            temporary = path.with_suffix(path.suffix + ".tmp")
+            with open(temporary, "w", newline="", encoding="utf-8") as stream:
+                writer = csv.DictWriter(stream, fieldnames=merged_fields)
+                writer.writeheader()
+                writer.writerows(existing_rows)
+            temporary.replace(path)
     write_header = not path.exists()
     with open(path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(record.keys()))
+        if path.stat().st_size > 0:
+            with open(path, "r", newline="", encoding="utf-8") as stream:
+                fieldnames = list(csv.reader(stream).__next__())
+        else:
+            fieldnames = list(record.keys())
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         if write_header:
             writer.writeheader()
         writer.writerow(record)
@@ -363,6 +388,15 @@ def validate(
     min_depth = float(loss_cfg.get("min_depth", 1e-3))
     max_depth = float(loss_cfg.get("max_depth", cfg.get("student", {}).get("max_depth", 120.0)))
     range_bins = loss_cfg.get("range_bins", [0.0, 20.0, 40.0, 60.0, 80.0, 120.0])
+    global_metrics = GlobalDepthMetricAccumulator(min_depth, max_depth)
+    range_metrics = {
+        f"{int(float(lo))}_{int(float(hi))}": GlobalDepthMetricAccumulator(min_depth, max_depth)
+        for lo, hi in zip(range_bins[:-1], range_bins[1:])
+    }
+    edge_metrics = {
+        "edge": GlobalDepthMetricAccumulator(min_depth, max_depth),
+        "nonedge": GlobalDepthMetricAccumulator(min_depth, max_depth),
+    }
     for batch in tqdm(loader, desc="val", leave=False):
         batch = to_device(batch, device, channels_last=channels_last)
         pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
@@ -374,7 +408,34 @@ def validate(
         metrics.update(depth_metrics_by_range_torch(D_eval, batch["gt"], gt_mask, bins=range_bins, min_depth=min_depth, max_depth=max_depth))
         metrics.update(depth_metrics_by_edge_torch(D_eval, batch["gt"], gt_mask, batch["rgb"], min_depth=min_depth, max_depth=max_depth))
         records.append(metrics)
-    return average_metric_dict(records) if records else {"rmse": float("inf"), "mae": float("inf"), "abs_rel": float("inf")}
+        global_metrics.update(D_eval, batch["gt"], gt_mask)
+        for lo, hi in zip(range_bins[:-1], range_bins[1:]):
+            key = f"{int(float(lo))}_{int(float(hi))}"
+            range_mask = gt_mask & (batch["gt"] >= float(lo)) & (batch["gt"] < float(hi))
+            range_metrics[key].update(D_eval, batch["gt"], range_mask)
+        gray = batch["rgb"].float().mean(dim=1, keepdim=True)
+        gx = torch.zeros_like(gray)
+        gy = torch.zeros_like(gray)
+        gx[..., :, 1:] = (gray[..., :, 1:] - gray[..., :, :-1]).abs()
+        gy[..., 1:, :] = (gray[..., 1:, :] - gray[..., :-1, :]).abs()
+        edge_mask = (torch.maximum(gx, gy) > 0.05) & gt_mask
+        edge_metrics["edge"].update(D_eval, batch["gt"], edge_mask)
+        edge_metrics["nonedge"].update(D_eval, batch["gt"], gt_mask & ~edge_mask)
+
+    result = global_metrics.compute()
+    macro = average_metric_dict(records) if records else {}
+    result.update({f"macro_{key}": value for key, value in macro.items()})
+    for key, accumulator in range_metrics.items():
+        values = accumulator.compute()
+        result[f"rmse_{key}"] = values["rmse"]
+        result[f"mae_{key}"] = values["mae"]
+        result[f"valid_pixels_{key}"] = values["valid_pixels"]
+    for key, accumulator in edge_metrics.items():
+        values = accumulator.compute()
+        result[f"rmse_{key}"] = values["rmse"]
+        result[f"mae_{key}"] = values["mae"]
+        result[f"valid_pixels_{key}"] = values["valid_pixels"]
+    return result
 
 
 def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
@@ -467,6 +528,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     mono_start_epoch = int(mono_cfg.get("start_epoch", 5))
     warned_missing_mono = False
     for epoch in range(start_epoch, epochs):
+        epoch_started = time.perf_counter()
         if distributed and isinstance(train_loader.sampler, DistributedSampler):
             train_loader.sampler.set_epoch(epoch)
         model.train()
@@ -509,6 +571,7 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             if is_main:
                 pbar.set_postfix(loss=f"{avg_loss:.4f}")
 
+        epoch_train_seconds = time.perf_counter() - epoch_started
         train_items = {f"train_{k}": v / max(1, count) for k, v in running.items()}
         if distributed:
             for key, value in train_items.items():
@@ -519,13 +582,23 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             dist.barrier()
         if is_main:
             assert val_loader is not None
+            validation_started = time.perf_counter()
             val_items = validate(_unwrap_model(model), val_loader, device, cfg, channels_last=channels_last)
+            epoch_val_seconds = time.perf_counter() - validation_started
             rmse = float(val_items.get("rmse", float("inf")))
             is_best = rmse < best_rmse
             if is_best:
                 best_rmse = rmse
 
-            record: dict[str, Any] = {"epoch": epoch, **train_items, **{f"val_{k}": v for k, v in val_items.items()}, "best_rmse": best_rmse}
+            record: dict[str, Any] = {
+                "epoch": epoch,
+                "epoch_train_seconds": epoch_train_seconds,
+                "epoch_val_seconds": epoch_val_seconds,
+                "epoch_total_seconds": time.perf_counter() - epoch_started,
+                **train_items,
+                **{f"val_{k}": v for k, v in val_items.items()},
+                "best_rmse": best_rmse,
+            }
             append_csv(log_csv, record)
             write_jsonl(log_jsonl, record)
             logger.info("epoch=%d train_loss=%.6f val_rmse=%.6f best=%.6f", epoch, train_items.get("train_loss", 0.0), rmse, best_rmse)

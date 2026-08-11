@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import statistics
+import time
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +14,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .dataset import KITTIDepthCompletionDataset
-from .metrics import average_metric_dict, depth_metrics_torch
+from .metrics import GlobalDepthMetricAccumulator, average_metric_dict, depth_metrics_torch
 from .model_factory import build_student
 from .sparse_propagation import downsample_depth_with_mask
 from .train_student import to_device
@@ -84,13 +86,29 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
     model.eval()
 
     metrics_records: list[dict[str, float]] = []
-    global_stats = {key: 0.0 for key in ("sq", "abs", "inv_sq", "inv_abs", "abs_rel", "count")}
+    loss_cfg = cfg.get("loss", {})
+    min_depth = float(loss_cfg.get("min_depth", 1e-3))
+    max_depth = float(loss_cfg.get("max_depth", cfg.get("student", {}).get("max_depth", 120.0)))
+    global_accumulator = GlobalDepthMetricAccumulator(min_depth, max_depth)
     stage_stats: dict[str, list[float]] = {}
+    forward_seconds: list[float] = []
+    timing_warmup = min(10, max(0, len(loader) // 10))
+    pipeline_started = time.perf_counter()
+    prediction_count = 0
     benchmark_dir = ensure_dir(out_dir / "benchmark_png")
     save_visual = bool(cfg.get("outputs", {}).get("save_visuals", True))
-    for batch in tqdm(loader, desc=f"infer:{split}"):
+    for batch_index, batch in enumerate(tqdm(loader, desc=f"infer:{split}")):
         batch = to_device(batch, device)
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        forward_started = time.perf_counter()
         pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        elapsed = time.perf_counter() - forward_started
+        if batch_index >= timing_warmup:
+            forward_seconds.append(elapsed)
+        prediction_count += 1
         D_full = pred.get("D_full", pred["D_c"])[0, 0].detach().cpu().numpy().astype(np.float32)
         C_full = pred.get("C_full", pred["C"])[0, 0].detach().cpu().numpy().astype(np.float32)
         D_1_4 = pred.get("D_1_4", pred["D_c"])[0, 0].detach().cpu().numpy().astype(np.float32)
@@ -113,16 +131,7 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
             gt_mask = (batch["gt_mask"] > 0.5) & (batch["gt"] > 1e-3)
             if gt_mask.sum().item() > 0:
                 metrics_records.append(depth_metrics_torch(pred.get("D_full", pred["D_c"]), batch["gt"], gt_mask))
-                prediction = pred.get("D_full", pred["D_c"]).float().clamp_min(1e-3)
-                target = batch["gt"].float().clamp_min(1e-3)
-                diff = (prediction - target)[gt_mask]
-                inv_diff = (1000.0 / prediction - 1000.0 / target)[gt_mask]
-                global_stats["sq"] += float((diff * diff).sum().cpu())
-                global_stats["abs"] += float(diff.abs().sum().cpu())
-                global_stats["inv_sq"] += float((inv_diff * inv_diff).sum().cpu())
-                global_stats["inv_abs"] += float(inv_diff.abs().sum().cpu())
-                global_stats["abs_rel"] += float((diff.abs() / target[gt_mask]).sum().cpu())
-                global_stats["count"] += int(gt_mask.sum().cpu())
+                global_accumulator.update(pred.get("D_full", pred["D_c"]), batch["gt"], gt_mask)
                 for stage in ("D_init", "D16", "D8", "D4", "D2", "D1", "D_full"):
                     if stage not in pred:
                         continue
@@ -139,14 +148,8 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
         with open(student_root / "logs" / f"infer_{split}_metrics.json", "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2, sort_keys=True)
         logger.info("Inference metrics for %s: %s", split, metrics)
-        count = max(1.0, global_stats["count"])
         global_metrics = {
-            "rmse": float(np.sqrt(global_stats["sq"] / count)),
-            "mae": global_stats["abs"] / count,
-            "irmse": float(np.sqrt(global_stats["inv_sq"] / count)),
-            "imae": global_stats["inv_abs"] / count,
-            "abs_rel": global_stats["abs_rel"] / count,
-            "valid_pixels": int(global_stats["count"]),
+            **global_accumulator.compute(),
             "stage_rmse_m": {key: float(np.sqrt(sq / max(1.0, n))) for key, (sq, n) in stage_stats.items()},
             "stage_valid_pixels": {key: int(n) for key, (_, n) in stage_stats.items()},
             "note": "Global pixel aggregation; D_init RMSE is restricted to V_init support, and D_full includes exact sparse anchoring.",
@@ -154,6 +157,29 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
         with open(student_root / "logs" / f"infer_{split}_metrics_global.json", "w", encoding="utf-8") as f:
             json.dump(global_metrics, f, indent=2, sort_keys=True)
         logger.info("Global inference metrics for %s: %s", split, global_metrics)
+
+    pipeline_seconds = time.perf_counter() - pipeline_started
+    ordered = sorted(forward_seconds)
+    median_seconds = statistics.median(ordered) if ordered else float("nan")
+    p95_index = max(0, int(0.95 * len(ordered)) - 1)
+    runtime = {
+        "split": split,
+        "device": str(device),
+        "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
+        "precision": "fp32",
+        "batch_size": 1,
+        "samples": prediction_count,
+        "timing_warmup_samples": timing_warmup,
+        "forward_median_ms": 1000.0 * median_seconds,
+        "forward_p95_ms": 1000.0 * ordered[p95_index] if ordered else float("nan"),
+        "forward_fps_from_median": 1.0 / median_seconds if median_seconds > 0.0 else 0.0,
+        "pipeline_with_output_io_seconds": pipeline_seconds,
+        "pipeline_with_output_io_fps": prediction_count / max(pipeline_seconds, 1e-9),
+        "timing_scope": "Forward timing excludes data loading and output writes; pipeline timing includes both.",
+    }
+    with open(student_root / "logs" / f"infer_{split}_runtime.json", "w", encoding="utf-8") as f:
+        json.dump(runtime, f, indent=2, sort_keys=True)
+    logger.info("Inference runtime for %s: %s", split, runtime)
 
 
 def main() -> None:
