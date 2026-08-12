@@ -192,7 +192,7 @@ class StageAdaptedMobileViT(nn.Module):
         last_error: Exception | None = None
         for candidate in candidates:
             try:
-                base = timm.create_model(candidate, pretrained=False)
+                base = timm.create_model(candidate, pretrained=True)
                 break
             except Exception as exc:  # pragma: no cover - depends on timm registry
                 last_error = exc
