@@ -111,13 +111,6 @@ class CompactSparsePyramid(nn.Module):
             "D_init": initial4,
             "V_init": valid4,
             "rho4": density4,
-            # Raw metric states are exposed for decoder ablations. They are
-            # guidance only; hard anchoring remains a full-resolution operation.
-            "S4": sparse4,
-            "M4": mask4,
-            "S8": sparse8,
-            "M8": mask8,
-            "rho8": density8,
         }
         return (features[0], features[1], features[2]), aux
 

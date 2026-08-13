@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .dataset import KITTIDepthCompletionDataset
-from .metrics import DepthPredictionAudit, GlobalDepthMetricAccumulator, average_metric_dict, depth_metrics_torch
+from .metrics import GlobalDepthMetricAccumulator, average_metric_dict, depth_metrics_torch
 from .model_factory import build_student
 from .sparse_propagation import downsample_depth_with_mask
 from .train_student import to_device
@@ -90,17 +90,6 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
     min_depth = float(loss_cfg.get("min_depth", 1e-3))
     max_depth = float(loss_cfg.get("max_depth", cfg.get("student", {}).get("max_depth", 120.0)))
     global_accumulator = GlobalDepthMetricAccumulator(min_depth, max_depth)
-    audit_cfg = cfg.get("evaluation", {}).get("depth_audit", {})
-    audit = None
-    if split != "test" and bool(audit_cfg.get("enabled", False)):
-        audit = DepthPredictionAudit(
-            min_depth=min_depth,
-            max_depth=max_depth,
-            protocol_min_depth=float(audit_cfg.get("protocol_min_depth", min_depth)),
-            protocol_max_depth=float(audit_cfg.get("protocol_max_depth", max_depth)),
-            thresholds=tuple(audit_cfg.get("thresholds", [0.01, 0.05, 0.1, 0.5])),
-            top_k=int(audit_cfg.get("top_k", 100)),
-        )
     stage_stats: dict[str, list[float]] = {}
     forward_seconds: list[float] = []
     timing_warmup = min(10, max(0, len(loader) // 10))
@@ -143,8 +132,6 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
             if gt_mask.sum().item() > 0:
                 metrics_records.append(depth_metrics_torch(pred.get("D_full", pred["D_c"]), batch["gt"], gt_mask))
                 global_accumulator.update(pred.get("D_full", pred["D_c"]), batch["gt"], gt_mask)
-                if audit is not None:
-                    audit.update(pred, batch)
                 for stage in ("D_init", "D16", "D8", "D4", "D2", "D1", "D_full"):
                     if stage not in pred:
                         continue
@@ -167,10 +154,6 @@ def infer(cfg: dict[str, Any], paths: dict[str, str], checkpoint: str, split: st
             "stage_valid_pixels": {key: int(n) for key, (_, n) in stage_stats.items()},
             "note": "Global pixel aggregation; D_init RMSE is restricted to V_init support, and D_full includes exact sparse anchoring.",
         }
-        if audit is not None:
-            global_metrics.update(audit.summary_metrics())
-            audit_path = student_root / "logs" / f"infer_{split}_depth_audit.json"
-            audit_path.write_text(json.dumps(audit.report(), indent=2), encoding="utf-8")
         with open(student_root / "logs" / f"infer_{split}_metrics_global.json", "w", encoding="utf-8") as f:
             json.dump(global_metrics, f, indent=2, sort_keys=True)
         logger.info("Global inference metrics for %s: %s", split, global_metrics)

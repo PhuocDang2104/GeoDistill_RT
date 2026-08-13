@@ -196,14 +196,7 @@ def main() -> None:
             architecture = str(cfg.get("model", {}).get("architecture", "")).lower().replace("-", "_")
             profile_script = (
                 "scripts/profile_geolift_s3.py"
-                if architecture in {
-                    "geolift_s3",
-                    "geolift_s3_lite",
-                    "geolift_s3_v1",
-                    "geolift_decoder_v2",
-                    "geolift_s3_decoder_v2",
-                    "decoder_v2",
-                }
+                if architecture in {"geolift_s3", "geolift_s3_lite", "geolift_s3_v1"}
                 else "scripts/profile_geolift_s2.py"
             )
             run_step(

@@ -49,9 +49,6 @@ def main() -> None:
     device = torch.device("cuda")
     model = build_student(cfg).eval().to(device=device, dtype=torch.float16)
     inputs = make_inputs(args.height, args.width, device)
-    phase_guidance_modules: torch.nn.Module | tuple[torch.nn.Module, ...] = model.phase_guidance
-    if hasattr(model, "f2_project"):
-        phase_guidance_modules = (model.phase_guidance, model.f2_project)
     components: dict[str, torch.nn.Module | tuple[torch.nn.Module, ...]] = {
         "mobilenetv4_rgb_encoder": model.encoder,
         "compact_sparse_pyramid": model.sparse_pyramid,
@@ -60,7 +57,7 @@ def main() -> None:
         "coarse_D16_head": model.initial_depth,
         "residual_lift_16_to_8": model.lift16_8,
         "residual_lift_8_to_4": model.lift8_4,
-        "learned_phase_guidance_F2": phase_guidance_modules,
+        "learned_phase_guidance_F2": model.phase_guidance,
         "residual_raylift_4_to_2": model.lift4_2,
         "source2": model.source2,
         "residual_raylift_2_to_1": model.lift2_1,
@@ -148,7 +145,7 @@ def main() -> None:
         )
     rows.sort(key=lambda row: row["median_ms"], reverse=True)
     result = {
-        "architecture": str(cfg.get("model", {}).get("name", "GeoLift-S3-Lite")),
+        "architecture": "GeoLift-S3-Lite",
         "gpu": torch.cuda.get_device_name(0),
         "precision": "fp16",
         "batch": 1,

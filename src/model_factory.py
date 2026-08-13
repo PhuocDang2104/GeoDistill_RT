@@ -15,10 +15,6 @@ def build_student(cfg: dict[str, Any]) -> nn.Module:
         from .model_geolift_s3 import GeoLiftStudentS3Lite
 
         return GeoLiftStudentS3Lite.from_config(cfg)
-    if architecture in {"geolift_decoder_v2", "geolift_s3_decoder_v2", "decoder_v2"}:
-        from .model_geolift_decoder_v2 import GeoLiftDecoderV2
-
-        return GeoLiftDecoderV2.from_config(cfg)
     if architecture in {"geort_a0", "geort_student_s", "legacy"}:
         from .model_geort import GeoRTStudentS
 
