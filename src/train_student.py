@@ -57,6 +57,7 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         float(loss_cfg.get("lambda_G", loss_cfg.get("lambda_ssi", mono_cfg.get("weight", 0.0)))) > 0.0
         or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0
     )
+    load_metric_teacher = bool(data_cfg.get("load_metric_teacher", training or split == "val"))
     dataset = KITTIDepthCompletionDataset(
         data_root=paths["data_root"],
         split_root=paths["split_root"],
@@ -66,7 +67,7 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         output_scale=int(data_cfg.get("output_scale", 4)),
         depth_scale=float(data_cfg.get("depth_scale", 256.0)),
         teacher_root=paths["teacher_root"],
-        load_teacher=training or split == "val",
+        load_teacher=load_metric_teacher,
         load_geometry=load_geometry,
         geometry_fallback=bool(loss_cfg.get("geometry_fallback", True)),
         load_mono=load_mono,

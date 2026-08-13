@@ -277,10 +277,20 @@ class RayLiftIDBlock(nn.Module):
     phase_x = (0.0, 1.0, 0.0, 1.0)
     phase_y = (0.0, 0.0, 1.0, 1.0)
 
-    def __init__(self, source_ch: int, guidance_ch_per_phase: int, spec: RayLiftSpec, final: bool = False) -> None:
+    def __init__(
+        self,
+        source_ch: int,
+        guidance_ch_per_phase: int,
+        spec: RayLiftSpec,
+        final: bool = False,
+        residual_correction: bool = False,
+        residual_limit: float = 0.02,
+    ) -> None:
         super().__init__()
         self.spec = spec
         self.final = bool(final)
+        self.residual_correction = bool(residual_correction)
+        self.residual_limit = float(residual_limit)
         trunk_in = source_ch + 4 * guidance_ch_per_phase + 4
         self.trunk = nn.Sequential(
             ConvBNAct(trunk_in, 24, kernel=1),
@@ -294,6 +304,8 @@ class RayLiftIDBlock(nn.Module):
         self.eta = nn.Conv2d(16, 4, 1)
         self.gate = nn.Conv2d(16, 4, 1)
         self.conf_calibration = nn.Conv2d(16, 4, 1) if final else None
+        self.residual_delta = nn.Conv2d(16, 4, 1) if self.residual_correction else None
+        self.residual_gate = nn.Conv2d(16, 4, 1) if self.residual_correction else None
         self._init_near_bilinear()
 
     def _init_near_bilinear(self) -> None:
@@ -305,6 +317,11 @@ class RayLiftIDBlock(nn.Module):
         if self.conf_calibration is not None:
             nn.init.zeros_(self.conf_calibration.weight)
             nn.init.constant_(self.conf_calibration.bias, math.log(0.95 / 0.05))
+        if self.residual_delta is not None and self.residual_gate is not None:
+            nn.init.normal_(self.residual_delta.weight, mean=0.0, std=1e-3)
+            nn.init.zeros_(self.residual_delta.bias)
+            nn.init.zeros_(self.residual_gate.weight)
+            nn.init.constant_(self.residual_gate.bias, math.log(0.05 / 0.95))
 
     @staticmethod
     def _sample(field: torch.Tensor, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -421,7 +438,16 @@ class RayLiftIDBlock(nn.Module):
 
         xi_bilinear = phase_pack(F.interpolate(inverse, scale_factor=2, mode="bilinear", align_corners=False))
         gate = torch.sigmoid(self.gate(trunk))
-        xi_child = ((1.0 - gate) * xi_bilinear + gate * xi_aggregate).clamp(1.0 / max_depth, 1.0 / min_depth)
+        xi_raylift = (1.0 - gate) * xi_bilinear + gate * xi_aggregate
+        if self.residual_delta is not None and self.residual_gate is not None:
+            residual_delta = torch.tanh(self.residual_delta(trunk)) * self.residual_limit
+            residual_gate = torch.sigmoid(self.residual_gate(trunk))
+            xi_child = xi_raylift + residual_gate * residual_delta
+        else:
+            residual_delta = torch.zeros_like(xi_raylift)
+            residual_gate = torch.zeros_like(xi_raylift)
+            xi_child = xi_raylift
+        xi_child = xi_child.clamp(1.0 / max_depth, 1.0 / min_depth)
         depth_child = phase_unpack(xi_child).reciprocal().clamp(min_depth, max_depth)
 
         confidence_bilinear = phase_pack(F.interpolate(confidence, scale_factor=2, mode="bilinear", align_corners=False))
@@ -437,6 +463,8 @@ class RayLiftIDBlock(nn.Module):
             "slope_b": bb.squeeze(2),
             "eta": eta.squeeze(2),
             "gate": gate,
+            "residual_delta": residual_delta,
+            "residual_gate": residual_gate,
             "weights": weights,
         }
         return depth_child, confidence_child, aux

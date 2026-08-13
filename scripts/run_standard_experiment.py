@@ -193,11 +193,17 @@ def main() -> None:
 
         profile_path = logs_root / "geolift_component_profile.json"
         if not args.skip_profile:
+            architecture = str(cfg.get("model", {}).get("architecture", "")).lower().replace("-", "_")
+            profile_script = (
+                "scripts/profile_geolift_s3.py"
+                if architecture in {"geolift_s3", "geolift_s3_lite", "geolift_s3_v1"}
+                else "scripts/profile_geolift_s2.py"
+            )
             run_step(
                 "profile_fp16",
                 [
                     sys.executable,
-                    "scripts/profile_geolift_s2.py",
+                    profile_script,
                     "--config",
                     str(config_path),
                     "--warmup",

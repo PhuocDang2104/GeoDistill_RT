@@ -1,0 +1,84 @@
+paths_file: "configs/paths_colab_geolift.yaml"
+
+seed: 42
+device: "cuda"
+
+data:
+  image_size: [352, 1216]
+  output_scale: 4
+  num_workers: 2
+  depth_scale: 256.0
+  load_metric_teacher: false
+
+model:
+  name: "GeoLift-S3-Lite"
+  architecture: "geolift_s3_lite"
+  encoder: "mobilenetv4_conv_small_050.e3000_r224_in1k"
+  encoder_pretrained: true
+
+student:
+  max_depth: 120.0
+
+sparse_propagation:
+  scale: 4
+  radius: 7
+  mode: "local_normalized_pyramid"
+
+train:
+  epochs: 30
+  batch_size: 2
+  lr: 0.0002
+  weight_decay: 0.00001
+  amp: true
+  amp_dtype: "float16"
+  fused_adamw: true
+  grad_clip_norm: 1.0
+  scheduler: "cosine"
+  warmup_epochs: 1.0
+  min_lr_ratio: 0.05
+  channels_last: true
+  data_parallel: false
+  distributed: false
+  find_unused_parameters: false
+  compile: false
+  deterministic: false
+  float32_matmul_precision: "high"
+  resume: null
+
+loss:
+  objective: "s3_lite"
+  lambda_metric: 1.0
+  lambda_log: 0.2
+  lambda_sparse: 0.1
+  lambda_edge: 0.05
+  metric_huber_delta: 1.0
+  multiscale_weights:
+    D16: 0.05
+    D8: 0.10
+    D4: 0.25
+    D2: 0.50
+    D1: 1.00
+  lambda_G: 0.0
+  lambda_ord: 0.0
+  geometry_fallback: false
+  min_depth: 0.001
+  max_depth: 120.0
+  range_bins: [0.0, 20.0, 40.0, 60.0, 80.0, 120.0]
+
+mono_ssi:
+  enabled: false
+  weight: 0.0
+  key: "D_da_raw"
+
+# Kept for trainer interface compatibility; S3 objective does not gate losses by epoch.
+schedule: {}
+
+teacher_checks:
+  enabled: false
+  require_metric: false
+  require_geometry: false
+  require_geometry_fused: false
+
+outputs:
+  save_every: 1
+  save_visuals: true

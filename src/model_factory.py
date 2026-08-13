@@ -11,9 +11,12 @@ def build_student(cfg: dict[str, Any]) -> nn.Module:
         from .model_geolift_s2 import GeoLiftStudentS2
 
         return GeoLiftStudentS2.from_config(cfg)
+    if architecture in {"geolift_s3", "geolift_s3_lite", "geolift_s3_v1"}:
+        from .model_geolift_s3 import GeoLiftStudentS3Lite
+
+        return GeoLiftStudentS3Lite.from_config(cfg)
     if architecture in {"geort_a0", "geort_student_s", "legacy"}:
         from .model_geort import GeoRTStudentS
 
         return GeoRTStudentS.from_config(cfg)
     raise ValueError(f"Unknown student architecture: {architecture}")
-

@@ -585,6 +585,77 @@ def geolift_loss(
     return total, items
 
 
+def geolift_s3_loss(
+    pred: dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
+    loss_cfg: dict[str, Any],
+) -> tuple[torch.Tensor, dict[str, float]]:
+    """Simple end-to-end S3 objective; no teacher or epoch-gated curriculum."""
+    min_depth = float(loss_cfg.get("min_depth", 1e-3))
+    max_depth = float(loss_cfg.get("max_depth", 120.0))
+    gt = batch["gt"].float()
+    gt_mask = (
+        (batch["gt_mask"] > 0.5)
+        & torch.isfinite(gt)
+        & (gt > min_depth)
+        & (gt < max_depth)
+    )
+    sparse = batch["sparse"].float()
+    sparse_mask = (
+        (batch["mask"] > 0.5)
+        & torch.isfinite(sparse)
+        & (sparse > min_depth)
+        & (sparse < max_depth)
+    )
+    scale_weights_cfg = loss_cfg.get(
+        "multiscale_weights", {"D16": 0.05, "D8": 0.10, "D4": 0.25, "D2": 0.50, "D1": 1.0}
+    )
+    scale_weights = {
+        name: float(scale_weights_cfg.get(name, default))
+        for name, default in (("D16", 0.05), ("D8", 0.10), ("D4", 0.25), ("D2", 0.50), ("D1", 1.0))
+    }
+    metric_loss = pred["D1"].new_tensor(0.0)
+    per_scale: dict[str, torch.Tensor] = {}
+    for name in ("D16", "D8", "D4", "D2", "D1"):
+        target, valid_weight = _valid_downsample_to(gt, gt_mask, pred[name].shape[-2:])
+        valid = (valid_weight > 0.0) & torch.isfinite(target) & (target > min_depth) & (target < max_depth)
+        stage_loss = mean_valid(huber(pred[name] - target, delta=float(loss_cfg.get("metric_huber_delta", 1.0))), valid)
+        per_scale[name] = stage_loss
+        metric_loss = metric_loss + scale_weights[name] * stage_loss
+
+    log_loss = _log_huber_loss(pred["D1"], gt, gt_mask)
+    sparse_loss = mean_valid((pred["D_pre_anchor"] - sparse).abs(), sparse_mask)
+    edge_loss = _log_gradient_loss(pred["D1"], gt, gt_mask)
+    lambda_metric = float(loss_cfg.get("lambda_metric", 1.0))
+    lambda_log = float(loss_cfg.get("lambda_log", 0.2))
+    lambda_sparse = float(loss_cfg.get("lambda_sparse", 0.1))
+    lambda_edge = float(loss_cfg.get("lambda_edge", 0.05))
+    total = (
+        lambda_metric * metric_loss
+        + lambda_log * log_loss
+        + lambda_sparse * sparse_loss
+        + lambda_edge * edge_loss
+    )
+
+    items = {
+        "loss": float(total.detach().cpu()),
+        "L_metric_multiscale": float(metric_loss.detach().cpu()),
+        "L_log": float(log_loss.detach().cpu()),
+        "L_sparse_pre_anchor": float(sparse_loss.detach().cpu()),
+        "L_edge": float(edge_loss.detach().cpu()),
+        "w_metric": lambda_metric,
+        "w_log": lambda_log,
+        "w_sparse": lambda_sparse,
+        "w_edge": lambda_edge,
+    }
+    for stage, value in per_scale.items():
+        items[f"metric_{stage}"] = float(value.detach().cpu())
+    for name in ("fusion_gate4", "fusion_gate8", "fusion_gate16", "residual_gate_8", "residual_gate_4", "residual_gate_2", "residual_gate_1"):
+        if name in pred:
+            items[f"mean_{name}"] = float(pred[name].detach().mean().cpu())
+    return total, items
+
+
 def geort_loss(
     pred: dict[str, torch.Tensor],
     batch: dict[str, torch.Tensor],
@@ -594,6 +665,8 @@ def geort_loss(
     mono_ssi_cfg: dict[str, Any] | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute the theory-aligned full-resolution GeoRT objective."""
+    if str(loss_cfg.get("objective", "")).lower() in {"s3", "s3_lite", "geolift_s3_lite"}:
+        return geolift_s3_loss(pred, batch, loss_cfg)
     if "D16" in pred:
         return geolift_loss(pred, batch, loss_cfg, schedule_cfg, epoch, mono_ssi_cfg)
     D_full = pred.get("D_full", pred["D_c"])
