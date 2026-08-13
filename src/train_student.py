@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import os
 import shutil
@@ -19,6 +20,7 @@ from tqdm import tqdm
 from .dataset import KITTIDepthCompletionDataset
 from .losses import geort_loss
 from .metrics import (
+    DepthPredictionAudit,
     GlobalDepthMetricAccumulator,
     average_metric_dict,
     depth_metrics_by_edge_torch,
@@ -169,20 +171,55 @@ def _make_grad_scaler(device: torch.device, enabled: bool) -> Any:
 
 def _make_optimizer(model: torch.nn.Module, cfg: dict[str, Any], device: torch.device, logger: Any) -> torch.optim.Optimizer:
     train_cfg = cfg["train"]
+    base_lr = float(train_cfg.get("lr", 1e-4))
+    encoder_multiplier = float(train_cfg.get("encoder_lr_multiplier", 1.0))
+    new_head_multiplier = float(train_cfg.get("new_head_lr_multiplier", 1.0))
+    new_head_patterns = tuple(str(value) for value in train_cfg.get("new_head_patterns", []))
+    parameter_source: Any = model.parameters()
+    if encoder_multiplier != 1.0 or new_head_multiplier != 1.0 or new_head_patterns:
+        grouped: dict[str, list[torch.nn.Parameter]] = {"encoder": [], "decoder": [], "new_heads": []}
+        for raw_name, parameter in model.named_parameters():
+            if not parameter.requires_grad:
+                continue
+            name = raw_name.removeprefix("module.")
+            if any(pattern in name for pattern in new_head_patterns):
+                grouped["new_heads"].append(parameter)
+            elif name.startswith("encoder."):
+                grouped["encoder"].append(parameter)
+            else:
+                grouped["decoder"].append(parameter)
+        learning_rates = {
+            "encoder": base_lr * encoder_multiplier,
+            "decoder": base_lr,
+            "new_heads": base_lr * new_head_multiplier,
+        }
+        parameter_source = [
+            {"params": parameters, "lr": learning_rates[name], "group_name": name}
+            for name, parameters in grouped.items()
+            if parameters
+        ]
+        logger.info(
+            "Optimizer groups: %s",
+            {
+                name: {"parameters": sum(value.numel() for value in parameters), "lr": learning_rates[name]}
+                for name, parameters in grouped.items()
+                if parameters
+            },
+        )
     kwargs: dict[str, Any] = {
-        "lr": float(train_cfg.get("lr", 1e-4)),
+        "lr": base_lr,
         "weight_decay": float(train_cfg.get("weight_decay", 1e-5)),
     }
     use_fused = bool(train_cfg.get("fused_adamw", True)) and device.type == "cuda"
     if use_fused:
         kwargs["fused"] = True
     try:
-        return torch.optim.AdamW(model.parameters(), **kwargs)
+        return torch.optim.AdamW(parameter_source, **kwargs)
     except TypeError:
         if "fused" in kwargs:
             logger.warning("Fused AdamW is unavailable in this PyTorch build; using standard AdamW.")
             kwargs.pop("fused", None)
-            return torch.optim.AdamW(model.parameters(), **kwargs)
+            return torch.optim.AdamW(parameter_source, **kwargs)
         raise
 
 
@@ -382,6 +419,7 @@ def validate(
     device: torch.device,
     cfg: dict[str, Any],
     channels_last: bool = False,
+    audit_output_path: Path | None = None,
 ) -> dict[str, float]:
     model.eval()
     records: list[dict[str, float]] = []
@@ -398,6 +436,17 @@ def validate(
         "edge": GlobalDepthMetricAccumulator(min_depth, max_depth),
         "nonedge": GlobalDepthMetricAccumulator(min_depth, max_depth),
     }
+    audit_cfg = cfg.get("evaluation", {}).get("depth_audit", {})
+    audit = None
+    if bool(audit_cfg.get("enabled", False)):
+        audit = DepthPredictionAudit(
+            min_depth=min_depth,
+            max_depth=max_depth,
+            protocol_min_depth=float(audit_cfg.get("protocol_min_depth", min_depth)),
+            protocol_max_depth=float(audit_cfg.get("protocol_max_depth", max_depth)),
+            thresholds=tuple(audit_cfg.get("thresholds", [0.01, 0.05, 0.1, 0.5])),
+            top_k=int(audit_cfg.get("top_k", 100)),
+        )
     for batch in tqdm(loader, desc="val", leave=False):
         batch = to_device(batch, device, channels_last=channels_last)
         pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
@@ -422,6 +471,8 @@ def validate(
         edge_mask = (torch.maximum(gx, gy) > 0.05) & gt_mask
         edge_metrics["edge"].update(D_eval, batch["gt"], edge_mask)
         edge_metrics["nonedge"].update(D_eval, batch["gt"], gt_mask & ~edge_mask)
+        if audit is not None:
+            audit.update(pred, batch)
 
     result = global_metrics.compute()
     macro = average_metric_dict(records) if records else {}
@@ -436,6 +487,11 @@ def validate(
         result[f"rmse_{key}"] = values["rmse"]
         result[f"mae_{key}"] = values["mae"]
         result[f"valid_pixels_{key}"] = values["valid_pixels"]
+    if audit is not None:
+        result.update(audit.summary_metrics())
+        if audit_output_path is not None:
+            ensure_dir(audit_output_path.parent)
+            audit_output_path.write_text(json.dumps(audit.report(), indent=2), encoding="utf-8")
     return result
 
 
@@ -477,6 +533,9 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     start_epoch = 0
 
     resume = train_cfg.get("resume")
+    init_checkpoint = train_cfg.get("init_checkpoint")
+    if resume and init_checkpoint:
+        raise ValueError("train.resume and train.init_checkpoint are mutually exclusive")
     ckpt: dict[str, Any] | None = None
     if resume:
         ckpt = torch.load(resume, map_location=device)
@@ -485,6 +544,23 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
         start_epoch = int(ckpt.get("epoch", -1)) + 1
         best_rmse = float(ckpt.get("best_rmse", best_rmse))
         logger.info("Resumed from %s at epoch %d", resume, start_epoch)
+    elif init_checkpoint:
+        init_payload = torch.load(init_checkpoint, map_location=device)
+        init_state = init_payload["model"] if isinstance(init_payload, dict) and "model" in init_payload else init_payload
+        strict = bool(train_cfg.get("init_strict", False))
+        load_result = model.load_state_dict(init_state, strict=strict)
+        if not strict:
+            allowed_prefixes = tuple(str(value) for value in train_cfg.get("init_allowed_missing_prefixes", []))
+            disallowed_missing = [
+                key for key in load_result.missing_keys if not any(key.startswith(prefix) for prefix in allowed_prefixes)
+            ]
+            if disallowed_missing or load_result.unexpected_keys:
+                raise RuntimeError(
+                    "Unsafe warm-start state mismatch: "
+                    f"missing={disallowed_missing}, unexpected={load_result.unexpected_keys}"
+                )
+            logger.info("Warm-start new parameters: %s", load_result.missing_keys)
+        logger.info("Initialized model weights from %s; optimizer/epoch/best metric start fresh.", init_checkpoint)
 
     if bool(train_cfg.get("compile", False)):
         if not hasattr(torch, "compile"):
@@ -584,7 +660,17 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
         if is_main:
             assert val_loader is not None
             validation_started = time.perf_counter()
-            val_items = validate(_unwrap_model(model), val_loader, device, cfg, channels_last=channels_last)
+            audit_epoch_path = student_root / "logs" / f"val_depth_audit_epoch_{epoch:03d}.json"
+            val_items = validate(
+                _unwrap_model(model),
+                val_loader,
+                device,
+                cfg,
+                channels_last=channels_last,
+                audit_output_path=audit_epoch_path,
+            )
+            if audit_epoch_path.is_file():
+                shutil.copy2(audit_epoch_path, student_root / "logs" / "val_depth_audit_latest.json")
             epoch_val_seconds = time.perf_counter() - validation_started
             rmse = float(val_items.get("rmse", float("inf")))
             is_best = rmse < best_rmse
@@ -618,7 +704,8 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
                 shutil.copy2(ckpt_dir / "last.pth", backup_ckpt / "last.pth")
                 if (ckpt_dir / "best.pth").exists():
                     shutil.copy2(ckpt_dir / "best.pth", backup_ckpt / "best.pth")
-                for log_path in (log_csv, log_jsonl, student_root / "logs" / log_name):
+                audit_latest = student_root / "logs" / "val_depth_audit_latest.json"
+                for log_path in (log_csv, log_jsonl, student_root / "logs" / log_name, audit_epoch_path, audit_latest):
                     if log_path.exists():
                         shutil.copy2(log_path, backup_logs / log_path.name)
                 logger.info("Backed up epoch %d checkpoint/logs to %s", epoch, backup_root)

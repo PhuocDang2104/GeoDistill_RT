@@ -650,9 +650,24 @@ def geolift_s3_loss(
     }
     for stage, value in per_scale.items():
         items[f"metric_{stage}"] = float(value.detach().cpu())
-    for name in ("fusion_gate4", "fusion_gate8", "fusion_gate16", "residual_gate_8", "residual_gate_4", "residual_gate_2", "residual_gate_1"):
+    for name in (
+        "fusion_gate4",
+        "fusion_gate8",
+        "fusion_gate16",
+        "residual_gate_8",
+        "residual_gate_4",
+        "residual_gate_2",
+        "residual_gate_1",
+        "metric_gate_4",
+        "metric_delta_4",
+        "sparse_error_8",
+        "f2_alpha",
+    ):
         if name in pred:
             items[f"mean_{name}"] = float(pred[name].detach().mean().cpu())
+    for name in ("metric_delta_4", "sparse_error_8"):
+        if name in pred:
+            items[f"mean_abs_{name}"] = float(pred[name].detach().abs().mean().cpu())
     return total, items
 
 

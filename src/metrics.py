@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import math
-from typing import Mapping
+from typing import Any, Mapping
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 
 def valid_mask(depth: torch.Tensor, min_depth: float = 1e-3, max_depth: float = 120.0) -> torch.Tensor:
@@ -86,6 +87,220 @@ class GlobalDepthMetricAccumulator:
             "delta3": self.delta3 / count,
             "valid_pixels": self.count,
         }
+
+
+class DepthPredictionAudit:
+    """Streaming near-zero and inverse-depth outlier audit on the GT grid."""
+
+    def __init__(
+        self,
+        min_depth: float = 1e-3,
+        max_depth: float = 120.0,
+        protocol_min_depth: float | None = None,
+        protocol_max_depth: float | None = None,
+        stages: tuple[str, ...] = ("D8", "D4", "D2", "D1", "D_full"),
+        thresholds: tuple[float, ...] = (0.01, 0.05, 0.1, 0.5),
+        top_k: int = 100,
+        histogram_bins: int = 8192,
+    ) -> None:
+        self.min_depth = float(min_depth)
+        self.max_depth = float(max_depth)
+        self.protocol_min_depth = float(protocol_min_depth if protocol_min_depth is not None else min_depth)
+        self.protocol_max_depth = float(protocol_max_depth if protocol_max_depth is not None else max_depth)
+        self.stages = tuple(stages)
+        self.thresholds = tuple(float(value) for value in thresholds)
+        self.top_k = int(top_k)
+        self.histogram_bins = int(histogram_bins)
+        self.hist_log_min = math.log(1e-6)
+        self.hist_log_max = math.log(max(self.max_depth, self.protocol_max_depth, 1.0))
+        self.stage_stats: dict[str, dict[str, Any]] = {
+            stage: {
+                "min": float("inf"),
+                "count": 0,
+                "nonpositive_or_nonfinite": 0,
+                "low_counts": {threshold: 0 for threshold in self.thresholds},
+                "hist": torch.zeros(self.histogram_bins, dtype=torch.float64),
+                "sum": 0.0,
+            }
+            for stage in self.stages
+        }
+        self.inverse_stats = {
+            stage: {"raw_sq": 0.0, "raw_count": 0, "raw_invalid": 0, "protocol_sq": 0.0, "protocol_count": 0}
+            for stage in ("D1", "D_full")
+        }
+        self.top_records: list[dict[str, Any]] = []
+
+    @staticmethod
+    def _sample_ids(batch: dict[str, Any], batch_size: int) -> list[str]:
+        raw = batch.get("sample_id", [])
+        if isinstance(raw, (list, tuple)):
+            return [str(value) for value in raw]
+        return [str(raw)] * batch_size
+
+    def _to_gt_grid(self, value: torch.Tensor, target_hw: tuple[int, int]) -> torch.Tensor:
+        value = value.detach().float()
+        if value.shape[-2:] == target_hw:
+            return value
+        return F.interpolate(value, size=target_hw, mode="bilinear", align_corners=False)
+
+    def update(self, predictions: dict[str, torch.Tensor], batch: dict[str, Any]) -> None:
+        target = batch["gt"].detach().float()
+        target_mask = (
+            (batch["gt_mask"] > 0.5)
+            & torch.isfinite(target)
+            & (target > self.min_depth)
+            & (target < self.max_depth)
+        )
+        if int(target_mask.sum().item()) < 1:
+            return
+        aligned: dict[str, torch.Tensor] = {}
+        for stage in self.stages:
+            if stage not in predictions:
+                continue
+            value = self._to_gt_grid(predictions[stage], target.shape[-2:])
+            aligned[stage] = value
+            values = value[target_mask]
+            finite_positive = torch.isfinite(values) & (values > 0.0)
+            valid_values = values[finite_positive]
+            stats = self.stage_stats[stage]
+            stats["count"] += int(values.numel())
+            stats["nonpositive_or_nonfinite"] += int((~finite_positive).sum().item())
+            if valid_values.numel() > 0:
+                stats["min"] = min(float(stats["min"]), float(valid_values.min().item()))
+                stats["sum"] += float(valid_values.sum().cpu())
+                for threshold in self.thresholds:
+                    stats["low_counts"][threshold] += int((valid_values < threshold).sum().item())
+                log_values = valid_values.clamp_min(1e-6).log()
+                hist = torch.histc(
+                    log_values,
+                    bins=self.histogram_bins,
+                    min=self.hist_log_min,
+                    max=self.hist_log_max,
+                )
+                stats["hist"] += hist.double().cpu()
+
+        for stage in ("D1", "D_full"):
+            if stage not in aligned:
+                continue
+            prediction = aligned[stage]
+            raw_valid = target_mask & torch.isfinite(prediction) & (prediction > 0.0)
+            raw_invalid = target_mask & ~raw_valid
+            inv = self.inverse_stats[stage]
+            inv["raw_invalid"] += int(raw_invalid.sum().item())
+            if int(raw_valid.sum().item()) > 0:
+                raw_diff = 1000.0 / prediction[raw_valid] - 1000.0 / target[raw_valid]
+                inv["raw_sq"] += float((raw_diff * raw_diff).sum().cpu())
+                inv["raw_count"] += int(raw_valid.sum().item())
+            protocol_prediction = prediction.clamp(self.protocol_min_depth, self.protocol_max_depth)
+            protocol_target = target.clamp(self.protocol_min_depth, self.protocol_max_depth)
+            protocol_diff = 1000.0 / protocol_prediction[target_mask] - 1000.0 / protocol_target[target_mask]
+            inv["protocol_sq"] += float((protocol_diff * protocol_diff).sum().cpu())
+            inv["protocol_count"] += int(target_mask.sum().item())
+
+        if "D1" not in aligned:
+            return
+        ranking_prediction = aligned["D1"]
+        ranking_valid = target_mask & torch.isfinite(ranking_prediction) & (ranking_prediction > 0.0)
+        if int(ranking_valid.sum().item()) < 1:
+            return
+        error_map = torch.full_like(target, float("-inf"))
+        error_map[ranking_valid] = (
+            1000.0 / ranking_prediction[ranking_valid] - 1000.0 / target[ranking_valid]
+        ).abs()
+        flat = error_map.flatten()
+        count = min(self.top_k, int(ranking_valid.sum().item()))
+        errors, indices = torch.topk(flat, k=count)
+        height, width = target.shape[-2:]
+        image_area = height * width
+        batch_indices = indices // image_area
+        within = indices % image_area
+        ys = within // width
+        xs = within % width
+        sample_ids = self._sample_ids(batch, target.shape[0])
+        stage_cpu = {
+            stage: value.flatten()[indices].detach().cpu().tolist()
+            for stage, value in aligned.items()
+        }
+        gt_values = target.flatten()[indices].detach().cpu().tolist()
+        errors_cpu = errors.detach().cpu().tolist()
+        batch_cpu = batch_indices.detach().cpu().tolist()
+        ys_cpu = ys.detach().cpu().tolist()
+        xs_cpu = xs.detach().cpu().tolist()
+        for index in range(count):
+            self.top_records.append(
+                {
+                    "inverse_error_1_per_km": float(errors_cpu[index]),
+                    "sample_id": sample_ids[int(batch_cpu[index])],
+                    "u": int(xs_cpu[index]),
+                    "v": int(ys_cpu[index]),
+                    "gt_m": float(gt_values[index]),
+                    "stage_prediction_m": {
+                        stage: float(values[index]) for stage, values in stage_cpu.items()
+                    },
+                }
+            )
+        self.top_records.sort(key=lambda row: row["inverse_error_1_per_km"], reverse=True)
+        del self.top_records[self.top_k :]
+
+    def _quantile(self, histogram: torch.Tensor, probability: float) -> float:
+        count = float(histogram.sum().item())
+        if count < 1:
+            return float("nan")
+        target = max(1.0, probability * count)
+        index = int(torch.searchsorted(histogram.cumsum(0), torch.tensor(target, dtype=torch.float64)).item())
+        index = min(max(index, 0), self.histogram_bins - 1)
+        log_value = self.hist_log_min + (index + 0.5) * (self.hist_log_max - self.hist_log_min) / self.histogram_bins
+        return math.exp(log_value)
+
+    def report(self) -> dict[str, Any]:
+        quantiles = {"q0001": 0.0001, "q001": 0.001, "q01": 0.01, "q1": 0.1}
+        stages: dict[str, Any] = {}
+        for stage, stats in self.stage_stats.items():
+            stages[stage] = {
+                "pred_min_m": float(stats["min"]) if math.isfinite(float(stats["min"])) else None,
+                "pred_mean_m": float(stats["sum"]) / max(1, int(stats["count"]) - int(stats["nonpositive_or_nonfinite"])),
+                **{
+                    f"pred_{name}_m": self._quantile(stats["hist"], probability)
+                    for name, probability in quantiles.items()
+                },
+                "valid_gt_pixels": int(stats["count"]),
+                "nonpositive_or_nonfinite": int(stats["nonpositive_or_nonfinite"]),
+                "low_depth_counts": {f"lt_{threshold:g}m": int(stats["low_counts"][threshold]) for threshold in self.thresholds},
+            }
+        inverse: dict[str, Any] = {}
+        for stage, stats in self.inverse_stats.items():
+            inverse[stage] = {
+                "irmse_raw_1_per_km": math.sqrt(stats["raw_sq"] / max(1, stats["raw_count"])),
+                "irmse_protocol_1_per_km": math.sqrt(stats["protocol_sq"] / max(1, stats["protocol_count"])),
+                "raw_valid_pixels": int(stats["raw_count"]),
+                "raw_invalid_pixels": int(stats["raw_invalid"]),
+            }
+        return {
+            "scope": "Predictions bilinearly aligned to the full GT grid; statistics use valid GT pixels only.",
+            "quantile_probabilities": quantiles,
+            "quantile_note": "Quantiles are streaming log-histogram estimates; min/count/iRMSE/outlier values are exact.",
+            "protocol_bounds_m": [self.protocol_min_depth, self.protocol_max_depth],
+            "stages": stages,
+            "inverse_depth": inverse,
+            "top_inverse_depth_outliers_ranked_on": "D1_pre_anchor",
+            "top_inverse_depth_outliers": self.top_records,
+        }
+
+    def summary_metrics(self) -> dict[str, float]:
+        report = self.report()
+        result: dict[str, float] = {}
+        for stage, stats in report["stages"].items():
+            for name in ("pred_min_m", "pred_mean_m", "pred_q0001_m", "pred_q001_m", "pred_q01_m", "pred_q1_m"):
+                value = stats[name]
+                result[f"audit_{stage}_{name}"] = float(value) if value is not None else float("nan")
+            result[f"audit_{stage}_nonpositive_or_nonfinite"] = float(stats["nonpositive_or_nonfinite"])
+            for name, count in stats["low_depth_counts"].items():
+                result[f"audit_{stage}_{name}"] = float(count)
+        for stage, stats in report["inverse_depth"].items():
+            result[f"audit_{stage}_irmse_raw"] = float(stats["irmse_raw_1_per_km"])
+            result[f"audit_{stage}_irmse_protocol"] = float(stats["irmse_protocol_1_per_km"])
+            result[f"audit_{stage}_raw_invalid"] = float(stats["raw_invalid_pixels"])
+        return result
 
 
 def depth_metrics_torch(

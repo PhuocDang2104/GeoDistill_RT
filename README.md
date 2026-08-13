@@ -30,16 +30,19 @@ Notebook chuẩn:
 
 - S2: `notebooks/GeoLift_RT_v2_1_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
 - S3: `notebooks/GeoLift_S3_Lite_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
+- Decoder-V2 quick ablation: `notebooks/GeoLift_Decoder_V2_TAR2000_Finetune_OneRun.ipynb`
 
 ## Source of truth
 
 ```text
 src/model_geolift_s2.py              # S2 forward graph
 src/model_geolift_s3.py              # S3 forward graph
+src/model_geolift_decoder_v2.py      # warm-start decoder ablation
 src/losses.py                        # geolift_loss / geolift_s3_loss
 src/train_student.py                 # train, validation, checkpoint, log
 configs/geolift_s2_v2_1_balanced_ablation.yaml
 configs/geolift_s3_lite_tar2000.yaml
+configs/geolift_decoder_v2_finetune_tar2000.yaml
 scripts/run_standard_experiment.py   # protocol-locked train/infer/profile
 ```
 

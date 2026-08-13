@@ -191,3 +191,40 @@ Vì vậy `lambda_log=0.2` và `lambda_edge=0.05` không đồng nghĩa chúng �
 - Contract tests: `tests/test_geolift_s3_contracts.py`
 
 Mọi claim mới phải báo ít nhất global metrics, range metrics, iRMSE, edge/non-edge metrics, parameter, FP16 latency/P95/VRAM và protocol hash.
+
+## 8. Decoder V2 — ablation kế tiếp
+
+Decoder V2 là một run fine-tune tách biệt; S3 baseline và loss không bị sửa.
+
+```text
+S3 epoch_019.pth
+      │
+      ├── direct metric-depth residual tại 8→4
+      ├── sparse error E8=M8(S8-D8) tại 8→4
+      └── encoder F2 reuse tại 4→2 và 2→1
+      │
+10 epoch fine-tune, cùng TAR2000/protocol/loss
+```
+
+Direct correction:
+
+\[
+D_4=D_{4,base}+g_m\Delta D,
+\quad \Delta D=5\tanh(h_D(Z_8)),
+\quad g_m=\sigma(h_g(Z_8)).
+\]
+
+`metric_delta` khởi tạo zero, `metric_gate` khởi tạo `0.05`, sparse projection khởi tạo rất nhỏ (`σ=1e-3`) và hệ số F2 `alpha=0`. Khi load S3 epoch 19, mọi output `D16…Dfull` ban đầu trùng baseline chính xác. Thay đổi thêm 1.473 parameters, từ 369.209 lên 370.682 (`+0.40%`), khoảng `0.019 G` Conv MAC ở `352×1216`; runtime thật vẫn phải lấy từ CUDA profiler. Sparse chỉ làm guidance; hard anchor vẫn chỉ nằm tại output cuối.
+
+Fine-tune dùng LR base `5e-5`, encoder `1.25e-5`, decoder cũ `5e-5`, head mới `1e-4`, warm-up một epoch rồi cosine decay. Objective giữ nguyên S3; không thêm range loss.
+
+Depth audit chạy mỗi validation và final inference:
+
+- min và quantile `0.01%/0.1%/1%/10%` của `D8/D4/D2/D1/Dfull` trên valid GT grid;
+- count prediction `<0.01/0.05/0.1/0.5 m` theo stage;
+- `iRMSE_raw` và `iRMSE_protocol` cho `D1/Dfull`;
+- top-100 D1 inverse-depth outlier với sample ID, `(u,v)`, GT và prediction của mọi stage.
+
+Notebook: `notebooks/GeoLift_Decoder_V2_TAR2000_Finetune_OneRun.ipynb`. Config: `configs/geolift_decoder_v2_finetune_tar2000.yaml`. Output tách biệt: `MyDrive/GeoLift_RT_runs/v3_decoder_v2_finetune10_from_s3_epoch19/`.
+
+Acceptance giữ nguyên: pass mạnh nếu RMSE `≤1.45 m` và latency tăng không quá `5%`; pass vừa nếu RMSE `≤1.48 m` cùng edge và `40–80 m` tốt hơn rõ, không làm `0–20 m` xấu đáng kể.
