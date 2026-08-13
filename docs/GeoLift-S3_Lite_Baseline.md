@@ -27,29 +27,43 @@ ImageNet pretrained chỉ là khởi tạo trọng số RGB encoder. Nó không 
 
 ## 2. Kiến trúc tổng thể
 
-Sơ đồ dưới đây dùng code block thuần để hiển thị ổn định trên cả GitHub và Markdown preview:
+```mermaid
+flowchart TB
+    RGB["RGB I"] --> ENC["MobileNetV4-Conv-Small-0.5<br/>ImageNet pretrained"]
+    ENC --> R4["RGB F4 · 16 ch"]
+    ENC --> R8["RGB F8 · 32 ch"]
+    ENC --> R16["RGB F16 · 48 ch"]
 
-```text
-RGB I ──> MobileNetV4-Conv-Small-0.5 ──> F4 / F8 / F16
-                   │                         │
-                   │                  RGB projections
-                   │                         │
-Sparse S, M ──> compact sparse pyramid ──> gated fusion ×3
-                                              │
-                                      LiteFPN 32/24/24
-                                              │
-                                             D16
-                                              │  residual metric 16→8
-                                             D8
-                                              │  residual metric 8→4
-                                             D4
-                                              │  Residual RayLift 4→2, K=3
-RGB I ──> learned phase guidance G2 ──────────┤
-                                             D2
-                                              │  Residual RayLift 2→1, K=2
-                                             D1
-                                              │  sparse hard anchor
-                                             D_full
+    SP["Sparse depth S + mask M"] --> CSP["Compact sparse pyramid<br/>5 → 8 ch mỗi scale"]
+    CSP --> S4["Sparse F4"]
+    CSP --> S8["Sparse F8"]
+    CSP --> S16["Sparse F16"]
+
+    R4 --> GF4["Gated fusion · 32 ch"]
+    S4 --> GF4
+    R8 --> GF8["Gated fusion · 24 ch"]
+    S8 --> GF8
+    R16 --> GF16["Gated fusion · 24 ch"]
+    S16 --> GF16
+
+    GF4 --> FPN["LiteFPN 32 / 24 / 24"]
+    GF8 --> FPN
+    GF16 --> FPN
+    FPN --> D16["Coarse D16"]
+    D16 --> L8["Residual metric lift 16→8"]
+    L8 --> D8["D8"]
+    D8 --> L4["Residual metric lift 8→4"]
+    L4 --> D4["D4"]
+    D4 --> RL2["Residual RayLift 4→2 · line K=3"]
+    RGB --> PG["Learned phase guidance F2"]
+    PG --> RL2
+    RL2 --> D2["D2"]
+    D2 --> RL1["Residual RayLift 2→1 · neighbor K=2"]
+    PG --> RL1
+    RL1 --> D1["D1 / D_pre_anchor"]
+    D1 --> ANCHOR["Sparse hard anchor"]
+    SP --> ANCHOR
+    ANCHOR --> DF["D_full"]
 ```
 
 ### Tensor contract tại kích thước chuẩn
