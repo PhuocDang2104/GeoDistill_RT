@@ -656,6 +656,150 @@ def geolift_s3_loss(
     return total, items
 
 
+def geolift_s3_teacher_loss(
+    pred: dict[str, torch.Tensor],
+    batch: dict[str, torch.Tensor],
+    loss_cfg: dict[str, Any],
+    schedule_cfg: dict[str, Any],
+    epoch: int,
+) -> tuple[torch.Tensor, dict[str, float]]:
+    """S3 baseline objective plus metric and fused-geometry distillation only.
+
+    The architecture and four S3 base losses stay unchanged. Metric KD is
+    restricted to pixels without KITTI GT so the teacher contributes genuinely
+    additional dense supervision instead of duplicating the ground truth.
+    """
+    base_total, items = geolift_s3_loss(pred, batch, loss_cfg)
+    min_depth = float(loss_cfg.get("min_depth", 1e-3))
+    max_depth = float(loss_cfg.get("max_depth", 120.0))
+    gt = batch["gt"].float()
+    gt_mask = (
+        (batch["gt_mask"] > 0.5)
+        & torch.isfinite(gt)
+        & (gt > min_depth)
+        & (gt < max_depth)
+    )
+
+    add_teacher_epoch = int(schedule_cfg.get("add_teacher_epoch", 0))
+    add_geometry_epoch = int(schedule_cfg.get("add_geometry_epoch", 3))
+    teacher_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_cm", 0.2)),
+        epoch,
+        add_teacher_epoch,
+        int(schedule_cfg.get("teacher_ramp_epochs", 3)),
+    )
+    geometry_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_G", 0.03)),
+        epoch,
+        add_geometry_epoch,
+        int(schedule_cfg.get("geometry_ramp_epochs", 3)),
+    )
+    ordinal_weight = scheduled_weight(
+        float(loss_cfg.get("lambda_ord", 0.01)),
+        epoch,
+        add_geometry_epoch,
+        int(schedule_cfg.get("geometry_ramp_epochs", 3)),
+    )
+
+    metric_kd = pred["D1"].new_tensor(0.0)
+    metric_non_gt_ratio = pred["D1"].new_tensor(0.0)
+    if epoch >= add_teacher_epoch:
+        if "D_cm" not in batch or "C_cm" not in batch:
+            raise RuntimeError("S3 teacher-KD requires D_cm/C_cm, but the metric teacher is absent from the batch.")
+        metric_teacher = batch["D_cm"].float()
+        metric_conf = batch["C_cm"].float().clamp(0.0, 1.0)
+        metric_valid = (
+            (metric_conf > float(loss_cfg.get("metric_conf_min", 0.05)))
+            & torch.isfinite(metric_teacher)
+            & (metric_teacher > min_depth)
+            & (metric_teacher < max_depth)
+        )
+        metric_non_gt = metric_valid & ~gt_mask
+        metric_non_gt_ratio = metric_non_gt.float().mean()
+        if bool(loss_cfg.get("require_dense_metric_teacher", True)) and int(metric_non_gt.sum().detach().cpu()) < int(
+            loss_cfg.get("min_dense_metric_pixels", 1024)
+        ):
+            raise RuntimeError("S3 teacher-KD has too few valid non-GT D_cm/C_cm pixels in this batch.")
+
+        scale_weights_cfg = loss_cfg.get(
+            "multiscale_weights", {"D16": 0.05, "D8": 0.10, "D4": 0.25, "D2": 0.50, "D1": 1.0}
+        )
+        for name, default in (("D16", 0.05), ("D8", 0.10), ("D4", 0.25), ("D2", 0.50), ("D1", 1.0)):
+            target, confidence = _valid_downsample_to(
+                metric_teacher,
+                metric_conf * metric_non_gt.float(),
+                pred[name].shape[-2:],
+            )
+            valid = (
+                (confidence > 0.0)
+                & torch.isfinite(target)
+                & (target > min_depth)
+                & (target < max_depth)
+            )
+            residual = torch.log(pred[name].clamp_min(min_depth)) - torch.log(target.clamp_min(min_depth))
+            stage_kd = weighted_mean(huber(residual, delta=0.1), confidence * valid.float())
+            metric_kd = metric_kd + float(scale_weights_cfg.get(name, default)) * stage_kd
+
+    geometry_ssi = pred["D1"].new_tensor(0.0)
+    geometry_ordinal = pred["D1"].new_tensor(0.0)
+    ordinal_accuracy = pred["D1"].new_tensor(0.0)
+    ordinal_pair_ratio = pred["D1"].new_tensor(0.0)
+    geometry_valid_ratio = pred["D1"].new_tensor(0.0)
+    if epoch >= add_geometry_epoch:
+        if "R_G" not in batch or "C_G" not in batch:
+            raise RuntimeError("S3 teacher-KD requires fused R_G/C_G, but the geometry teacher is absent from the batch.")
+        relative = match_prediction_size(batch["R_G"].float(), pred["D1"].shape[-2:], mode="bilinear")
+        relative_conf = match_prediction_size(batch["C_G"].float(), pred["D1"].shape[-2:], mode="bilinear")
+        geometry_valid = (
+            (relative_conf > float(loss_cfg.get("geometry_conf_threshold", 0.4)))
+            & torch.isfinite(relative)
+        )
+        geometry_valid_ratio = geometry_valid.float().mean()
+        if bool(loss_cfg.get("require_geometry_teacher", True)) and int(geometry_valid.sum().detach().cpu()) < int(
+            loss_cfg.get("geometry_min_valid_pixels", 512)
+        ):
+            raise RuntimeError("S3 teacher-KD has too few valid fused R_G/C_G pixels in this batch.")
+        geometry_ssi, alpha = geometry_ssi_loss(
+            pred["D1"],
+            relative,
+            relative_conf,
+            conf_threshold=float(loss_cfg.get("geometry_conf_threshold", 0.4)),
+            min_valid_pixels=int(loss_cfg.get("geometry_min_valid_pixels", 512)),
+        )
+        geometry_ordinal, ordinal_accuracy, ordinal_pair_ratio = boundary_ordinal_loss(
+            pred["D1"],
+            relative,
+            relative_conf,
+            batch["rgb"],
+            alpha=alpha,
+            conf_threshold=float(loss_cfg.get("geometry_conf_threshold", 0.4)),
+            rgb_tau=float(loss_cfg.get("ordinal_rgb_tau", 0.04)),
+            geom_tau=float(loss_cfg.get("ordinal_geom_tau", 0.10)),
+            temperature=float(loss_cfg.get("ordinal_temperature", 0.05)),
+            offsets=loss_cfg.get("ordinal_offsets", [1, 4, 8]),
+            require_geometry_edge=bool(loss_cfg.get("ordinal_require_geometry_edge", True)),
+            return_stats=True,
+        )
+
+    total = base_total + teacher_weight * metric_kd + geometry_weight * geometry_ssi + ordinal_weight * geometry_ordinal
+    items.update(
+        {
+            "loss": float(total.detach().cpu()),
+            "L_teacher_metric_kd": float(metric_kd.detach().cpu()),
+            "L_teacher_geometry_ssi": float(geometry_ssi.detach().cpu()),
+            "L_teacher_geometry_ord": float(geometry_ordinal.detach().cpu()),
+            "teacher_ord_accuracy": float(ordinal_accuracy.detach().cpu()),
+            "teacher_ord_pair_ratio": float(ordinal_pair_ratio.detach().cpu()),
+            "w_teacher_metric": teacher_weight,
+            "w_teacher_geometry": geometry_weight,
+            "w_teacher_ordinal": ordinal_weight,
+            "teacher_metric_non_gt_ratio": float(metric_non_gt_ratio.detach().cpu()),
+            "teacher_geometry_valid_ratio": float(geometry_valid_ratio.detach().cpu()),
+        }
+    )
+    return total, items
+
+
 def geort_loss(
     pred: dict[str, torch.Tensor],
     batch: dict[str, torch.Tensor],
@@ -665,7 +809,10 @@ def geort_loss(
     mono_ssi_cfg: dict[str, Any] | None = None,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     """Compute the theory-aligned full-resolution GeoRT objective."""
-    if str(loss_cfg.get("objective", "")).lower() in {"s3", "s3_lite", "geolift_s3_lite"}:
+    objective = str(loss_cfg.get("objective", "")).lower()
+    if objective in {"s3_teacher", "s3_teacher_kd", "geolift_s3_teacher_kd"}:
+        return geolift_s3_teacher_loss(pred, batch, loss_cfg, schedule_cfg, epoch)
+    if objective in {"s3", "s3_lite", "geolift_s3_lite"}:
         return geolift_s3_loss(pred, batch, loss_cfg)
     if "D16" in pred:
         return geolift_loss(pred, batch, loss_cfg, schedule_cfg, epoch, mono_ssi_cfg)

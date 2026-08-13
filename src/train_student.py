@@ -58,6 +58,8 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         or float(loss_cfg.get("lambda_ord", 0.0)) > 0.0
     )
     load_metric_teacher = bool(data_cfg.get("load_metric_teacher", training or split == "val"))
+    if bool(data_cfg.get("metric_teacher_train_only", False)) and not training:
+        load_metric_teacher = False
     dataset = KITTIDepthCompletionDataset(
         data_root=paths["data_root"],
         split_root=paths["split_root"],
@@ -510,7 +512,10 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
 
     optimizer = _make_optimizer(model, cfg, device, logger)
     epochs = int(train_cfg.get("epochs", 30))
-    scheduler = _make_scheduler(optimizer, cfg, steps_per_epoch=len(train_loader), epochs=epochs)
+    scheduler_epochs = int(train_cfg.get("scheduler_total_epochs", epochs))
+    if scheduler_epochs < epochs:
+        raise ValueError("train.scheduler_total_epochs cannot be smaller than train.epochs")
+    scheduler = _make_scheduler(optimizer, cfg, steps_per_epoch=len(train_loader), epochs=scheduler_epochs)
     amp_enabled = bool(train_cfg.get("amp", True)) and device.type == "cuda"
     autocast_dtype = _amp_dtype(cfg, device, logger)
     scaler = _make_grad_scaler(device, enabled=amp_enabled and autocast_dtype == torch.float16)

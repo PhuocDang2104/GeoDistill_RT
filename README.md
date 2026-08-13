@@ -30,6 +30,7 @@ Notebook chuẩn:
 
 - S2: `notebooks/GeoLift_RT_v2_1_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
 - S3: `notebooks/GeoLift_S3_Lite_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
+- S3 teacher-KD ablation: `notebooks/GeoLift_S3_Lite_TeacherKD_TAR2000_Train1600_Val400_E20.ipynb`
 
 ## Source of truth
 
