@@ -4,11 +4,13 @@ import argparse
 import csv
 import math
 import os
+import random
 import shutil
 import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
@@ -48,6 +50,12 @@ def to_device(batch: dict[str, Any], device: torch.device, channels_last: bool =
     return out
 
 
+def _seed_data_worker(_: int) -> None:
+    worker_seed = torch.initial_seed() % (2**32)
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
+
 def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool, distributed: bool = False) -> DataLoader:
     data_cfg = cfg["data"]
     mono_cfg = cfg.get("mono_ssi", {})
@@ -81,9 +89,15 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         metric_conf_sparse_decay=float(loss_cfg.get("metric_conf_sparse_decay", 6.0)),
         metric_conf_range_decay=float(loss_cfg.get("metric_conf_range_decay", 0.25)),
         metric_conf_sparse_blend_radius=float(loss_cfg.get("metric_conf_sparse_blend_radius", 48.0)),
+        augmentation=data_cfg.get("augmentation") if training else None,
         return_tensors=True,
     )
+    augmentation_enabled = training and dataset.augmentor.enabled
     sampler = DistributedSampler(dataset, shuffle=training) if distributed else None
+    loader_generator = torch.Generator()
+    rank = dist.get_rank() if distributed and dist.is_initialized() else 0
+    loader_generator.manual_seed(int(cfg.get("seed", 42)) + rank)
+
     return DataLoader(
         dataset,
         batch_size=int(cfg["train"]["batch_size"]) if training else 1,
@@ -92,7 +106,11 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         num_workers=int(data_cfg.get("num_workers", 2)),
         pin_memory=torch.cuda.is_available(),
         drop_last=training,
-        persistent_workers=int(data_cfg.get("num_workers", 2)) > 0,
+        # Restart augmented workers each epoch so seed+epoch reproduces the
+        # same transform stream after an interrupted/resumed run.
+        persistent_workers=int(data_cfg.get("num_workers", 2)) > 0 and not augmentation_enabled,
+        worker_init_fn=_seed_data_worker,
+        generator=loader_generator,
     )
 
 
@@ -535,6 +553,14 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     warned_missing_mono = False
     for epoch in range(start_epoch, epochs):
         epoch_started = time.perf_counter()
+        if train_loader.dataset.augmentor.enabled and train_loader.generator is not None:
+            rank_seed = dist.get_rank() if distributed and dist.is_initialized() else 0
+            epoch_data_seed = int(cfg.get("seed", 42)) + epoch + 1_000_003 * rank_seed
+            train_loader.generator.manual_seed(epoch_data_seed)
+            # Covers num_workers=0; worker processes receive deterministic
+            # NumPy/Python seeds from the DataLoader generator above.
+            np.random.seed(epoch_data_seed % (2**32))
+            random.seed(epoch_data_seed)
         if distributed and isinstance(train_loader.sampler, DistributedSampler):
             train_loader.sampler.set_epoch(epoch)
         model.train()
