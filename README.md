@@ -1,5 +1,8 @@
 # GeoDistill-RT / GeoLift
 
+Server training with the prebuilt private Docker image, automatic preparation,
+hardware calibration, crash recovery and Drive backup: [operator runbook](docs/Server_Training_Runbook.md).
+
 Repo nghiên cứu sparse depth completion thời gian thực trên KITTI. Hai baseline được duy trì:
 
 | Baseline | Mục đích | Teacher khi train | Tài liệu chuẩn |

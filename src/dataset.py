@@ -262,6 +262,12 @@ class KITTIDepthCompletionDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
+        # Server sampler supplies a per-sample seed, independent of worker count
+        # and prefetch, so a mid-epoch restart replays the same transforms.
+        augmentation_rng = None
+        if isinstance(index, tuple):
+            index, sample_seed = index
+            augmentation_rng = np.random.RandomState(sample_seed)
         sample = self.load_sample_np(index)
         if self.load_teacher:
             D_cm, C_cm = self._load_metric_teacher(
@@ -281,7 +287,7 @@ class KITTIDepthCompletionDataset(Dataset):
             sample["D_da_raw"], sample["da_raw_valid"] = self._load_da_raw(
                 sample["sample_id"], sample["rgb"].shape[:2]
             )
-        sample = self.augmentor(sample)
+        sample = self.augmentor(sample, rng=augmentation_rng)
         if not self.return_tensors:
             return sample
 

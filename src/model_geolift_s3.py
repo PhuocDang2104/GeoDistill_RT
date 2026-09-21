@@ -29,7 +29,7 @@ def _valid_pool(value: torch.Tensor, valid: torch.Tensor) -> tuple[torch.Tensor,
 class MobileNetV4RGBEncoder(nn.Module):
     """RGB-only MobileNetV4-Conv features at reductions 4, 8 and 16."""
 
-    def __init__(self, model_name: str, pretrained: bool) -> None:
+    def __init__(self, model_name: str, pretrained: bool, normalize_input: bool) -> None:
         super().__init__()
         import timm  # type: ignore
 
@@ -49,8 +49,28 @@ class MobileNetV4RGBEncoder(nn.Module):
             raise RuntimeError(f"GeoLift-S3 requires encoder reductions (4,8,16), got {reductions}")
         self.out_channels = tuple(int(item["num_chs"]) for item in info)
         self.pretrained = bool(pretrained)
+        self.normalize_input = bool(normalize_input)
+        pretrained_cfg = getattr(self.backbone, "pretrained_cfg", {}) or {}
+        mean = tuple(float(value) for value in pretrained_cfg.get("mean", ()))
+        std = tuple(float(value) for value in pretrained_cfg.get("std", ()))
+        if self.normalize_input and (len(mean) != 3 or len(std) != 3 or any(value <= 0.0 for value in std)):
+            raise RuntimeError(
+                f"Encoder input normalization requires a valid three-channel mean/std in pretrained_cfg, got "
+                f"mean={mean}, std={std} for {model_name}"
+            )
+        if not mean:
+            mean = (0.0, 0.0, 0.0)
+        if not std:
+            std = (1.0, 1.0, 1.0)
+        # Non-persistent buffers follow device/dtype moves without breaking old checkpoints.
+        self.register_buffer("input_mean", torch.tensor(mean).view(1, 3, 1, 1), persistent=False)
+        self.register_buffer("input_std", torch.tensor(std).view(1, 3, 1, 1), persistent=False)
 
     def forward(self, rgb: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if self.normalize_input:
+            mean = self.input_mean.to(dtype=rgb.dtype)
+            std = self.input_std.to(dtype=rgb.dtype)
+            rgb = (rgb - mean) / std
         features = self.backbone(rgb)
         return features[0], features[1], features[2]
 
@@ -215,6 +235,7 @@ class GeoLiftStudentS3Lite(nn.Module):
         self,
         encoder: str = "mobilenetv4_conv_small_050.e3000_r224_in1k",
         encoder_pretrained: bool = True,
+        encoder_normalize_input: bool = True,
         sparse_scale: int = 4,
         sparse_radius: int = 7,
         min_depth: float = 1e-3,
@@ -224,7 +245,8 @@ class GeoLiftStudentS3Lite(nn.Module):
         self.min_depth = float(min_depth)
         self.max_depth = float(max_depth)
         self.encoder_pretrained = bool(encoder_pretrained)
-        self.encoder = MobileNetV4RGBEncoder(encoder, encoder_pretrained)
+        self.encoder_normalize_input = bool(encoder_normalize_input)
+        self.encoder = MobileNetV4RGBEncoder(encoder, encoder_pretrained, encoder_normalize_input)
         self.sparse_pyramid = CompactSparsePyramid(sparse_scale, sparse_radius)
         fusion_widths = (32, 24, 24)
         self.fusion4 = GatedScaleFusion(self.encoder.out_channels[0], 8, fusion_widths[0])
@@ -259,9 +281,15 @@ class GeoLiftStudentS3Lite(nn.Module):
         sparse_cfg = cfg.get("sparse_propagation", {})
         loss_cfg = cfg.get("loss", {})
         student_cfg = cfg.get("student", {})
+        if "encoder_normalize_input" not in model_cfg:
+            raise ValueError(
+                "GeoLift-S3 config must explicitly set model.encoder_normalize_input; "
+                "use true for the canonical pretrained MobileNetV4 preprocessing contract"
+            )
         return cls(
             encoder=str(model_cfg.get("encoder", "mobilenetv4_conv_small_050.e3000_r224_in1k")),
             encoder_pretrained=bool(model_cfg.get("encoder_pretrained", True)),
+            encoder_normalize_input=bool(model_cfg["encoder_normalize_input"]),
             sparse_scale=int(sparse_cfg.get("scale", 4)),
             sparse_radius=int(sparse_cfg.get("radius", 7)),
             min_depth=float(loss_cfg.get("min_depth", 1e-3)),

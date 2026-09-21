@@ -1,0 +1,83 @@
+{
+  "image": "phatle0106/geodistill-train:server-v1",
+  "digest": "sha256:04b67813e90d69d7f71866dbb8becb339022b64994539b683caccc7f1070dea9",
+  "pull": "phatle0106/geodistill-train@sha256:04b67813e90d69d7f71866dbb8becb339022b64994539b683caccc7f1070dea9",
+  "private": true,
+  "published_date": "2026-09-18",
+  "source_sha256": "f469deac24b3c19fa8a3e288f3262b26294860c855052fa442dbc48ffdfc449e",
+  "base_revision": "5da7463",
+  "includes_working_tree_changes": true,
+  "platform": "linux/amd64",
+  "pytorch": "2.10.0+cu128",
+  "tests": {
+    "linux_repository_suite": "44 passed",
+    "packaged_recovery_tests": "6 passed",
+    "process_recovery": ["SIGTERM", "SIGKILL"],
+    "resume_equivalence": "Exact CPU model, optimizer and scheduler match with two workers and A3 augmentation",
+    "backup_restore": "rclone local backend and checksum-verified restore passed",
+    "registry": "Authenticated pull by digest and private repository readback passed",
+    "gpu": "RTX 4060 Laptop 8 GB",
+    "synthetic_full_kd": {
+      "resolution": [352, 1216],
+      "batch_size": 2,
+      "images_per_second": 10.081640075360179,
+      "peak_reserved_vram_bytes": 991952896,
+      "loss": 15.206552505493164,
+      "precision": "float16 AMP",
+      "is_real_data_benchmark": false
+    }
+  },
+  "dataset_validation": {
+    "archive_sha256": "All four assets verified",
+    "extracted_teacher_files": "Metric and geometry files decoded and validated",
+    "full_sample_preflight": "1600 train and 400 validation samples passed on the local host"
+  },
+  "real_data_calibration": {
+    "subset": "8 train and 4 validation samples from the frozen TAR2000 split",
+    "batch_size": 2,
+    "selected_workers": 2,
+    "images_per_second": 9.492593041189334,
+    "peak_reserved_vram_bytes": 991952896,
+    "is_full_dataset_throughput_benchmark": false
+  },
+  "final_local_validation_date": "2026-09-19",
+  "real_data_gpu_resume": {
+    "passed": true,
+    "epochs": 20,
+    "consumed_batches": 80,
+    "successful_optimizer_steps": 78,
+    "amp_skips": 2,
+    "stop_at_step": 4,
+    "first_resumed_step": 5,
+    "fresh_container_resume": true,
+    "optimizer_and_scheduler_final_step": 78,
+    "model_optimizer_scaler_and_rng_state_verified": true,
+    "geometry_objective_active": true,
+    "missing_or_duplicate_batch_or_epoch_records": false,
+    "final_status": "COMPLETE",
+    "best_epoch": 17,
+    "subset_validation_rmse_m": 11.258172963118051,
+    "peak_reserved_vram_bytes_in_step_telemetry": 2237661184,
+    "backup_restore_checksums_match": true,
+    "is_full_dataset_accuracy_or_throughput_benchmark": false,
+    "gpu_bitwise_resume_equivalence_tested": false,
+    "report": "docs/Server_Training_Validation.md",
+    "local_audit": "server-runs/final-validation/gpu-resume-audit.json"
+  },
+  "pending_local_validation": [],
+  "google_drive_validation": {
+    "passed": true,
+    "date": "2026-09-21",
+    "container_upload_download_restore": true,
+    "files_sha256_verified": 17,
+    "download_bytes": 6133714,
+    "restored_checkpoint_checksums_match": true,
+    "optimizer_and_scheduler_step": 78,
+    "model_optimizer_amp_rng_logs_verified": true,
+    "isolated_expired_token_refresh": "passed in published image",
+    "remote_bundle": "gdrive:GeoLift_RT_runs/server/real-kd-smoke/000000000024-3ed7bb8d",
+    "local_audit": "server-runs/drive-verification-20260921/audit.json"
+  },
+  "deferred_by_user": ["Vast.ai qualification"],
+  "pending_external_qualification": ["RTX 5060"]
+}

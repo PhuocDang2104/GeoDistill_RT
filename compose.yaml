@@ -1,0 +1,55 @@
+x-training: &training
+  image: ${TRAIN_IMAGE:-phatle0106/geodistill-train:server-v1}
+  # The image entrypoint already runs tini as PID 1.
+  working_dir: /app
+  environment:
+    RUN_ID: ${RUN_ID:-tar2000-kd-001}
+    TRAIN_IMAGE: ${TRAIN_IMAGE:-phatle0106/geodistill-train:server-v1}
+    TRAIN_MODE: ${TRAIN_MODE:-baseline}
+    TRAIN_CONFIG: ${TRAIN_CONFIG:-/app/configs/geolift_s3_lite_teacher_kd_tar2000.yaml}
+    BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+  volumes:
+    - ${DATA_DIR:-./server-data}:/data
+    - ${RUNS_DIR:-./server-runs}:/runs
+    - ${CACHE_DIR:-./server-cache}:/cache
+    - ${CONFIG_DIR:-./server-config}:/config
+    - ${SECRETS_DIR:-./server-secrets}:/secrets
+  shm_size: ${SHM_SIZE:-2gb}
+  stop_grace_period: 5m
+  logging:
+    driver: json-file
+    options:
+      max-size: 20m
+      max-file: "3"
+
+services:
+  trainer:
+    <<: *training
+    command: [run]
+    gpus: all
+    restart: "on-failure:3"
+  prepare:
+    <<: *training
+    command: [prepare]
+    gpus: all
+    profiles: [tools]
+  doctor:
+    <<: *training
+    command: [doctor]
+    gpus: all
+    profiles: [tools]
+  catalog:
+    <<: *training
+    profiles: [tools]
+  backup:
+    <<: *training
+    command: [backup]
+    restart: unless-stopped
+    profiles: [backup]
+  tensorboard:
+    <<: *training
+    init: true
+    entrypoint: [tensorboard]
+    command: [--logdir, /runs, --host, 0.0.0.0, --port, "6006"]
+    ports: ["127.0.0.1:6006:6006"]
+    profiles: [monitor]

@@ -2,7 +2,7 @@
 
 > **Trạng thái:** Baseline chính, teacher-free, train end-to-end từ epoch đầu tiên.<br>
 > **Protocol:** KITTI Depth Completion, `352 × 1216`, 1.600 train, 400 validation, 1.000 anonymous test.<br>
-> **Cập nhật đặc tả:** 2026-08-13.
+> **Cập nhật đặc tả:** 2026-09-04.
 
 Tài liệu này mô tả implementation đang chạy trong repo, không phải kiến trúc dự kiến. GeoLift-S3 Lite dùng RGB encoder pretrained, một nhánh sparse depth rất nhỏ, hai residual metric lift ở độ phân giải thấp và hai Residual RayLift ở độ phân giải cao.
 
@@ -14,6 +14,7 @@ Tài liệu này mô tả implementation đang chạy trong repo, không phải 
 | Architecture key | `geolift_s3_lite` |
 | RGB encoder | `mobilenetv4_conv_small_050.e3000_r224_in1k` |
 | Encoder initialization | ImageNet pretrained; toàn encoder tiếp tục được fine-tune |
+| Encoder preprocessing | RGB `[0,1]` được chuẩn hóa bằng `mean/std` lấy từ `timm pretrained_cfg`; checkpoint hiện tại dùng `(x-0.5)/0.5` |
 | Input thật sự dùng | RGB `I`, sparse depth `S`, mask `M`, intrinsics `K` |
 | Input API tương thích | `ray` và `uv` vẫn có trong chữ ký hàm nhưng bị loại ngay trong `forward` |
 | Kích thước chuẩn | RGB `[B,3,352,1216]`; depth/mask `[B,1,352,1216]` |
@@ -24,6 +25,8 @@ Tài liệu này mô tả implementation đang chạy trong repo, không phải 
 | Số tham số | **369.209** trainable parameters |
 
 ImageNet pretrained chỉ là khởi tạo trọng số RGB encoder. Nó không tạo thêm nhánh inference, không yêu cầu teacher TAR và không làm tăng số tham số hoặc MAC khi deploy.
+
+Normalization chỉ được áp dụng bên trong `MobileNetV4RGBEncoder`. Tensor RGB `[0,1]` ban đầu vẫn được dùng cho learned phase guidance, edge metric/loss và visualization. Flag canonical là `model.encoder_normalize_input: true`. Checkpoint S3 cũ được train khi flag này chưa tồn tại thuộc một preprocessing contract khác và không được resume vào run đã bật normalization.
 
 ## 2. Kiến trúc tổng thể
 
@@ -283,7 +286,7 @@ MyDrive/GeoLift_Data/teacher_subset_2000/
 Notebook tải official anonymous test trực tiếp từ KITTI, extract dữ liệu vào SSD `/content`, rồi đồng bộ checkpoint, log và result về:
 
 ```text
-MyDrive/GeoLift_RT_runs/v3_s3_lite_pretrained_train1600_val400/
+MyDrive/GeoLift_RT_runs/v4_s3_lite_encnorm_pretrained_train1600_val400/
 ├── checkpoints/{best.pth,last.pth,epoch_*.pth}
 ├── logs/{train_log.csv,train_log.jsonl,train_student.log}
 ├── logs/{infer_val_metrics_global.json,geolift_component_profile.json}
@@ -328,9 +331,9 @@ $$
 
 iRMSE và iMAE dùng đơn vị `km⁻¹` theo hệ số 1000 trong code. Validation còn log global RMSE/MAE cho từng range, edge và non-edge. Edge mask được tạo từ gradient ảnh grayscale với threshold `0.05`.
 
-## 7. Baseline đã quan sát — epoch 0 đến 19
+## 7. Baseline legacy đã quan sát — epoch 0 đến 19
 
-Nguồn: [`GeoLift-S3-Lite_TAR2000_train_log_epoch0_19.csv`](../results/GeoLift-S3-Lite_TAR2000_train_log_epoch0_19.csv). Đây là validation nội bộ trên 400 ảnh; không phải KITTI leaderboard và chưa đại diện cho checkpoint sau đủ 30 epoch.
+Nguồn: [`GeoLift-S3-Lite_TAR2000_train_log_epoch0_19.csv`](../results/GeoLift-S3-Lite_TAR2000_train_log_epoch0_19.csv). Đây là validation nội bộ trên 400 ảnh; không phải KITTI leaderboard và chưa đại diện cho checkpoint sau đủ 30 epoch. Run này có trước bản sửa encoder normalization, vì vậy chỉ là kết quả legacy và không được dùng làm số đo của preprocessing contract hiện tại.
 
 | Metric | Epoch 0 | Epoch 19 | Thay đổi |
 |---|---:|---:|---:|
