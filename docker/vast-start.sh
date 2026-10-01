@@ -2,6 +2,9 @@
 set -euo pipefail
 # Vast may replace the image ENTRYPOINT. Select this script as on-start command.
 # Set AUTO_TRAIN=1 only after provisioning /config/dataset.json and Drive credentials.
+# Images contain no shared host keys. Vast may attempt sshd before this hook;
+# generate per-instance keys and recover that failed start before probing/training.
+bash /app/docker/vast-ssh.sh
 cd /app
 mkdir -p /data /runs /cache /config /secrets
 python -m src.runtime doctor --root /runs > /runs/doctor.json

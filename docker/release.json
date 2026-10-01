@@ -12,13 +12,19 @@
   "tests": {
     "linux_repository_suite": "44 passed",
     "packaged_recovery_tests": "6 passed",
-    "process_recovery": ["SIGTERM", "SIGKILL"],
+    "process_recovery": [
+      "SIGTERM",
+      "SIGKILL"
+    ],
     "resume_equivalence": "Exact CPU model, optimizer and scheduler match with two workers and A3 augmentation",
     "backup_restore": "rclone local backend and checksum-verified restore passed",
     "registry": "Authenticated pull by digest and private repository readback passed",
     "gpu": "RTX 4060 Laptop 8 GB",
     "synthetic_full_kd": {
-      "resolution": [352, 1216],
+      "resolution": [
+        352,
+        1216
+      ],
       "batch_size": 2,
       "images_per_second": 10.081640075360179,
       "peak_reserved_vram_bytes": 991952896,
@@ -78,6 +84,40 @@
     "remote_bundle": "gdrive:GeoLift_RT_runs/server/real-kd-smoke/000000000024-3ed7bb8d",
     "local_audit": "server-runs/drive-verification-20260921/audit.json"
   },
-  "deferred_by_user": ["Vast.ai qualification"],
-  "pending_external_qualification": ["RTX 5060"]
+  "deferred_by_user": [],
+  "pending_external_qualification": [
+    "RTX 5060"
+  ],
+  "vastai_qualification": {
+    "passed": true,
+    "date": "2026-10-01",
+    "timezone": "Asia/Saigon",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "vram_bytes": 16617635840,
+    "allocated_cpus": 3,
+    "compute_capability": [
+      12,
+      0
+    ],
+    "source_sha256_verified": "f469deac24b3c19fa8a3e288f3262b26294860c855052fa442dbc48ffdfc449e",
+    "dataset": "8 train / 4 validation actual TAR2000 samples",
+    "optimizer_steps": [
+      4,
+      8,
+      12
+    ],
+    "cloud_restore_resume": true,
+    "downloaded_bundle_verified_files": 15,
+    "populated_optimizer_states_verified": 256,
+    "finite_model_optimizer_losses_validation": true,
+    "no_duplicate_batch_positions": true,
+    "full_training_run": false,
+    "selected_batch_size": 2,
+    "selected_workers": 2,
+    "calibration_images_per_second": 5.918617825738594,
+    "peak_reserved_vram_bytes": 2262827008,
+    "provenance_limitation": "Original SSH-launched run image field unrecorded; source/data hashes verified. Future launch instructions export TRAIN_IMAGE.",
+    "report": "docs/Server_Training_Validation.md",
+    "local_evidence": "server-runs/vast-qualification-20261001/evidence"
+  }
 }

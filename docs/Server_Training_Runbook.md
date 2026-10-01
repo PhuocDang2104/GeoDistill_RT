@@ -1,13 +1,21 @@
 # GeoDistill server training
 
+For the current Vast.ai setup, follow the
+[step-by-step operator guide](Vast_Training_Step_by_Step.md), covering cloning,
+credentials, full TAR2000 preparation, detached training and backup, monitoring,
+resume/restore, final verification, and downloading results. Run training directly
+from the image's `/app` inside Vast; the Docker Compose commands below apply to a
+conventional Linux Docker host. The Vast guide also records which local startup
+repairs have not yet been pushed to the repository.
+
 The Docker image contains the training source, Python dependencies, CUDA runtime,
 dataset preparation, hardware calibration, checkpoint recovery, TensorBoard, and
 rclone backup. The host needs an NVIDIA driver, Docker Engine with Compose GPU
 support, and NVIDIA Container Toolkit. No host Python or CUDA toolkit is required.
 
 The first release targets one GPU. It uses PyTorch 2.10.0/CUDA 12.8, tested locally
-on an RTX 4060 Laptop 8 GB. RTX 5060 qualification remains pending; Vast.ai
-testing is deferred for now.
+on an RTX 4060 Laptop 8 GB and qualified on a Vast.ai RTX 5060 Ti 16 GB on
+2026-10-01 (Asia/Saigon). The exact RTX 5060 8 GB target remains unqualified.
 The installed wheel includes `sm_120`; actual GPU kernel execution is checked by
 `doctor`. Use the published digest in `docker/release.json` to reproduce a release.
 
@@ -239,15 +247,47 @@ Do not label a larger dataset run as the TAR2000 baseline.
 Use the private published image directly, with registry pull credentials, SSH
 launch mode, at least 60 GB disk (80–100 preferred), and one GPU. Prefer an RTX 5060
 8 GB to qualify the target; another 8 GB GPU only verifies the general workflow.
-Use the on-start command `bash /app/docker/vast-start.sh`. Vast overrides ordinary
-image CMD/ENTRYPOINT in its managed launch workflow, so the separate startup script
-is intentional. See [Vast's custom-image example](https://docs.vast.ai/examples/ner/gliner2).
+Paste the complete contents of `docker/vast-onstart.sh` into On-start Script.
+It is also embedded as `onstart` in `docker/vast-template.json` and works with the
+published `server-v1` image without requiring the new helper to exist in it.
+
+Vast overrides ordinary image CMD/ENTRYPOINT in its managed launch workflow.
+The image deliberately contains no SSH host keys; Vast can attempt to start SSH
+before this hook and fail with `sshd: no hostkeys available -- exiting`. The hook
+generates missing per-instance keys, validates SSH configuration and starts the
+service. It also repairs root SSH directory/key-file ownership and permissions,
+prints only public-key fingerprints and selected effective SSH settings, and sends
+verbose authentication events to the container log. It does not add login keys,
+disable StrictModes, change root login policy, or enable password authentication.
+If a registered key still fails, compare the logged authorized-key fingerprint
+with `ssh-keygen -lf ~/.ssh/id_ed25519.pub`, retry once, and inspect the new auth
+log entry. The client error alone cannot distinguish missing keys, bad permissions,
+account restrictions, or a provider configuration override.
+Repeated execution preserves existing keys. It is required for the
+existing published image even though newer source includes this recovery in
+`vast-start.sh`. Editing a template does not repair an already-created instance;
+run `docker/vast-ssh.sh` through an available browser terminal or ask
+the provider to run them inside the container. Apply this hook to the existing
+instance only if its controls support editing it without recreating storage.
+Vast's `update instance` operation is documented as recreating the instance;
+do not assume it preserves container data. Its constrained `execute` interface
+is not a general replacement for a shell. Do not bake shared host keys into
+an image. See [Vast's custom-image example](https://docs.vast.ai/examples/ner/gliner2).
+
+The isolated integration check `tests/test_vast_ssh.sh` exercises real SSH login
+and rejection in an Ubuntu 24.04 container with openssh-server/client installed.
+It requires `GEODISTILL_DISPOSABLE_SSH_TEST=1`; never run it on a rented server or
+the host because it deliberately creates test keys and insecure fixture modes.
 
 Provision persistent paths and Drive credentials over SSH. Inside Vast, use the
 runtime directly; **do not run Docker Compose inside its container**:
 
 ```bash
 cd /app
+export PATH=/opt/train-venv/bin:$PATH
+export TRAIN_IMAGE=phatle0106/geodistill-train@sha256:04b67813e90d69d7f71866dbb8becb339022b64994539b683caccc7f1070dea9
+export BACKUP_REMOTE=gdrive:GeoLift_RT_runs/server
+export RCLONE_CONFIG=/secrets/rclone.conf
 python -m src.runtime doctor
 python -m src.runtime prepare --run-id vast-qualification
 python -m src.runtime run --run-id vast-qualification --stop-after-steps 10
@@ -255,12 +295,17 @@ python -m src.runtime run --run-id vast-qualification --stop-after-steps 20
 python -m src.runtime backup --once
 ```
 
-The second command must report resume and advance optimizer step from 10 to 20.
+The second `run` command must report resume and advance optimizer step from 10 to 20.
 For full training, omit `--stop-after-steps`. Keep RUN_ID consistent when starting
 the backup service. `AUTO_TRAIN=1` enables startup training after credentials and
 storage are ready; `BACKUP_REMOTE` also enables its background backup process.
 The default startup only probes and leaves training for the operator to start.
 Use `/opt/train-venv/bin/python` explicitly if the SSH shell changes PATH.
+Export the image reference and backup settings explicitly in SSH-launched jobs;
+do not assume template variables are inherited by an SSH login shell. The first
+Vast qualification recorded the correct source hash but `image: unrecorded` for
+this reason. Existing evidence is preserved; the commands above correct future
+launches.
 
 Acceptance before a long run: full-objective calibration passes, VRAM margin is
 recorded, SIGTERM resume works, a disposable SIGKILL test resumes from a committed

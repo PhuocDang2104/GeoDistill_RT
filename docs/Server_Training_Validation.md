@@ -108,8 +108,69 @@ Local evidence is `server-runs/drive-verification-20260921/audit.json` and
 `server-runs/final-validation/drive-refresh-audit.json` (ignored by Git).
 No further training or image rebuild was needed.
 
-## External qualification still pending
+## Vast.ai RTX 5060 Ti qualification — passed 2026-10-01
 
-Vast.ai testing is deferred at the user's request. RTX 5060 execution remains
-unqualified. A new server still needs the authenticated rclone configuration
-transferred securely to its writable secrets mount and a connectivity check there.
+The short qualification used an RTX 5060 Ti 16 GB, driver 580.173.02, three
+allocated CPU cores, about 42.5 GiB RAM, 15 GiB shared memory and a 100 GB container
+disk. PyTorch 2.10.0+cu128 exercised compute capability 12.0 (`sm_120`) successfully.
+The packaged source hash matched release `server-v1`:
+`f469deac24b3c19fa8a3e288f3262b26294860c855052fa442dbc48ffdfc449e`.
+
+Only 8 training and 4 validation samples from TAR2000 were downloaded and audited,
+using the existing 352×1216 configuration and FP16 AMP. This was not a full training
+run, a full-dataset server audit, or an accuracy benchmark.
+
+| Loader workers | Calibration images/s | Peak reserved VRAM |
+|---:|---:|---:|
+| 0 | 3.506 | 1,086,324,736 bytes |
+| 2 | **5.919** | 1,086,324,736 bytes |
+
+Baseline calibration retained batch size 2 and selected two workers. It exercised
+the full scheduled loss at epoch 23, including geometry objectives. Four workers
+were correctly skipped because the rental exposes only three CPU cores. These
+short cached-sample timings exclude warmup and do not predict full KITTI throughput.
+Fresh training processes took roughly 89–93 seconds for the first training batch
+and 74–75 seconds for the first validation batch; subsequent batches were much
+faster. This startup overhead deserves separate profiling before repeated short
+experiments; the qualification did not change the training protocol to avoid it.
+
+Verified sequence:
+
+- Clean stop at successful optimizer step 4; a new process resumed at step 5.
+- Stop at step 8, upload immutable bundles to Google Drive, download the latest
+  completed bundle, and restore into a separate run directory.
+- All 15 downloaded file hashes passed; the restored checkpoint matched the
+  original step-8 checkpoint byte for byte.
+- A new process resumed the cloud-restored run at step 9 and stopped at step 12.
+- All 256 populated optimizer states and the scheduler reached step 12. Model
+  and optimizer tensors, recorded losses, and validation metrics were finite.
+- The final log contained 13 consumed batches, 12 successful updates and one AMP
+  skip, with no duplicate epoch/batch positions. Three TensorBoard session files
+  survived the local and cloud resume sequence. Peak reserved memory recorded in
+  telemetry was 2,262,827,008 bytes (about 2.11 GiB).
+- Both run backup states were OK. Training processes exited and the GPU was idle.
+
+Remote completed bundles:
+
+- `gdrive:GeoLift_RT_runs/server/vast-5060ti-qual-20261001-01/000000000006-5becc1a0`
+- `gdrive:GeoLift_RT_runs/server/vast-5060ti-qual-20261001-01-restored/000000000009-9d8ed87b`
+
+Local evidence, checkpoints, logs, downloaded bundle, and test scripts are retained
+under `server-runs/vast-qualification-20261001/` (ignored by Git). The transferred
+archive SHA256 is `4cee28c3cf46a54ea12ffb51d391ef281cfc102fe0c7e652427caa545f470ec7`.
+Credential files were excluded from the archive.
+The eight evidence files were also uploaded to
+`gdrive:GeoLift_RT_runs/qualification-evidence/vast-5060ti-qual-20261001-01`;
+`rclone check --one-way` reported eight matches and zero differences.
+
+The original run provenance correctly recorded source/data hashes but stored
+`image: unrecorded`: the template's image variable did not reach the SSH shell.
+The detailed audit separately records the expected image and observed packaged
+source hash without rewriting the original provenance. Future launch instructions
+explicitly export `TRAIN_IMAGE`.
+
+This qualifies process restart and cloud restore on the 5060 Ti 16 GB. It does not
+establish bitwise GPU equivalence, inject a physical host failure, qualify the
+RTX 5060 8 GB, or replace a full TAR2000 preflight before a long server run. The
+earlier CPU SIGTERM/SIGKILL tests remain separate evidence. Use a new run ID and
+the full manifest when moving beyond this smoke subset.
