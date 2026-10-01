@@ -38,3 +38,9 @@ third_party/**
 !weights/**/.gitkeep
 !third_party/**/.gitkeep
 .cache
+server-data/
+server-runs/
+server-cache/
+server-config/
+server-secrets/
+docker/validation/

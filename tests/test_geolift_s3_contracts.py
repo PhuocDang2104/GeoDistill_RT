@@ -10,7 +10,7 @@ class GeoLiftS3ContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         torch.manual_seed(13)
-        cls.model = GeoLiftStudentS3Lite(encoder_pretrained=False).train()
+        cls.model = GeoLiftStudentS3Lite(encoder_pretrained=False, encoder_normalize_input=True).train()
         b, h, w = 1, 64, 128
         cls.rgb = torch.rand(b, 3, h, w)
         cls.sparse = torch.zeros(b, 1, h, w)
@@ -20,6 +20,16 @@ class GeoLiftS3ContractTest(unittest.TestCase):
         cls.uv = torch.zeros(b, 2, h, w)
         cls.K = torch.tensor([[[100.0, 0.0, w / 2], [0.0, 100.0, h / 2], [0.0, 0.0, 1.0]]])
         cls.output = cls.model(cls.rgb, cls.sparse, cls.mask, cls.ray, cls.uv, cls.K)
+
+    def test_rgb_encoder_uses_checkpoint_preprocessing_only_on_its_branch(self) -> None:
+        encoder = self.model.encoder
+        self.assertTrue(encoder.normalize_input)
+        self.assertTrue(torch.equal(encoder.input_mean.flatten(), torch.tensor([0.5, 0.5, 0.5])))
+        self.assertTrue(torch.equal(encoder.input_std.flatten(), torch.tensor([0.5, 0.5, 0.5])))
+        endpoints = torch.stack((torch.zeros(3), torch.ones(3))).view(2, 3, 1, 1)
+        normalized = (endpoints - encoder.input_mean) / encoder.input_std
+        self.assertTrue(torch.equal(normalized[0], torch.full_like(normalized[0], -1.0)))
+        self.assertTrue(torch.equal(normalized[1], torch.ones_like(normalized[1])))
 
     def test_depth_pyramid_and_hard_anchor(self) -> None:
         expected = {

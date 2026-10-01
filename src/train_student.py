@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import argparse
 import csv
+import copy
 import math
 import os
+import random
 import shutil
 import time
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
@@ -26,6 +29,9 @@ from .metrics import (
     depth_metrics_torch,
 )
 from .model_factory import build_student
+from .runtime.common import atomic_json
+from .runtime.recovery import (EpochBatchSampler, StopRequest, capture_rng, restore_rng,
+    commit_checkpoint, alias_checkpoint, load_checkpoint, verify_resume, reconcile_logs)
 from .utils import device_from_config, ensure_dir, load_project_config, seed_everything, setup_logger, write_jsonl
 
 
@@ -46,6 +52,15 @@ def to_device(batch: dict[str, Any], device: torch.device, channels_last: bool =
         else:
             out[key] = value
     return out
+
+
+def _seed_data_worker(_: int) -> None:
+    import cv2
+    cv2.setNumThreads(1)
+    torch.set_num_threads(1)
+    worker_seed = torch.initial_seed() % (2**32)
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 
 def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training: bool, distributed: bool = False) -> DataLoader:
@@ -81,9 +96,26 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         metric_conf_sparse_decay=float(loss_cfg.get("metric_conf_sparse_decay", 6.0)),
         metric_conf_range_decay=float(loss_cfg.get("metric_conf_range_decay", 0.25)),
         metric_conf_sparse_blend_radius=float(loss_cfg.get("metric_conf_sparse_blend_radius", 48.0)),
+        augmentation=data_cfg.get("augmentation") if training else None,
         return_tensors=True,
     )
+    augmentation_enabled = training and dataset.augmentor.enabled
     sampler = DistributedSampler(dataset, shuffle=training) if distributed else None
+    loader_generator = torch.Generator()
+    rank = dist.get_rank() if distributed and dist.is_initialized() else 0
+    loader_generator.manual_seed(int(cfg.get("seed", 42)) + rank)
+
+    if training and bool(cfg.get('runtime', {}).get('resumable', False)):
+        if distributed:
+            raise ValueError('Server resumable sampler currently supports one GPU only')
+        workers = int(data_cfg.get('num_workers', 2))
+        return DataLoader(dataset, batch_sampler=EpochBatchSampler(
+            len(dataset), int(cfg['train']['batch_size']), int(cfg.get('seed', 42))),
+            num_workers=workers, pin_memory=torch.cuda.is_available(),
+            persistent_workers=workers > 0, worker_init_fn=_seed_data_worker,
+            generator=loader_generator,
+            **({'prefetch_factor': int(data_cfg.get('prefetch_factor', 2))} if workers else {}))
+
     return DataLoader(
         dataset,
         batch_size=int(cfg["train"]["batch_size"]) if training else 1,
@@ -92,7 +124,11 @@ def make_loader(cfg: dict[str, Any], paths: dict[str, str], split: str, training
         num_workers=int(data_cfg.get("num_workers", 2)),
         pin_memory=torch.cuda.is_available(),
         drop_last=training,
-        persistent_workers=int(data_cfg.get("num_workers", 2)) > 0,
+        # Restart augmented workers each epoch so seed+epoch reproduces the
+        # same transform stream after an interrupted/resumed run.
+        persistent_workers=int(data_cfg.get("num_workers", 2)) > 0 and not augmentation_enabled,
+        worker_init_fn=_seed_data_worker,
+        generator=loader_generator,
     )
 
 
@@ -333,9 +369,10 @@ def save_checkpoint(
     epoch: int,
     best_rmse: float,
     cfg: dict[str, Any],
+    progress: dict[str, Any] | None = None,
 ) -> None:
     ensure_dir(path.parent)
-    torch.save(
+    commit_checkpoint(path,
         {
             "model": _unwrap_model(model).state_dict(),
             "optimizer": optimizer.state_dict(),
@@ -344,8 +381,9 @@ def save_checkpoint(
             "epoch": epoch,
             "best_rmse": best_rmse,
             "config": cfg,
+            'rng': capture_rng(),
+            'progress': progress or {},
         },
-        path,
     )
 
 
@@ -442,6 +480,11 @@ def validate(
 
 
 def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
+    with StopRequest() as stop:
+        _train_impl(cfg, paths, stop)
+
+
+def _train_impl(cfg: dict[str, Any], paths: dict[str, str], stop: StopRequest) -> None:
     train_cfg = cfg.get("train", {})
     distributed, local_rank, rank, world_size = _init_distributed(train_cfg)
     is_main = rank == 0
@@ -467,7 +510,10 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     train_loader = make_loader(cfg, paths, "train", training=True, distributed=distributed)
     val_loader = make_loader(cfg, paths, "val", training=False) if is_main else None
     preflight_teacher_coverage(cfg, train_loader.dataset, logger)
-    model = build_student(cfg).to(device)
+    initialization_cfg = copy.deepcopy(cfg)
+    if train_cfg.get('resume'):
+        initialization_cfg['model']['encoder_pretrained'] = False
+    model = build_student(initialization_cfg).to(device)
     channels_last = bool(train_cfg.get("channels_last", True)) and device.type == "cuda"
     if channels_last:
         model = model.to(memory_format=torch.channels_last)
@@ -477,14 +523,23 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     log_jsonl = student_root / "logs" / "train_log.jsonl"
     best_rmse = float("inf")
     start_epoch = 0
+    resumable = bool(cfg.get('runtime', {}).get('resumable', False))
+    progress: dict[str, Any] = {}
 
     resume = train_cfg.get("resume")
     ckpt: dict[str, Any] | None = None
     if resume:
-        ckpt = torch.load(resume, map_location=device)
+        ckpt = load_checkpoint(Path(resume))
+        verify_resume(ckpt.get('config', {}), cfg)
         state = ckpt["model"] if isinstance(ckpt, dict) and "model" in ckpt else ckpt
         model.load_state_dict(state)
         start_epoch = int(ckpt.get("epoch", -1)) + 1
+        progress = ckpt.get('progress') or {}
+        if progress:
+            start_epoch = int(progress['epoch'])
+        if progress.get('is_best') and Path(resume).with_suffix('.json').exists():
+            alias_checkpoint(Path(resume), ckpt_dir / 'best.pth')
+        reconcile_logs(student_root / 'logs', int(ckpt.get('epoch', -1)))
         best_rmse = float(ckpt.get("best_rmse", best_rmse))
         logger.info("Resumed from %s at epoch %d", resume, start_epoch)
 
@@ -528,6 +583,26 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             scaler.load_state_dict(ckpt["scaler"])
         if scheduler is not None and ckpt.get("scheduler") is not None:
             scheduler.load_state_dict(ckpt["scheduler"])
+        if 'rng' in ckpt:
+            restore_rng(ckpt['rng'])
+
+    global_step = int(progress.get('global_step', 0))
+    last_save = time.monotonic()
+    checkpoint_steps = int(train_cfg.get('checkpoint_steps', 100))
+    checkpoint_seconds = float(train_cfg.get('checkpoint_seconds', 300))
+    from .runtime.telemetry import Telemetry, publish_bundle
+    telemetry = Telemetry(student_root, enabled=resumable)
+    stop.cleanup = telemetry.close
+
+    def snapshot(epoch: int, next_batch: int, running: dict, count: int) -> None:
+        nonlocal last_save
+        p = {'epoch': epoch, 'next_batch': next_batch, 'running': running,
+             'count': count, 'global_step': global_step}
+        save_checkpoint(ckpt_dir / 'last.pth', model, optimizer, scaler, scheduler,
+                        epoch - 1, best_rmse, cfg, p)
+        if resumable:
+            publish_bundle(student_root)
+        last_save = time.monotonic()
 
     mono_cfg = cfg.get("mono_ssi", {})
     mono_enabled = bool(mono_cfg.get("enabled", False))
@@ -535,15 +610,28 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
     warned_missing_mono = False
     for epoch in range(start_epoch, epochs):
         epoch_started = time.perf_counter()
+        if train_loader.dataset.augmentor.enabled and train_loader.generator is not None:
+            rank_seed = dist.get_rank() if distributed and dist.is_initialized() else 0
+            epoch_data_seed = int(cfg.get("seed", 42)) + epoch + 1_000_003 * rank_seed
+            train_loader.generator.manual_seed(epoch_data_seed)
+            # Covers num_workers=0; worker processes receive deterministic
+            # NumPy/Python seeds from the DataLoader generator above.
+            np.random.seed(epoch_data_seed % (2**32))
+            random.seed(epoch_data_seed)
         if distributed and isinstance(train_loader.sampler, DistributedSampler):
             train_loader.sampler.set_epoch(epoch)
         model.train()
-        running: dict[str, float] = {}
-        count = 0
+        start_batch = int(progress.get('next_batch', 0)) if epoch == start_epoch else 0
+        running: dict[str, float] = dict(progress.get('running', {})) if epoch == start_epoch else {}
+        count = int(progress.get('count', 0)) if epoch == start_epoch else 0
+        if isinstance(train_loader.batch_sampler, EpochBatchSampler):
+            train_loader.batch_sampler.epoch = epoch
+            train_loader.batch_sampler.start_batch = start_batch
+            train_loader.generator.manual_seed(int(cfg.get('seed', 42)) + epoch)
         pbar = tqdm(train_loader, desc=f"train:{epoch}", disable=not is_main)
-        for batch in pbar:
+        for batch_number, batch in enumerate(pbar, start=start_batch):
             batch = to_device(batch, device, channels_last=channels_last)
-            geometry_available = "C_G" in batch and float(batch["C_G"].sum().detach().cpu()) >= 1.0
+            geometry_available = mono_enabled and "C_G" in batch and float(batch["C_G"].sum().detach().cpu()) >= 1.0
             if (
                 mono_enabled
                 and epoch >= mono_start_epoch
@@ -561,14 +649,20 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             with torch.amp.autocast(device_type=device.type, enabled=amp_enabled, dtype=autocast_dtype):
                 pred = model(batch["rgb"], batch["sparse"], batch["mask"], batch["ray"], batch["uv"], batch.get("K"))
                 loss, items = geort_loss(pred, batch, cfg["loss"], cfg["schedule"], epoch, mono_cfg)
+            if not torch.isfinite(loss):
+                raise FloatingPointError(f'Nonfinite loss at epoch={epoch} batch={batch_number}')
             scaler.scale(loss).backward()
+            grad_norm = None
             if grad_clip_norm > 0.0:
                 scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+                grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+            old_scale = scaler.get_scale()
             scaler.step(optimizer)
             scaler.update()
-            if scheduler is not None:
+            step_succeeded = scaler.get_scale() >= old_scale
+            if scheduler is not None and step_succeeded:
                 scheduler.step()
+            global_step += int(step_succeeded)
 
             count += 1
             for key, value in items.items():
@@ -576,6 +670,21 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             avg_loss = running["loss"] / count
             if is_main:
                 pbar.set_postfix(loss=f"{avg_loss:.4f}")
+            if resumable:
+                telemetry.step(epoch, batch_number + 1, global_step, items, optimizer.param_groups[0]['lr'],
+                               scaler.get_scale(), not step_succeeded, grad_norm)
+                requested = stop.requested or (student_root / 'STOP').exists()
+                stop_steps = int(train_cfg.get('stop_after_steps', 0))
+                requested = requested or (stop_steps > 0 and global_step >= stop_steps)
+                periodic = (checkpoint_steps > 0 and (batch_number + 1) % checkpoint_steps == 0)
+                periodic = periodic or time.monotonic() - last_save >= checkpoint_seconds
+                if requested or periodic:
+                    snapshot(epoch, batch_number + 1, running, count)
+                if requested:
+                    atomic_json(student_root / 'status.json', {'state': 'STOPPED', 'epoch': epoch,
+                                'next_batch': batch_number + 1, 'global_step': global_step})
+                    telemetry.close()
+                    return
 
         epoch_train_seconds = time.perf_counter() - epoch_started
         train_items = {f"train_{k}": v / max(1, count) for k, v in running.items()}
@@ -610,11 +719,23 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
             logger.info("epoch=%d train_loss=%.6f val_rmse=%.6f best=%.6f", epoch, train_items.get("train_loss", 0.0), rmse, best_rmse)
 
             save_every = int(cfg.get("outputs", {}).get("save_every", 1))
-            save_checkpoint(ckpt_dir / "last.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+            save_checkpoint(ckpt_dir / "last.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg,
+                            {'epoch': epoch + 1, 'next_batch': 0, 'count': 0, 'running': {}, 'global_step': global_step, 'is_best': is_best})
             if save_every > 0 and (epoch + 1) % save_every == 0:
-                save_checkpoint(ckpt_dir / f"epoch_{epoch:03d}.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+                alias_checkpoint(ckpt_dir / 'last.pth', ckpt_dir / f'epoch_{epoch:03d}.pth')
             if is_best:
-                save_checkpoint(ckpt_dir / "best.pth", model, optimizer, scaler, scheduler, epoch, best_rmse, cfg)
+                alias_checkpoint(ckpt_dir / 'last.pth', ckpt_dir / 'best.pth')
+            if resumable:
+                telemetry.epoch(record)
+                publish_bundle(student_root)
+                atomic_json(student_root / 'status.json', {'state': 'TRAINING', 'epoch': epoch + 1,
+                            'global_step': global_step, 'best_rmse': best_rmse})
+            if stop.requested:
+                telemetry.close()
+                if resumable:
+                    atomic_json(student_root / 'status.json', {'state': 'STOPPED', 'epoch': epoch + 1,
+                                'global_step': global_step})
+                return
             backup_root_value = cfg.get("outputs", {}).get("backup_root")
             if backup_root_value:
                 backup_root = Path(str(backup_root_value))
@@ -632,6 +753,10 @@ def train(cfg: dict[str, Any], paths: dict[str, str]) -> None:
 
     if distributed:
         dist.destroy_process_group()
+    telemetry.close()
+    if resumable:
+        atomic_json(student_root / 'status.json', {'state': 'TRAINING_COMPLETE', 'epoch': epochs,
+                    'global_step': global_step, 'best_rmse': best_rmse})
 
 
 def main() -> None:

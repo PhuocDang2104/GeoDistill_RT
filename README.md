@@ -1,5 +1,8 @@
 # GeoDistill-RT / GeoLift
 
+Server training with the prebuilt private Docker image, automatic preparation,
+hardware calibration, crash recovery and Drive backup: [operator runbook](docs/Server_Training_Runbook.md).
+
 Repo nghiên cứu sparse depth completion thời gian thực trên KITTI. Hai baseline được duy trì:
 
 | Baseline | Mục đích | Teacher khi train | Tài liệu chuẩn |
@@ -31,6 +34,9 @@ Notebook chuẩn:
 - S2: `notebooks/GeoLift_RT_v2_1_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
 - S3: `notebooks/GeoLift_S3_Lite_TAR2000_Train1600_Val400_Test_OneRun.ipynb`
 - S3 teacher-KD ablation: `notebooks/GeoLift_S3_Lite_TeacherKD_TAR2000_Train1600_Val400_E20.ipynb`
+- S3 teacher-KD augmentation ladder A1/A2/A3: `notebooks/GeoLift_S3_Lite_TeacherKD_AugA1_A2_A3_TAR2000_E20.ipynb`
+
+Trong notebook augmentation, đặt `AUGMENTATION_STAGE` và chạy riêng theo thứ tự `A1 → A2 → A3`. A1 dùng run Teacher-KD plain làm control; A2 dùng A1; A3 dùng A2. Mỗi stage có thư mục checkpoint riêng và validation luôn giữ nguyên, không augment.
 
 ## Source of truth
 
@@ -38,6 +44,7 @@ Notebook chuẩn:
 src/model_geolift_s2.py              # S2 forward graph
 src/model_geolift_s3.py              # S3 forward graph
 src/losses.py                        # geolift_loss / geolift_s3_loss
+src/augmentations.py                 # aligned train-only RGB/depth/teacher/camera transforms
 src/train_student.py                 # train, validation, checkpoint, log
 configs/geolift_s2_v2_1_balanced_ablation.yaml
 configs/geolift_s3_lite_tar2000.yaml

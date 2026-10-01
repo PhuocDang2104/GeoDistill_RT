@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from .augmentations import DepthCompletionAugmentor
 from .utils import (
     DEFAULT_KITTI_K,
     load_intrinsics_from_calib,
@@ -227,6 +228,7 @@ class KITTIDepthCompletionDataset(Dataset):
         metric_conf_sparse_decay: float = 6.0,
         metric_conf_range_decay: float = 0.25,
         metric_conf_sparse_blend_radius: float = 48.0,
+        augmentation: dict[str, Any] | None = None,
         return_tensors: bool = True,
     ) -> None:
         self.data_root = Path(data_root)
@@ -249,6 +251,7 @@ class KITTIDepthCompletionDataset(Dataset):
         self.metric_conf_sparse_decay = float(metric_conf_sparse_decay)
         self.metric_conf_range_decay = float(metric_conf_range_decay)
         self.metric_conf_sparse_blend_radius = float(metric_conf_sparse_blend_radius)
+        self.augmentor = DepthCompletionAugmentor(augmentation)
         self.return_tensors = return_tensors
         self._warned_dmd_geometry_fallback = False
 
@@ -259,7 +262,32 @@ class KITTIDepthCompletionDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
+        # Server sampler supplies a per-sample seed, independent of worker count
+        # and prefetch, so a mid-epoch restart replays the same transforms.
+        augmentation_rng = None
+        if isinstance(index, tuple):
+            index, sample_seed = index
+            augmentation_rng = np.random.RandomState(sample_seed)
         sample = self.load_sample_np(index)
+        if self.load_teacher:
+            D_cm, C_cm = self._load_metric_teacher(
+                sample["sample_id"],
+                sample["rgb"].shape[:2],
+                sample["gt"],
+                sample["gt_mask"],
+                sample["sparse"],
+                sample["mask"],
+            )
+            sample["D_cm"], sample["C_cm"] = D_cm, C_cm
+        if self.load_geometry:
+            sample["R_G"], sample["C_G"] = self._load_geometry_teacher(
+                sample["sample_id"], sample["rgb"].shape[:2]
+            )
+        if self.load_mono:
+            sample["D_da_raw"], sample["da_raw_valid"] = self._load_da_raw(
+                sample["sample_id"], sample["rgb"].shape[:2]
+            )
+        sample = self.augmentor(sample, rng=augmentation_rng)
         if not self.return_tensors:
             return sample
 
@@ -284,15 +312,10 @@ class KITTIDepthCompletionDataset(Dataset):
             "K": K,
             "orig_hw": torch.tensor(sample["orig_hw"], dtype=torch.long),
         }
+        if "augmentation_params" in sample:
+            out["augmentation_params"] = torch.from_numpy(sample["augmentation_params"]).float()
         if self.load_teacher:
-            D_cm, C_cm = self._load_metric_teacher(
-                sample["sample_id"],
-                sample["rgb"].shape[:2],
-                sample["gt"],
-                sample["gt_mask"],
-                sample["sparse"],
-                sample["mask"],
-            )
+            D_cm, C_cm = sample["D_cm"], sample["C_cm"]
             out["D_cm"] = torch.from_numpy(D_cm[None]).float()
             out["C_cm"] = torch.from_numpy(C_cm[None]).float()
             D_teacher = _downsample_map(D_cm, self.output_scale, interpolation=cv2.INTER_AREA)
@@ -300,11 +323,11 @@ class KITTIDepthCompletionDataset(Dataset):
             out["D_teacher"] = torch.from_numpy(D_teacher[None]).float()
             out["C_teacher"] = torch.from_numpy(C_teacher[None]).float()
         if self.load_geometry:
-            R_G, C_G = self._load_geometry_teacher(sample["sample_id"], sample["rgb"].shape[:2])
+            R_G, C_G = sample["R_G"], sample["C_G"]
             out["R_G"] = torch.from_numpy(R_G[None]).float()
             out["C_G"] = torch.from_numpy(C_G[None]).float()
         if self.load_mono:
-            D_da_raw, da_raw_valid = self._load_da_raw(sample["sample_id"], sample["rgb"].shape[:2])
+            D_da_raw, da_raw_valid = sample["D_da_raw"], sample["da_raw_valid"]
             out["D_da_raw"] = torch.from_numpy(D_da_raw[None]).float()
             out["da_raw_valid"] = torch.from_numpy(da_raw_valid[None]).float()
         return out
