@@ -1,1 +1,4 @@
 *.sh text eol=lf
+
+# Frozen Drive bundle hashes cover exact bytes; do not rewrite line endings.
+drive_upload/AnchorFlow_v6_Connection/** -text whitespace=cr-at-eol

@@ -1,0 +1,50 @@
+{
+  "name": "AnchorFlow_v6_Connection",
+  "default_epochs": 15,
+  "default_model": "v6_connection",
+  "available_models": [
+    "v6_connection",
+    "v6_ambient",
+    "v5_piecewise"
+  ],
+  "default_variants": [
+    "metric_kd"
+  ],
+  "contains_data": false,
+  "contains_teacher_weights": false,
+  "contains_parent_student_checkpoint": true,
+  "default_parent": "Actual Drive V5 best required; resolve SHA/epoch in notebook",
+  "fallback_v3_sha256": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+  "source_sha256": "2a0f3f8afafdf6bbcebc30f21c9988aa2d26e67a918cdb0dca637832b8ea1ba7",
+  "files": {
+    "model.py": "734af7edb0d742f46af69b40c4ec13b8073e65835ae7dddf2a89b017d4c2e4d8",
+    "model_v3.py": "71b74382c250d3bf72a406c61b3eadc96ac470ccd733a2eb4642638b5e8ff7ad",
+    "model_v5.py": "d39d5012ed1464678e4722ed8b84e32e3e5329e99f92df2b5fba4b1a4fe9f709",
+    "model_v6.py": "a8409fc7914096d07d00aa26035d56269f42e6c6ee5ba6365fd28f41a4359f95",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "data.py": "b50e1a224cd94edfd98c89ec8c504dc8e076fee9571ccb05f7fd5601bc24c0a3",
+    "losses.py": "5200b2b992aef27ef5169f72bc125ecf05fb1b0ae324c7beddd968e84c6b5376",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "metrics.py": "2f938b8f43fbd5802837073157118503d647a9d2347cada4dafad14802755658",
+    "run.py": "323a6d6ea5814fd1e6866f987e3239cdc5be691391ae628ab9cc8949a4250f0e",
+    "config.json": "36fcf06445f667d905f6f0b01e63aecc0d394f6eb1a718a18e76ff21948e4b78",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "test_contracts.py": "dd8b8b711ad5a8c3e759a885d894682d0d9bc2e2112399707182e705edf315b0",
+    "test_surface.py": "e284642f26dcf316bed1fc10e83ec80553055983023abdca48b3aaeb5bbefbdd",
+    "test_connection.py": "a0da076b55874abef7c2d21a2476fe5a81f7770ccfe5526454bd51b0de24d4e6",
+    "test_notebook.py": "c01f30af66406bb20261285311fb0f991b2cb3de11b23ee1f3dad819def7e4fd",
+    "README.md": "be0b168fec0c0a8bcfb1c72a66137822131e898c5e77faa3121642a3c74ae683",
+    "ARCHITECTURE.md": "9bc3b4fb3c44af5ed9e67a123eacd915a516b44f892d0db5cc5b422560742152",
+    "ANALYSIS_V5.md": "d930d408087518e0666589b11f48509bef021371082b9e0d82d34ebf983a3d41",
+    "VERIFICATION.md": "8a7178b349c569e2e6f1e45c56d7acf5296ffca8b2158a39782e67490d04257d",
+    "init_v3_best.pth": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+    "parent_val_metrics.json": "b0fe6bd3bd73f7a95347029f146fade9e70665406e6873b0fbfde83348d27eb6",
+    "v5_train_log.csv": "9754526d564405f01926468c40483dc1f54775772ec611f80b8f974ff089bce1",
+    "v5_gt_boundary_metrics.csv": "adfc5a7573ee30464cb1732e2bd1a0ffb6a1dea8504bb0f78037cd0b6b27627f",
+    "v4_val_metrics.json": "2b7eb98bbcc4642d0e8148b6849651e5a5663bad9535389c360d3a5fe51aa5c0",
+    "v4_gt_boundary_audit.json": "77bdb4108d7021b6ba910ff5b658d9a472efa5521e40fd5d0b20ca88132bd739",
+    "local_verification.json": "d91888ef7f323597015ab39f2ce2a6210c0d18eb17a65bc6b3d39b4747d1f241",
+    "AnchorFlow_v6_TAR2000_15ep.ipynb": "c2f424ac331f3af7da338dc5129fa01efa53f234d03de0661042bfb7c82db33b"
+  }
+}

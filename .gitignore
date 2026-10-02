@@ -44,3 +44,10 @@ server-cache/
 server-config/
 server-secrets/
 docker/validation/
+
+# Student checkpoints/exports belong in Drive bundles, not Git history.
+*.pth
+*.pt
+*.onnx
+*.safetensors
+results/**/export_work/
