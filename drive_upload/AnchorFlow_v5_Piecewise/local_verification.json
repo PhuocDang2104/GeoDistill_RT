@@ -1,0 +1,146 @@
+{
+  "tests": 21,
+  "tests_returncode": 0,
+  "tests_log": "INITIAL (not newly trained) soft=0.0008; hard=0.0008; pre=0.0008\nmetric_kd epoch=0 batch=1/1 loss=0.0090 KD=0.0000\nmetric_kd epoch=0 val_rmse=0.0023 m iRMSE=0.006 best=0.0008; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmppsp8lihg\\drive\\AnchorFlow_v5_Piecewise_FT15\\metric_kd\nResume metric_kd: next epoch=1, best=0.0008 m\nINITIAL (not newly trained) soft=0.0017; hard=0.0017; pre=0.0018\nmetric_kd epoch=0 batch=1/1 loss=0.0125 KD=0.0001\nmetric_kd epoch=0 val_rmse=0.0012 m iRMSE=0.003 best=0.0012; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmpzz58inpv\\drive\\AnchorFlow_v5_Piecewise_FT15\\metric_kd\nResume metric_kd: next epoch=1, best=0.0012 m\ntest_coarse_kd_blocks_entire_gt_or_sensor_cell (test_contracts.Contracts.test_coarse_kd_blocks_entire_gt_or_sensor_cell) ... ok\ntest_confidence_is_not_normalized_away (test_contracts.Contracts.test_confidence_is_not_normalized_away) ... ok\ntest_diffusion_zero_flux_and_stability (test_contracts.Contracts.test_diffusion_zero_flux_and_stability) ... ok\ntest_global_pixel_metrics_and_inverse_units (test_contracts.Contracts.test_global_pixel_metrics_and_inverse_units) ... ok\ntest_inference_interface_and_forward_backward (test_contracts.Contracts.test_inference_interface_and_forward_backward) ... ok\ntest_kd_excludes_gt_and_all_original_sparse (test_contracts.Contracts.test_kd_excludes_gt_and_all_original_sparse) ... ok\ntest_lr_schedule_endpoints (test_contracts.Contracts.test_lr_schedule_endpoints) ... ok\ntest_phase_constant_preservation (test_contracts.Contracts.test_phase_constant_preservation) ... ok\ntest_range_term_is_finite_and_ignores_insufficient_support (test_contracts.Contracts.test_range_term_is_finite_and_ignores_insufficient_support) ... ok\ntest_stream_cache_contains_training_teachers_only (test_contracts.Contracts.test_stream_cache_contains_training_teachers_only) ... ok\ntest_tar_rejects_traversal (test_contracts.Contracts.test_tar_rejects_traversal) ... ok\ntest_teacher_loader_schema_and_ids (test_contracts.Contracts.test_teacher_loader_schema_and_ids) ... ok\ntest_train_validate_checkpoint_and_resume_on_cpu_fixture (test_contracts.Contracts.test_train_validate_checkpoint_and_resume_on_cpu_fixture) ... ok\ntest_v3_matched_control_train_and_resume_on_cpu_fixture (test_contracts.Contracts.test_v3_matched_control_train_and_resume_on_cpu_fixture) ... ok\ntest_actual_parent_exact_noop_both_modes_all_old_stages (test_surface.SurfaceContracts.test_actual_parent_exact_noop_both_modes_all_old_stages) ... ok\ntest_amp_finite_new_gradients_and_opened_slopes (test_surface.SurfaceContracts.test_amp_finite_new_gradients_and_opened_slopes) ... ok\ntest_barriers_symmetric_directional_and_not_normalized_away (test_surface.SurfaceContracts.test_barriers_symmetric_directional_and_not_normalized_away) ... ok\ntest_boundary_metrics_counts_bands_and_ring_union (test_surface.SurfaceContracts.test_boundary_metrics_counts_bands_and_ring_union) ... ok\ntest_gt_boundary_does_not_use_missing_values_as_edges (test_surface.SurfaceContracts.test_gt_boundary_does_not_use_missing_values_as_edges) ... ok\ntest_inference_inputs_empty_sparse_and_compute_budget (test_surface.SurfaceContracts.test_inference_inputs_empty_sparse_and_compute_budget) ... ok\ntest_plane_transport_preserves_affine_inverse_depth (test_surface.SurfaceContracts.test_plane_transport_preserves_affine_inverse_depth) ... ok\n\n----------------------------------------------------------------------\nRan 21 tests in 9.414s\n\nOK\n",
+  "source_sha256": "6b465c587c8b541917adcad6a8149ccf2e0d470a8be989c95f39e5fecdc980e6",
+  "torch": "2.11.0+cpu",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "test_scope": "CPU fixtures and BF16 (not CUDA)",
+  "migration": {
+    "parent_tensors_loaded": 697,
+    "parent_parameters_loaded": 572017,
+    "new_parameters": 7976,
+    "old_keys_dropped": 0
+  },
+  "real_kitti_samples": [
+    0,
+    199,
+    399
+  ],
+  "full_size_noop_max_abs_m": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "real_kitti_bf16_loss": 0.9288911819458008,
+  "real_kitti_bf16_gradients_finite": true,
+  "gradient_check_teacher": "synthetic metric target; actual teacher cache gate runs in Colab prepare/smoke",
+  "complexity": {
+    "conv_linear_macs": {
+      "encoder": 536123456,
+      "context32": 25307392,
+      "sparse": 50561280,
+      "decoder": 1153171712,
+      "flow": 98019328,
+      "metric4": 178061312,
+      "surface": 202031104,
+      "guidance": 17977344,
+      "up4_2": 152165376,
+      "context2": 10272768,
+      "up2_1": 241410048,
+      "detail1": 511070208
+    },
+    "parameters": {
+      "encoder": 340992,
+      "sparse": 4896,
+      "decoder": 149748,
+      "flow": 2915,
+      "guidance": 200,
+      "context2": 400,
+      "up4_2": 6016,
+      "up2_1": 2488,
+      "context32": 52144,
+      "metric4": 7073,
+      "detail1": 5145,
+      "surface": 7976
+    },
+    "total_parameters": 579993,
+    "total_conv_linear_macs": 3176171328,
+    "mac_exclusions": [
+      "functional 1->9 fixed neighbourhood convolutions",
+      "fixed directional shifts and plane transport",
+      "pooling",
+      "interpolation",
+      "softmax",
+      "finite differences",
+      "elementwise operations",
+      "memory traffic"
+    ]
+  },
+  "onnx_nonzero_heads_parity": {
+    "opset": 17,
+    "static_batch": 1,
+    "shape": [
+      352,
+      1216
+    ],
+    "precision": "fp32",
+    "max_abs_errors_m": [
+      0.00042724609375,
+      6.866455078125e-05
+    ],
+    "untrained_weights": true,
+    "onnxruntime_cpu_parity": true,
+    "teacher_inputs": false,
+    "inputs": [
+      "rgb",
+      "sparse",
+      "mask",
+      "K"
+    ],
+    "outputs": [
+      "depth_m"
+    ],
+    "operators": [
+      "Add",
+      "And",
+      "AveragePool",
+      "Cast",
+      "Clip",
+      "Concat",
+      "Constant",
+      "ConstantOfShape",
+      "Conv",
+      "DepthToSpace",
+      "Div",
+      "Exp",
+      "Expand",
+      "Gather",
+      "Greater",
+      "Identity",
+      "IsInf",
+      "IsNaN",
+      "Less",
+      "Log",
+      "Max",
+      "Min",
+      "Mul",
+      "Neg",
+      "Not",
+      "Or",
+      "Pad",
+      "Range",
+      "Reciprocal",
+      "ReduceSum",
+      "Relu",
+      "Reshape",
+      "Resize",
+      "Shape",
+      "Sigmoid",
+      "Slice",
+      "Softmax",
+      "Softplus",
+      "Split",
+      "Sqrt",
+      "Sub",
+      "Tanh",
+      "Transpose",
+      "Unsqueeze",
+      "Where"
+    ],
+    "tensorrt_engine_built": false,
+    "target_device_latency_measured": false
+  },
+  "v5_accuracy_trained": false,
+  "gpu_latency_measured": false
+}

@@ -1,0 +1,41 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "capacity": 3369486336,
+    "decoder": 1153171712,
+    "flow": 98019328,
+    "metric4": 178061312,
+    "guidance": 17977344,
+    "up4_2": 152165376,
+    "context2": 10272768,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "decoder": 149748,
+    "flow": 2915,
+    "guidance": 200,
+    "context2": 400,
+    "up4_2": 6016,
+    "up2_1": 2488,
+    "context32": 52144,
+    "metric4": 7073,
+    "detail1": 5145,
+    "capacity": 1285704
+  },
+  "total_parameters": 1857721,
+  "total_conv_linear_macs": 6343626560,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ]
+}

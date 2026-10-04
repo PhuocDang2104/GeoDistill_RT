@@ -1,0 +1,185 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "f53c54e7",
+   "metadata": {},
+   "source": [
+    "# 01 — Generate DA3MONO-LARGE relative teacher, selected 2.000 RGB\n",
+    "\n",
+    "Upload **AnchorFlow_v9_1_MetricRefine** lên MyDrive; không upload repo/data/weights lần nữa.\n",
+    "Input dùng thẳng GeoLift_Data/teacher_subset_2000/{selected_2000_ids.json,kitti_trainval_2000.tar}.\n",
+    "Teacher chỉ thấy RGB, từng ảnh độc lập, không GT/sparse/K/metric teacher.\n",
+    "Generate cả 2.000; 400 val chỉ audit. Student train chỉ load 1.600 train targets.\n",
+    "Cần GPU; default long-side1232, flip TTA, full-frame resize không crop. 12+ GiB SSD trống."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2cda38d1",
+   "metadata": {},
+   "source": [
+    "> **Tùy chọn.** Bạn đã train V9 nên thường **bỏ qua notebook 01**, chạy thẳng notebook 02.\n",
+    "> Tái sử dụng `relative_teacher_2000_DA3MONO_LARGE.tar` đã có; không cần generate lại.\n",
+    "> Nếu generation trước bị ngắt, giữ nguyên recipe/LONG_SIDE và chạy từ đầu notebook để resume."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "7bd3affb",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from google.colab import drive\n",
+    "drive.mount(\"/content/drive\")\n",
+    "from pathlib import Path\n",
+    "import hashlib, json, os, shutil, subprocess, sys\n",
+    "BUNDLE=Path(\"/content/drive/MyDrive/AnchorFlow_v9_1_MetricRefine\")\n",
+    "DRIVE_DATA=Path(\"/content/drive/MyDrive/GeoLift_Data\")\n",
+    "DRIVE_RUNS=Path(\"/content/drive/MyDrive/GeoLift_RT_Runs\")\n",
+    "assert BUNDLE.is_dir(), f\"Upload the folder to {BUNDLE}\"\n",
+    "assert (DRIVE_DATA/\"teacher_subset_2000/selected_2000_ids.json\").is_file()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c2e7a91a",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "CODE=Path(\"/content/anchorflow_v9_1_teacher_code\")\n",
+    "TEACHER_WORK=Path(\"/content/anchorflow_v9_teacher_work\")\n",
+    "LONG_SIDE=1232\n",
+    "assert shutil.disk_usage(\"/content\").free/2**30>12,\"Need >=12 GiB local SSD free\"\n",
+    "print(\"Teacher output:\",DRIVE_DATA/\"teacher_subset_2000/relative_teacher_2000_DA3MONO_LARGE.tar\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6e322827",
+   "metadata": {},
+   "source": [
+    "## Verify and install minimal dependencies\n",
+    "\n",
+    "Không pip-install torch/torchvision hoặc toàn bộ DA3 extras. Adapter dùng official\n",
+    "network và strict checkpoint load; native PyTorch SDPA. Không silent random teacher fallback."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6e5f6a01",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "manifest=json.loads((BUNDLE/\"bundle_manifest.json\").read_text(encoding=\"utf-8\"))\n",
+    "assert not manifest[\"contains_data\"] and not manifest[\"contains_teacher_weights\"]\n",
+    "assert manifest[\"contains_student_checkpoint\"] and manifest[\"parent_checkpoint_model_only\"]\n",
+    "CODE.mkdir(parents=True,exist_ok=True)\n",
+    "for name,sha in manifest[\"files\"].items():\n",
+    "    # Notebook UI is mutable; source and immutable _contract.json remain strict.\n",
+    "    if name.endswith(\".ipynb\"): continue\n",
+    "    source=BUNDLE/name\n",
+    "    assert source.is_file(), f\"Missing {source}\"\n",
+    "    assert hashlib.sha256(source.read_bytes()).hexdigest()==sha, f\"Bundle changed: {name}\"\n",
+    "    destination=CODE/name\n",
+    "    if source.resolve()!=destination.resolve(): shutil.copy2(source,destination)\n",
+    "shutil.copy2(BUNDLE/\"bundle_manifest.json\",CODE/\"bundle_manifest.json\")\n",
+    "os.chdir(CODE)\n",
+    "subprocess.run([sys.executable,\"-m\",\"pip\",\"install\",\"-q\",\"-r\",str(CODE/\"teacher_requirements.txt\")],check=True)\n",
+    "import torch\n",
+    "assert torch.cuda.is_available(),\"Select GPU runtime\"\n",
+    "print(torch.__version__,torch.cuda.get_device_name(0))\n",
+    "assert torch.cuda.get_device_capability(0)[0]>=8 and torch.cuda.is_bf16_supported(including_emulation=False), \"Optional teacher generation requires native BF16 GPU. Existing V9 relative TAR: skip notebook01 and use notebook02 (T4 FP32 supported).\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3c78f47c",
+   "metadata": {},
+   "source": [
+    "## Generate + per-image Drive resume\n",
+    "\n",
+    "Pinned model revision và pinned official Git revision ghi trong recipe. Mỗi ảnh\n",
+    "lưu .npz vào Drive staging: mất runtime có thể chạy lại để tiếp tục. Không đổi LONG_SIDE\n",
+    "giữa run; đổi recipe phải dùng staging mới. Không tự xóa cache/data cũ.\n",
+    "R_T là normalized relative inverse depth (lớn = gần), C_T là flip-agreement confidence,\n",
+    "không phải depth mét và không phải calibrated uncertainty."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "98a590da",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "proc=subprocess.Popen([sys.executable,\"-u\",str(CODE/\"generate_relative.py\"),\n",
+    "    \"--drive-data\",str(DRIVE_DATA),\"--work\",str(TEACHER_WORK),\"--long-side\",str(LONG_SIDE)],\n",
+    "    cwd=CODE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding=\"utf-8\",errors=\"replace\")\n",
+    "for line in proc.stdout: print(line,end=\"\",flush=True)\n",
+    "result=proc.wait()\n",
+    "if result: raise RuntimeError(\"Teacher generation failed; read the real traceback above, do not train\")\n",
+    "report_path=DRIVE_DATA/\"teacher_subset_2000/relative_teacher_2000_report.json\"\n",
+    "report=json.loads(report_path.read_text())\n",
+    "assert report[\"records\"]==2000 and report[\"student_training_records\"]==1600\n",
+    "print(json.dumps(report,indent=2))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3a6585ad",
+   "metadata": {},
+   "source": [
+    "## Inspect one train and one val-audit sample\n",
+    "\n",
+    "Relative colors không có đơn vị mét. Archive final giữ 2.000 records + checksums;\n",
+    "intermediate .npz vẫn giữ để resume, nên Drive chứa cả staging và TAR."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "b55fed61",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import cv2, numpy as np, matplotlib.pyplot as plt\n",
+    "selected=json.loads((DRIVE_DATA/\"teacher_subset_2000/selected_2000_ids.json\").read_text())\n",
+    "fig,axes=plt.subplots(2,3,figsize=(18,6))\n",
+    "for row,split in enumerate((\"train\",\"val\")):\n",
+    "    sid=selected[split+\"_ids\"][0]\n",
+    "    rows=[x.split() for x in (TEACHER_WORK/\"kitti/splits\"/(\"train_1600.txt\" if split==\"train\" else \"val_400.txt\")).read_text().splitlines()]\n",
+    "    rgb=cv2.cvtColor(cv2.imread(str(TEACHER_WORK/\"kitti\"/rows[0][1])),cv2.COLOR_BGR2RGB)\n",
+    "    rgb=cv2.resize(rgb,(1216,352),interpolation=cv2.INTER_LINEAR)\n",
+    "    with np.load(DRIVE_DATA/\"teacher_subset_2000/relative_DA3MONO_LARGE_generation\"/(sid+\".npz\"),allow_pickle=False) as payload:\n",
+    "        r,c=payload[\"R_T\"],payload[\"C_T\"]\n",
+    "    axes[row,0].imshow(rgb); axes[row,0].set_title(split+\" RGB\")\n",
+    "    axes[row,1].imshow(r,cmap=\"turbo\",vmin=-2,vmax=2); axes[row,1].set_title(\"Relative inverse depth | near higher\")\n",
+    "    axes[row,2].imshow(c,vmin=0,vmax=1,cmap=\"viridis\"); axes[row,2].set_title(\"TTA confidence | heuristic\")\n",
+    "for ax in axes.flat: ax.axis(\"off\")\n",
+    "plt.tight_layout(); plt.show()\n",
+    "fig.savefig(DRIVE_DATA/\"teacher_subset_2000/relative_teacher_preview.png\",dpi=150)\n",
+    "print(\"Now open notebook 02 in a clean GPU runtime\")"
+   ]
+  }
+ ],
+ "metadata": {
+  "accelerator": "GPU",
+  "colab": {
+   "name": "01_Optional_Generate_Relative_Teacher.ipynb"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

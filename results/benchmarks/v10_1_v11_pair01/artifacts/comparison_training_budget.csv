@@ -1,0 +1,3 @@
+model,epochs_logged,last_epoch_logged,optimizer_updates,batch_size,accumulation,effective_batch,epoch_seconds_mean_UNDER_TRAIN_CONTENTION,train_seconds_total_UNDER_TRAIN_CONTENTION,training_status
+V10_1,34,33,13600,4,1,4,105.11069344102937,2441.2942782869977,early_stopped
+V11,34,33,13600,4,1,4,177.85983884847056,4106.050254816996,early_stopped

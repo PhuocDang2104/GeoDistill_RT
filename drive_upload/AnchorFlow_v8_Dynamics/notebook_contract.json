@@ -1,0 +1,420 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "1ea94a23",
+   "metadata": {},
+   "source": [
+    "# AnchorFlow V8 — Feedback Jet Dynamics · Fresh30 + Early Stop\n",
+    "\n",
+    "Upload nguyên folder `AnchorFlow_v8_Dynamics` vào MyDrive. Chọn GPU → Run all.\n",
+    "Student mới từ epoch 0; **chỉ RGB encoder ImageNet pretrained**, không lấy checkpoint V5/V6/V7.\n",
+    "Ba Euler steps dùng chung CNN, đọc lại jet state và sparse error ở từng bước.\n",
+    "\n",
+    "Giữ 1.600 train / 400 val / 1.000 anonymous test. Metric teacher chỉ train.\n",
+    "V7 tốt nhất 1,0061 m sau nhiều run nối tiếp; <0,8 m là mục tiêu nghiên cứu, không bảo đảm.\n",
+    "Tối đa 30 epoch fresh, early stop không sớm hơn 15 epoch; không tương đương 75 epoch tích lũy của V7."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bda4586f",
+   "metadata": {},
+   "source": [
+    "## 1. Mount và đường dẫn\n",
+    "\n",
+    "Default tối đa 30 epoch. Early stop: patience 7, min delta 0,001 m, minimum 15 epochs.\n",
+    "Optional `v8_frozen_feedback` là control cùng số tham số/compute,\n",
+    "nhưng CNN luôn đọc state ban đầu. Không tự chạy nhiều experiment.\n",
+    "Thay batch/epochs/recipe/source cần `RUN_TAG` mới; không ghi đè run cũ."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "fb31af5b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from google.colab import drive\n",
+    "drive.mount(\"/content/drive\")\n",
+    "from pathlib import Path\n",
+    "import hashlib, json, os, shutil, subprocess, sys\n",
+    "BUNDLE=Path(\"/content/drive/MyDrive/AnchorFlow_v8_Dynamics\")\n",
+    "DRIVE_DATA=Path(\"/content/drive/MyDrive/GeoLift_Data\")\n",
+    "DRIVE_RUNS=Path(\"/content/drive/MyDrive/GeoLift_RT_Runs\")\n",
+    "WORK=Path(\"/content/anchorflow_v8_work\")\n",
+    "CODE=Path(\"/content/anchorflow_v8_code\")\n",
+    "MODEL_NAME=\"v8_dynamics\"  # optional: \"v8_frozen_feedback\"\n",
+    "RUN_NAMES={\"v8_dynamics\":\"AnchorFlow_v8_Dynamics_Fresh30_ES\",\n",
+    "           \"v8_frozen_feedback\":\"AnchorFlow_v8_FrozenFeedback_Fresh30_ES\"}\n",
+    "RUN_TAG=\"\"  # e.g. \"_B2\" if changing batch to 2\n",
+    "EPOCHS=30\n",
+    "EARLY_STOP_PATIENCE=7\n",
+    "EARLY_STOP_MIN_DELTA_M=0.001\n",
+    "EARLY_STOP_MIN_EPOCHS=15\n",
+    "BATCH_SIZE=4\n",
+    "WORKERS=2\n",
+    "RUN_EXPORT=True\n",
+    "assert MODEL_NAME in RUN_NAMES\n",
+    "assert BUNDLE.is_dir(),f\"Upload folder to {BUNDLE}\"\n",
+    "RUN_NAME=RUN_NAMES[MODEL_NAME]+RUN_TAG\n",
+    "RUN_ROOT=DRIVE_RUNS/RUN_NAME\n",
+    "RUN_DIR=RUN_ROOT/\"metric_kd\"\n",
+    "print(\"Input:\",DRIVE_DATA/\"teacher_subset_2000\")\n",
+    "print(\"Outputs:\",RUN_DIR)\n",
+    "print(\"Colab SSD free GiB:\",round(shutil.disk_usage(\"/content\").free/2**30,1))\n",
+    "assert shutil.disk_usage(\"/content\").free/2**30>12,\"Need at least 12 GiB free; 20+ GiB recommended\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8a2ea31d",
+   "metadata": {},
+   "source": [
+    "## 2. Verify bundle → copy code nhỏ vào SSD → install\n",
+    "\n",
+    "Không copy repo/weights/data từ Drive. Notebook không cần git pull.\n",
+    "ImageNet weights tải qua timm/Hugging Face; cảnh báo thiếu HF_TOKEN không phải lỗi.\n",
+    "Không tự fallback random encoder nếu download thất bại."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "3b52e73b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "manifest=json.loads((BUNDLE/\"bundle_manifest.json\").read_text(encoding=\"utf-8\"))\n",
+    "assert not manifest[\"contains_parent_student_checkpoint\"]\n",
+    "CODE.mkdir(parents=True,exist_ok=True)\n",
+    "for name,expected in manifest[\"files\"].items():\n",
+    "    # Colab mutates this UI artifact; verify the immutable JSON snapshot instead.\n",
+    "    if name.endswith(\".ipynb\"):\n",
+    "        continue\n",
+    "    source=BUNDLE/name\n",
+    "    assert source.is_file(),f\"Missing bundle file: {source}\"\n",
+    "    assert hashlib.sha256(source.read_bytes()).hexdigest()==expected,f\"Bundle changed: {name}\"\n",
+    "    if source.resolve()!=(CODE/name).resolve():\n",
+    "        shutil.copy2(source,CODE/name)\n",
+    "shutil.copy2(BUNDLE/\"bundle_manifest.json\",CODE/\"bundle_manifest.json\")\n",
+    "os.chdir(CODE)\n",
+    "subprocess.run([sys.executable,\"-m\",\"pip\",\"install\",\"-q\",\"-r\",str(CODE/\"requirements.txt\")],check=True)\n",
+    "import torch\n",
+    "assert torch.cuda.is_available(),\"Colab: Runtime > Change runtime type > GPU\"\n",
+    "print(torch.__version__,torch.cuda.get_device_name(0))\n",
+    "tests=subprocess.run([sys.executable,\"-u\",\"-m\",\"unittest\",\"discover\",\"-s\",str(CODE),\"-v\"],\n",
+    "                     cwd=CODE,capture_output=True,text=True,encoding=\"utf-8\",errors=\"replace\")\n",
+    "test_log=tests.stdout+tests.stderr\n",
+    "print(test_log,flush=True)\n",
+    "(CODE/\"unit_test_output.txt\").write_text(test_log,encoding=\"utf-8\")\n",
+    "if tests.returncode:\n",
+    "    raise RuntimeError(f\"Bundle tests failed (exit {tests.returncode}). Full traceback printed above; log: {CODE/'unit_test_output.txt'}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "55305c82",
+   "metadata": {},
+   "source": [
+    "## 3. Resolve fresh config + freeze source\n",
+    "\n",
+    "LR decoder/dynamics 3e-4; encoder 0,5×. Warm-up 1 epoch → cosine.\n",
+    "Tất cả module học từ epoch 0. Chỉ squared tail loss ramp trong 2 epoch đầu để tránh\n",
+    "magnitude lớn khi depth chưa học. Intermediate jet steps có GT supervision.\n",
+    "Run cùng tên đã có `last.pth` sẽ resume đúng V8; không bao giờ dùng checkpoint V7."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c55b4992",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cfg=json.loads((CODE/\"config.json\").read_text(encoding=\"utf-8\"))\n",
+    "cfg.update(drive_data=str(DRIVE_DATA),drive_runs=str(DRIVE_RUNS),work=str(WORK),\n",
+    "           run_name=RUN_NAME,model_name=MODEL_NAME,epochs=EPOCHS,batch_size=BATCH_SIZE,workers=WORKERS,\n",
+    "           early_stopping=True,early_stop_patience=EARLY_STOP_PATIENCE,\n",
+    "           early_stop_min_delta_m=EARLY_STOP_MIN_DELTA_M,early_stop_min_epochs=EARLY_STOP_MIN_EPOCHS)\n",
+    "cfg[\"architecture\"]=\"AnchorFlow-v8-FeedbackJetDynamics\" if MODEL_NAME==\"v8_dynamics\" else \"AnchorFlow-v8-FrozenFeedbackControl\"\n",
+    "assert cfg[\"teacher_enabled\"] and cfg[\"encoder_pretrained\"] and cfg[\"flow_steps\"]==3\n",
+    "assert not cfg.get(\"init_checkpoint\")\n",
+    "CONFIG=CODE/\"resolved_config.json\"\n",
+    "CONFIG.write_text(json.dumps(cfg,indent=2),encoding=\"utf-8\")\n",
+    "SUBSET=DRIVE_DATA/\"teacher_subset_2000\"\n",
+    "for name in (\"selected_2000_ids.json\",\"kitti_trainval_2000.tar\",cfg[\"metric_tar\"]):\n",
+    "    assert (SUBSET/name).is_file(),f\"Missing {SUBSET/name}\"\n",
+    "RUN_ROOT.mkdir(parents=True,exist_ok=True)\n",
+    "snapshot=RUN_ROOT/\"source_bundle\"\n",
+    "snapshot.mkdir(parents=True,exist_ok=True)\n",
+    "for name in [*manifest[\"files\"],\"resolved_config.json\"]:\n",
+    "    if name.endswith(\".ipynb\"): continue\n",
+    "    source,target=CODE/name,snapshot/name\n",
+    "    if target.exists():\n",
+    "        assert hashlib.sha256(target.read_bytes()).hexdigest()==hashlib.sha256(source.read_bytes()).hexdigest(),f\"Frozen run differs: {name}; use a new RUN_TAG\"\n",
+    "    else:\n",
+    "        shutil.copy2(source,target)\n",
+    "shutil.copy2(BUNDLE/\"bundle_manifest.json\",snapshot/\"bundle_manifest.json\")\n",
+    "print(CONFIG.read_text())\n",
+    "def command(action,extra=()):\n",
+    "    subprocess.run([sys.executable,\"-u\",str(CODE/\"run.py\"),action,\"--config\",str(CONFIG),\n",
+    "                    \"--variant\",\"metric_kd\",*extra],cwd=CODE,check=True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5d75086f",
+   "metadata": {},
+   "source": [
+    "## 4. Data gate — không bỏ qua\n",
+    "\n",
+    "Đọc TAR trực tiếp từ Drive → extract RGB/sparse/GT/K và cache **chỉ 1.600 train teachers**\n",
+    "vào `/content`. Kiểm tra paired IDs, raw-drive disjoint, confidence và KD coverage.\n",
+    "Test ưu tiên `GeoLift_Data/test_1000/kitti_test_1000.tar`; thiếu thì tải official KITTI\n",
+    "và lưu TAR test vào Drive một lần. Không dùng geometry TAR, DSINE hay teacher weights."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "e9d0118f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "command(\"prepare\")\n",
+    "contract=json.loads((WORK/\"data_contract.json\").read_text())\n",
+    "assert (contract[\"train\"],contract[\"val\"],contract[\"test\"])==(1600,400,1000)\n",
+    "assert not contract[\"validation_teacher_used\"]\n",
+    "shutil.copy2(WORK/\"data_contract.json\",RUN_ROOT/\"data_contract.json\")\n",
+    "print(json.dumps(contract,indent=2))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "36d9e7de",
+   "metadata": {},
+   "source": [
+    "## 5. Inspect RGB / sparse / GT / metric teacher trước train"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "969056d8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import numpy as np\n",
+    "sys.path.insert(0,str(CODE))\n",
+    "from data import KITTIDataset\n",
+    "fig,axes=plt.subplots(2,4,figsize=(20,7))\n",
+    "for row,split in enumerate((\"train\",\"val\")):\n",
+    "    sample=KITTIDataset(cfg,split,teacher=split==\"train\")[0]\n",
+    "    axes[row,0].imshow(sample[\"rgb\"].permute(1,2,0)); axes[row,0].set_title(split+\" RGB\")\n",
+    "    for col,key in enumerate((\"sparse\",\"gt\",\"teacher\"),1):\n",
+    "        if key in sample:\n",
+    "            d=sample[key][0].numpy()\n",
+    "            axes[row,col].imshow(np.ma.masked_where(d<=0,d),vmin=0,vmax=80,cmap=\"turbo\")\n",
+    "            axes[row,col].set_title(key+\" (m)\")\n",
+    "        else: axes[row,col].set_title(\"Val: no teacher loaded\")\n",
+    "    print(split,sample[\"sid\"],\"keys\",list(sample))\n",
+    "for a in axes.flat: a.axis(\"off\")\n",
+    "plt.tight_layout(); plt.show()\n",
+    "fig.savefig(RUN_ROOT/\"data_preview.png\",dpi=120)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0871c279",
+   "metadata": {},
+   "source": [
+    "## 6. Real-data AMP smoke\n",
+    "\n",
+    "Kiểm tra finite loss/gradients, metric KD có support, shared reaction nhận gradient,\n",
+    "và jet thay đổi ở cả ba bước. Smoke không cập nhật model train; trainer tạo student fresh riêng."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "c43d3a31",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "command(\"smoke\")\n",
+    "smoke=json.loads((WORK/\"smoke_report.json\").read_text())\n",
+    "assert smoke[\"passed\"] and not smoke[\"student_checkpoint_loaded\"]\n",
+    "assert smoke[\"imagenet_encoder_only\"]\n",
+    "shutil.copy2(WORK/\"smoke_report.json\",RUN_ROOT/\"smoke_report.json\")\n",
+    "print(json.dumps(smoke,indent=2))\n",
+    "torch.cuda.empty_cache()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "816ba082",
+   "metadata": {},
+   "source": [
+    "## 7. Train tối đa epoch 0…29, có early stop\n",
+    "\n",
+    "Mỗi epoch backup `last.pth`, `best.pth` khi cải thiện, và log vào `RUN_DIR`.\n",
+    "`initial_val_metrics.json` là epoch −1 chưa train; không lẫn với epoch 0.\n",
+    "Đứt Colab: chạy lại từ đầu notebook, giữ config/run name để resume.\n",
+    "Theo dõi global val RMSE; dừng khi 7 validation liên tiếp không giảm >0,001 m,\n",
+    "nhưng phải hoàn tất ít nhất 15 epoch. Counter được lưu/resume trong checkpoint.\n",
+    "Best checkpoint vẫn lưu mọi raw RMSE tốt hơn, không bị min_delta loại bỏ."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "9a15f0fa",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "command(\"train\")\n",
+    "print(\"Logs/checkpoints:\",RUN_DIR)\n",
+    "print(json.loads((RUN_DIR/\"training_status.json\").read_text()))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "49d04ff1",
+   "metadata": {},
+   "source": [
+    "## 8. Best checkpoint: global / range / boundary / tail / từng dynamics step"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "32cd2322",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "command(\"evaluate\")\n",
+    "import pandas as pd\n",
+    "best=json.loads((RUN_DIR/\"val_metrics.json\").read_text())\n",
+    "initial=json.loads((RUN_DIR/\"initial_val_metrics.json\").read_text())\n",
+    "rows=[]\n",
+    "for label,report,policy in ((\"V8 initial\",initial,\"final\"),(\"V8 best\",best,\"final\"),\n",
+    "                            (\"V8 pre-fusion\",best,\"pre_anchor\"),(\"V8 hard diagnostic\",best,\"legacy_hard_anchor\")):\n",
+    "    score=report[policy]\n",
+    "    rows.append({\"output\":label,\"RMSE m\":score[\"all\"][\"rmse_m\"],\"MAE m\":score[\"all\"][\"mae_m\"],\n",
+    "                 \"iRMSE km^-1\":score[\"all\"][\"irmse_km_inv\"],\"pixels\":score[\"all\"][\"pixels\"],\n",
+    "                 **{f\"RMSE {k}\":score[k][\"rmse_m\"] for k in (\"0-20\",\"20-40\",\"40-60\",\"60-80\",\"80-120\",\"edge\")}})\n",
+    "comparison=pd.DataFrame(rows)\n",
+    "comparison.to_csv(RUN_DIR/\"comparison_accuracy.csv\",index=False)\n",
+    "display(comparison)\n",
+    "assert best[\"final\"][\"all\"][\"pixels\"]==25424992,\"GT support/protocol changed\"\n",
+    "display(pd.DataFrame(best[\"stage_native_gt_metrics\"]).T)\n",
+    "display(pd.DataFrame(best[\"final\"][\"all\"][\"error_tail\"]).T)\n",
+    "display(pd.DataFrame(best[\"gt_boundary\"][\"bands\"]).T)\n",
+    "print(\"Best trained epoch:\",best[\"checkpoint_epoch\"],\"Target <0.8:\",best[\"final\"][\"all\"][\"rmse_m\"]<.8)\n",
+    "v7=pd.read_csv(CODE/\"v7_train_log.csv\")\n",
+    "print(\"Historical V7 best:\",v7.val_rmse_m.min(),\"NOT matched training budget/initialization\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "be091e97",
+   "metadata": {},
+   "source": [
+    "## 9. Learning curves + loss budget + state evolution"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "825bfafd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "log=pd.read_csv(RUN_DIR/\"train_log.csv\")\n",
+    "display(log[[\"epoch\",\"val_rmse_m\",\"val_mae_m\",\"train_seconds\",\"epoch_seconds\"]])\n",
+    "fig,axes=plt.subplots(1,3,figsize=(18,4))\n",
+    "axes[0].plot(log.epoch,log.val_rmse_m,label=\"V8 global\"); axes[0].set_ylabel(\"RMSE m\")\n",
+    "for k in (1,2,3):\n",
+    "    axes[1].plot(log.epoch,log[f\"val_native_D4_step{k}_rmse_m\"],label=f\"D4 step{k}\")\n",
+    "    axes[2].plot(log.epoch,log[f\"loss_dynamics_state_change_{k}\"],label=f\"normalized state change{k}\")\n",
+    "for a in axes: a.set_xlabel(\"fresh epoch\"); a.legend(); a.grid(alpha=.3)\n",
+    "plt.tight_layout(); plt.show(); fig.savefig(RUN_DIR/\"dynamics_learning.png\",dpi=150)\n",
+    "weighted=log[[c for c in log if c.startswith(\"loss_weighted_\")]].copy()\n",
+    "weighted.insert(0,\"epoch\",log.epoch)\n",
+    "weighted.to_csv(RUN_DIR/\"loss_budget.csv\",index=False)\n",
+    "display(weighted.tail())\n",
+    "dynamics=log[[\"epoch\"]+[c for c in log if \"dynamics_\" in c or \"native_D4_step\" in c]]\n",
+    "dynamics.to_csv(RUN_DIR/\"dynamics_evolution.csv\",index=False)\n",
+    "display(dynamics.tail())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d794b803",
+   "metadata": {},
+   "source": [
+    "## 10. 1.000 anonymous test PNG + inference efficiency + ONNX\n",
+    "\n",
+    "Test không có public GT, không thể tính RMSE nội bộ. ZIP dùng để submit KITTI.\n",
+    "Profile batch 1, cùng input shape/AMP: median/P95, VRAM và component timing;\n",
+    "Conv/Linear MAC không tính tensor shifts/transport/memory. ONNX kiểm tra CPU parity,\n",
+    "không đồng nghĩa đã validate TensorRT hoặc latency trên thiết bị edge."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0bacb5a1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "command(\"test\")\n",
+    "command(\"profile\")\n",
+    "profile=json.loads((RUN_DIR/\"profile.json\").read_text())\n",
+    "display(pd.DataFrame({\"parameters\":profile[\"parameters\"],\"ConvLinear MAC\":profile[\"conv_linear_macs\"],\n",
+    "                      \"eager median ms\":profile[\"eager_component_median_ms\"]}))\n",
+    "print(\"Median/P95 ms:\",profile[\"median_ms\"],profile[\"p95_ms\"])\n",
+    "if RUN_EXPORT:\n",
+    "    command(\"export\")\n",
+    "    print(json.loads((RUN_DIR/\"export_report.json\").read_text()))\n",
+    "print(\"DONE:\",RUN_DIR)\n",
+    "print(\"Test:\",RUN_DIR/\"kitti_test_predictions.zip\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e268933a",
+   "metadata": {},
+   "source": [
+    "## Đọc kết quả đúng\n",
+    "\n",
+    "- Student fresh tối đa30 có thể chưa hội tụ. Không xem thua V7 đã fine-tune nhiều lần là chứng minh dynamics sai.\n",
+    "- Dynamics không cam kết RMSE giảm đơn điệu từng step. Kiểm tra `D4_step1/2/3`, forcing/transport,\n",
+    "  far-range, GT boundary và tail SSE để đánh giá lợi ích.\n",
+    "- Để isolate feedback: chạy notebook lần khác với `MODEL_NAME=\"v8_frozen_feedback\"`, cùng seed/budget/early-stop policy/recipe; báo cả số epoch thực tế.\n",
+    "- Early stop không khóa notebook: evaluate/test/profile/export tiếp tục dùng best.pth. Run đã early-stop không tự train tiếp khi resume.\n",
+    "- Muốn đổi budget/early-stop policy: đổi config và RUN_TAG **trước** run mới; không sửa config checkpoint đang resume.\n",
+    "- Các module train từ epoch đầu; không teacher inference, không GT input, không adaptive early stopping."
+   ]
+  }
+ ],
+ "metadata": {
+  "accelerator": "GPU",
+  "colab": {
+   "name": "AnchorFlow_v8_Dynamics_TAR2000_Fresh30_EarlyStop.ipynb"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

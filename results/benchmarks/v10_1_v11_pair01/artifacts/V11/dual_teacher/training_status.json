@@ -1,0 +1,14 @@
+{
+  "status": "early_stopped",
+  "epochs_completed": 34,
+  "max_epochs": 40,
+  "best_rmse_m": 0.9860213546358949,
+  "early_stopping": {
+    "monitor_best_rmse": 0.986715909988786,
+    "bad_epochs": 8,
+    "stopped": true
+  },
+  "patience": 8,
+  "min_delta_m": 0.001,
+  "min_epochs": 20
+}

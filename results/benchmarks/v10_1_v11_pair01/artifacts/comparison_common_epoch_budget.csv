@@ -1,0 +1,3 @@
+model,common_completed_epochs,selected_epoch,RMSE_m,iRMSE_km_inv_SAME_EPOCH,source
+V10_1,34,25,0.9936944399191143,3.1808618442360443,"epoch validation log, not isolated reevaluation; checkpoint may not have been retained"
+V11,34,29,0.9860213546358949,3.2155151470012697,"epoch validation log, not isolated reevaluation; checkpoint may not have been retained"

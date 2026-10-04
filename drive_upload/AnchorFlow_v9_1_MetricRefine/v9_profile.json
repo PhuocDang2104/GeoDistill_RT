@@ -1,0 +1,73 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "decoder": 1153171712,
+    "guidance": 17977344,
+    "dynamics": 386940928,
+    "up4_2": 152165376,
+    "phase2": 142534656,
+    "context2": 10272768,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "context32": 52144,
+    "decoder": 149748,
+    "guidance": 200,
+    "dynamics": 10891,
+    "up4_2": 6016,
+    "phase2": 5648,
+    "context2": 400,
+    "up2_1": 2488,
+    "detail1": 5145
+  },
+  "total_parameters": 578568,
+  "total_conv_linear_macs": 3227535168,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "fixed directional shifts and plane transport",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ],
+  "eager_component_median_ms": {
+    "encoder": 1.7936480045318604,
+    "sparse": 1.184607982635498,
+    "context32": 0.22204799950122833,
+    "decoder": 1.331488013267517,
+    "guidance": 0.10751999914646149,
+    "dynamics": 3.4283039569854736,
+    "up4_2": 0.3875200003385544,
+    "phase2": 1.04230397939682,
+    "context2": 0.06868800148367882,
+    "up2_1": 0.3713280111551285,
+    "detail1": 0.5147520005702972
+  },
+  "device": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu130",
+  "batch": 1,
+  "shape": [
+    352,
+    1216
+  ],
+  "precision": "bf16",
+  "cpu_threads": 24,
+  "channels_last": true,
+  "compiled_total": false,
+  "untrained_weights": false,
+  "median_ms": 10.716495990753174,
+  "p95_ms": 10.797472190856933,
+  "runs": 100,
+  "peak_cuda_allocated_mib": 98.74951171875,
+  "inference_includes": "RGB encoder + sparse pyramid + F32 context + decoder + three shared jet Euler steps + phase query/detail + learned sensor fusion",
+  "phase_query": "five-jet inverse consensus + disagreement gate",
+  "excludes": "disk I/O and host-to-device transfer; there is no teacher/prior model",
+  "component_timings_are_separate_eager_instrumented_pass": true
+}

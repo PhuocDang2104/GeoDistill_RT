@@ -1,0 +1,67 @@
+{
+  "architecture": "AnchorFlow-V11-JetNODE",
+  "fresh_epochs_max": 40,
+  "source_sha256": "2d01818cbbb93b873c9ef5d619a2e9ac3c7fe8c81857c35a3ac93c184156ac3d",
+  "files": {
+    "ANALYSIS_AND_COMPARISON.md": "48970dc30e4070a397238d9b084fc9cb2295fd300430636a8b3f1b80b1eb1eb0",
+    "ARCHITECTURE.md": "b5a5fad8b2859c14ef44f0df8f0ca242d4cf93cc9e8d9e9b9a35609225b4cce1",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "config.json": "c0a9016898de373fa9a5f7f28b0246197505660aa9ef6d2a04f5d02cba9ebd13",
+    "core.py": "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d",
+    "data.py": "a84e047bc263f019557628ab240ddde251f18e023e3407b95f30cf59a4686fb9",
+    "geometry.py": "d65e6b995df6585665c8e8810a69ec8e9274f9d491f3d7d262d1d6d183492395",
+    "geometry_primitives.py": "147f719c3cc34a98ca50233aa3d8cbbf7d49727e3e5003decae6718b5395c368",
+    "local_verification.json": "22da7335aa358f3dcdec663632dc011720eb5c3296fbe4244efb53a29b89a139",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "losses.py": "ca1d52631bd16ff0b8f2f95d6f24c548560ab4846515fe37458a81c3f53e5e1c",
+    "metrics.py": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+    "model.py": "82daebcaf9df89c9ecb4a566b9a738190a3d9d9a5883148cd81e82ce67ab2cf4",
+    "model_base.py": "8a3102399808db10b4a9e1818cda98087b490d3835b26455015d945eb6a09eba",
+    "ode_solver.py": "b836d06632289d3463371378ba9b6fc2b53b5f6891b6fca8e5025a1e346d930f",
+    "README.md": "2b5aea104cb88467577945a33dd4e43ee2c6a335367d8a8d5ac0821dac27ff27",
+    "relative_data.py": "08f2f63ac3669e3c37e38f6a7487dde5e41d2e69166a7be9bca856bfa5c4dddc",
+    "relative_loss.py": "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2",
+    "requirements.txt": "f52cdffe11c63bac0fcb6b8b4529af5c4528b65244b671a611067403c4159292",
+    "run.py": "081016fe14cfdd51c308b7ee012dde23a7e3fa47bf949a6a84ea9a21d6033a9b",
+    "support.py": "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6",
+    "test_contracts.py": "6bd3afbdcf6742ee5fc36bf24741e3afe498ef3dcebbd56800a69b124407f029",
+    "Train_AnchorFlow_V11_NODE_TAR2000_Fresh40.ipynb": "cb0226d87e4325ac498c73a2c4ffa0912809d2049310af79bcc13e9c9175d309",
+    "Train_AnchorFlow_V11_NODE_TAR2000_Fresh40_contract.json": "f5a909957393135101a9507d4f1ea1793cae2d2e8200e39db097a49da0b18288",
+    "v10_val_metrics.json": "9aa41c39966dcc7cfdae8cc8ee62d17327ac716246a93a68f3545393d07c365e",
+    "v8_val_metrics.json": "3ba5a7cf3eb925c589d29d5c5b289c81e1675f58ed18e78ab3d72a29a625a406",
+    "v9_1_val_metrics.json": "6a2b22badaca057af06f8cb8ef1cba29b06c97e58d92e350f5e1fb4b6703c396",
+    "v9_val_metrics.json": "444127392c2d2e192664e64088a37b6f437a71994df21ea2d568a4036b992d7c"
+  },
+  "historical_bundles_preserved": {
+    "AnchorFlow_v8_Dynamics": {
+      "unchanged_sealed_sources": true,
+      "mismatches": []
+    },
+    "AnchorFlow_v9_Consensus": {
+      "unchanged_sealed_sources": true,
+      "mismatches": []
+    },
+    "AnchorFlow_v10_AdaptiveJet": {
+      "unchanged_sealed_sources": true,
+      "mismatches": []
+    },
+    "AnchorFlow_v10_1_LiteMetric": {
+      "unchanged_sealed_sources": true,
+      "mismatches": []
+    }
+  },
+  "unchanged_litemetric_primitives": {
+    "core.py": true,
+    "support.py": true,
+    "data.py": true,
+    "relative_data.py": true,
+    "relative_loss.py": true,
+    "loss_helpers.py": true,
+    "metrics.py": true,
+    "boundaries.py": true
+  },
+  "notebook_ui_checksum_policy": "Skip mutable .ipynb UI at runtime; verify immutable _contract.json and ALL source/config",
+  "adaptive_solver": "torchdiffeq==0.2.5/bosh3",
+  "terminal_time": 1.0,
+  "gpu_training_accuracy_or_latency_verified": false
+}

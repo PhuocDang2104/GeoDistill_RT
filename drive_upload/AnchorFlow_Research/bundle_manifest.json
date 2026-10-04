@@ -1,0 +1,42 @@
+{
+  "name": "AnchorFlow_Research",
+  "default_epochs": 15,
+  "default_model": "v4",
+  "available_models": [
+    "v3",
+    "v4"
+  ],
+  "default_variants": [
+    "metric_kd"
+  ],
+  "contains_data": false,
+  "contains_teacher_weights": false,
+  "contains_parent_student_checkpoint": true,
+  "parent_sha256": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+  "files": {
+    "model.py": "8dfebac577c5dd117c5cd9cc7f9a1e4895aab9fa23d9cd5ba8c512fc22b42fde",
+    "model_v3.py": "32aca009f24ae4656c790cd4cf6135bb12996e68c6588b97d8cd14edf715090f",
+    "model_v4.py": "1ca765f0ae786bf653fd5e2bbae7d1eb31cf919a08da95cf3d088b04db4eeaea",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "data.py": "b50e1a224cd94edfd98c89ec8c504dc8e076fee9571ccb05f7fd5601bc24c0a3",
+    "losses.py": "8dcba22e6aaa95f883759957d33d25276ddada2df8d00acde99841d6aac63370",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "metrics.py": "bd25ba0941b54788ca0f6bdbee8f4629a3276dcea581395c9316117bbdee0d7d",
+    "run.py": "af1ea3e0d7c5c8b5742f6d4384c53c64157ca505f8f531e08bc3a4b56c555e45",
+    "config.json": "28988cd3ee6365f646d158b51e8d507d439490b08c06ac5238583b15ba6b26c5",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "test_contracts.py": "6ee2816e6713bd737ed37c4f9aec8c2ed12783310cb83d1dd342bd251065653f",
+    "test_models.py": "3d5f5456d6b2f344dea1673f1ec0b085da488a57f5479f1c1ee6c2d3674c125b",
+    "README.md": "7ecb930c7aa9d49235ca875a9ca2ad99f20a3c773f999e729693ec58fb4a3380",
+    "ARCHITECTURE.md": "8edee74cd699cb70ea00d79e583afe959131dcf589181a481bbe87bfd2a11830",
+    "ANALYSIS_V3.md": "777c5c8a3096fe1476ea53d13389e19fc42a8e3aa298242c41d9a17428ffefc3",
+    "VERIFICATION.md": "27da9c616832cb2a348358c6d112254eb38a42ef4fc6713847192d9ad427873a",
+    "init_v3_best.pth": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+    "parent_train_log.csv": "a4f62c616030dab7bcda825c1dc715c0d78686e5b263b8655e78d3985d2a9e1a",
+    "parent_val_metrics.json": "b0fe6bd3bd73f7a95347029f146fade9e70665406e6873b0fbfde83348d27eb6",
+    "parent_profile.json": "7c12384c61ddbeadd6f79622c9c7d3e4642d12d45b66a1cff73b5bcf38e4f28b",
+    "parent_prediction_audit.json": "d8f783f14b151a02497ca264cdac1150b082bc754e8bf91b796f4acbed172310",
+    "v4_complexity.json": "45f220a456a434261df57cc19ea9c254f2291a00ec0f1f7706f0b4eaee138be8",
+    "AnchorFlow_Research_TAR2000_15ep.ipynb": "df8884cebb3d4e5fbf94b68bdaaa0a2ec1c906faffc40a12b5b867b5e0392f9c"
+  }
+}

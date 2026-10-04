@@ -1,0 +1,53 @@
+{
+  "name": "AnchorFlow_v7_Jet",
+  "default_epochs": 15,
+  "default_model": "v7_jet",
+  "default_variants": [
+    "metric_kd"
+  ],
+  "available_models": [
+    "v7_jet",
+    "v6_reduced",
+    "v7_no_transport"
+  ],
+  "contains_data": false,
+  "contains_teacher_weights": false,
+  "contains_parent_student_checkpoint": true,
+  "parent_v6_sha256": "7ea785092601da3f64aebc1350c7d327aa4f6ce44591988d3bccc67cccd2f809",
+  "parent_v6_epoch": 14,
+  "parent_cumulative_epoch": 59,
+  "source_sha256": "46b4b39400df9a86262016ca4476fb615e96260713ec541ab9ffb958cdcf06c7",
+  "files": {
+    "model.py": "2961b061c9b95c6c3f9c525560bee50622f65e0c9f7e14f5673edd75c7b0f0f5",
+    "model_v3.py": "71b74382c250d3bf72a406c61b3eadc96ac470ccd733a2eb4642638b5e8ff7ad",
+    "model_v5.py": "d39d5012ed1464678e4722ed8b84e32e3e5329e99f92df2b5fba4b1a4fe9f709",
+    "model_v6.py": "a8409fc7914096d07d00aa26035d56269f42e6c6ee5ba6365fd28f41a4359f95",
+    "model_v7.py": "9e9a106e3f4faf35ef05446ab5cecee53eee116c6fece79de69629d109a6c70b",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "data.py": "b50e1a224cd94edfd98c89ec8c504dc8e076fee9571ccb05f7fd5601bc24c0a3",
+    "metrics.py": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "losses.py": "6d0cb033ea337c25d352ac66f32078ec412a2aa5e1601b2ed2e252ef80c4d912",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "run.py": "e18857f0f374ed87f0243d743027a8811ec3557c11601dcec181d805116d8458",
+    "config.json": "4928335929db28b7a116441a7f360ed15f76e935f4d25e313d7bfb75e2de1f24",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "test_contracts.py": "451f44acb7709a5e19cdff00846461906d9ade6695ea17df58a1f723e79d2f03",
+    "test_surface.py": "bd662d4f9a303666fba5243337d419c9362a020672a7bc95a0cf4cc08c1ced28",
+    "test_jet.py": "3d53d11e93ae2c404dca4cc88b7e42d8e668f2089fe4fd7977566dd62aef4c35",
+    "test_notebook.py": "e25aa0293732d363c1e54f24aeb4f611396f0235bd0c152b1b23e6f30445cc9c",
+    "README.md": "6e274524270a52c27fe9cfa5808d49b95df1dd0ce6e531541674d63901c2ee6b",
+    "ARCHITECTURE.md": "554e3483a40cf9bdcde0d8e15dff54b1f591b3ac69efc9fd580594548aed141b",
+    "ANALYSIS_V6.md": "a30e9650ef002cd3baa05c4602640a6a7da045b8d1801c7267adb0e512a5adad",
+    "VERIFICATION.md": "89a7556b8df764f9439212103c4ea476d50b25f4baa90199829e1139f2091ebd",
+    "init_v6_best.pth": "7ea785092601da3f64aebc1350c7d327aa4f6ce44591988d3bccc67cccd2f809",
+    "v6_train_log.csv": "43684b86b5847dbeed41babb72ae7fbffb7292a8b0a19b33c865350e5d1cc5d8",
+    "parent_val_metrics.json": "a0d521ce3e55f145ed116e6fb9db8da18a6f059f4a5a53cfd838a7363728b2cb",
+    "v6_initial_val_metrics.json": "f1d2559ac4e793fd561d1531c0b1cfccbadc488d45172dfa1668e168b95dcd74",
+    "v6_resolved_config.json": "7558b8bae9c300920b61c868597c637e60a020b9c8ea9e3750b418cbdcac17d7",
+    "v6_run_manifest.json": "e4335a1e02ebe0c38c148278d217a279b02e542ca0c51a9ce43cf0514df98c44",
+    "v6_causal_audit.json": "a16697f058c52a7f94cb862de872b10cb048210afb819c2676e833d7e8e46ec0",
+    "local_verification.json": "2649c3d882ac0cde5b69344b554478fc8886ee3a387212e27413edb17d1e9703",
+    "AnchorFlow_v7_Jet_TAR2000_FT15.ipynb": "61f7d30363bc4900bb4205c15d38cc6d1d8eeea79f10f2e0fad60ec5e97eb5a2"
+  }
+}

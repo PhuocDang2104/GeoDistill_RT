@@ -1,0 +1,328 @@
+{
+  "archive": "Compare_V10_1_V11_Fresh40_bf16_pair01-20261004T151154Z-1-001.zip",
+  "archive_sha256": "a12a283f15a45f293c999642d2e9a46dbe038ec9eff0780cb07b7da14c1da470",
+  "audit_pass": true,
+  "source_release_matches_trained_snapshots": {
+    "V10_1": "1e745065606b4f5074813a45d65c70bd148321660c9702a2adc959a799d29e45",
+    "V11": "2d01818cbbb93b873c9ef5d619a2e9ac3c7fe8c81857c35a3ac93c184156ac3d"
+  },
+  "checked_checkpoint_sha256": {
+    "V10_1/dual_teacher/best.pth": "8661a4e51d30ff30992acc4cae996f118d3cc0dcca03c63c8b8edcffd24f7ec1",
+    "V10_1/dual_teacher/best_inverse.pth": "fd3c4ff0dadb8a733c7548cd8960820961230a7073dd2eb67cc8f4e4df662288",
+    "V10_1/dual_teacher/best_joint.pth": "8661a4e51d30ff30992acc4cae996f118d3cc0dcca03c63c8b8edcffd24f7ec1",
+    "V11/dual_teacher/best.pth": "81a7512a83d6487098ef24e805d2049c0547bed05c6b6d0e7a114ff3ab17518d",
+    "V11/dual_teacher/best_inverse.pth": "d31b15f662cae273e4c61412edf69cb855c54d331cc276166d60a71c06fb4949",
+    "V11/dual_teacher/best_joint.pth": "81a7512a83d6487098ef24e805d2049c0547bed05c6b6d0e7a114ff3ab17518d"
+  },
+  "train": 1600,
+  "val": 400,
+  "anonymous_test": 1000,
+  "valid_GT_pixels": 25424992,
+  "seed": 42,
+  "completed_epochs_per_model": 34,
+  "optimizer_updates_per_model": 13600,
+  "RMSE_V10_1_m": 0.9936944399191143,
+  "RMSE_V11_m": 0.9860213546358949,
+  "V11_RMSE_gain_mm": 7.673085283219416,
+  "V11_RMSE_gain_percent": 0.7721775401947517,
+  "V11_metric_SSE_reduction_percent": 1.5383924988536912,
+  "V11_iRMSE_change_km_inv": 0.03465330276522538,
+  "V11_adaptive_wall_latency_ratio": 2.1115085762274597,
+  "V11_static_wall_latency_reduction_percent": 32.12353605929709,
+  "V11_static_RMSE_minus_adaptive_m": -4.9490676211183526e-05,
+  "default_and_tighter_metrics_exactly_equal": true,
+  "validation_solver": {
+    "method": "bosh3",
+    "library": "torchdiffeq==0.2.5",
+    "nfe_mean": 13.0,
+    "nfe_p50": 13.0,
+    "nfe_p95": 13.0,
+    "nfe_max": 13,
+    "nfe_histogram": {
+      "13": 400
+    },
+    "accepted_steps_mean": 4.0,
+    "rejected_steps_mean": 0.0,
+    "accepted_h_mean": 0.25,
+    "terminal_time_mean": 1.0,
+    "terminal_time_max_error": 0.0,
+    "learned_step_size": false,
+    "learned_stopping": false,
+    "fixed_terminal_time": 1.0,
+    "nfe_includes_rejected_trials": true,
+    "batch_step_policy": "one grid; worst sample/channel normalized RMS"
+  },
+  "all_epochs_train_NFE_means": [
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0
+  ],
+  "all_epochs_validation_NFE_means": [
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    13.0
+  ],
+  "all_epochs_train_rejected_step_means": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "GT_range_SSE_fractions": {
+    "0-20": 0.17321479221022928,
+    "20-40": 0.3189675485467682,
+    "40-60": 0.2745844676200989,
+    "60-80": 0.20845564253635288,
+    "80-120": 0.02477754908655123,
+    "edge": 0.36491686168207016,
+    "non_edge": 0.6350831383179297
+  },
+  "GT_boundary_3px_pixel_fraction": 0.13160983492148198,
+  "GT_boundary_3px_SSE_fraction": 0.37652136069794334,
+  "tail_gt10m_pixel_fraction": 0.0017601185479232402,
+  "tail_gt10m_SSE_fraction": 0.5719652627489964,
+  "tail_gt10m_required_SSE_reduction_for_RMSE_0_9_all_else_equal": 0.2917498142385613,
+  "near_0_5_pixel_fraction": 0.01503095851514919,
+  "near_0_5_inverse_SSE_fraction": 0.2980268616476869,
+  "weighted_loss_budgets_at_best_epoch": {
+    "V10_1": {
+      "metric": {
+        "weighted_value": 0.2797848582267761,
+        "fraction_total": 0.20836968548680576
+      },
+      "rmse": {
+        "weighted_value": 0.49089181423187256,
+        "fraction_total": 0.3655915248159546
+      },
+      "range": {
+        "weighted_value": 0.208126500248909,
+        "fraction_total": 0.15500214583872862
+      },
+      "sparse": {
+        "weighted_value": 0.00850632879883051,
+        "fraction_total": 0.0063350857072580575
+      },
+      "holdout": {
+        "weighted_value": 0.025009427219629288,
+        "fraction_total": 0.018625763084489138
+      },
+      "trust": {
+        "weighted_value": 0.007567248307168484,
+        "fraction_total": 0.005635705805377133
+      },
+      "metric_kd": {
+        "weighted_value": 0.0173930823802948,
+        "fraction_total": 0.012953492652167
+      },
+      "boundary": {
+        "weighted_value": 0.08291862159967422,
+        "fraction_total": 0.06175361745173261
+      },
+      "barrier": {
+        "weighted_value": 0.0030785524286329746,
+        "fraction_total": 0.0022927509564829767
+      },
+      "tail": {
+        "weighted_value": 0.07989297062158585,
+        "fraction_total": 0.05950026483396473
+      },
+      "dynamics_aux": {
+        "weighted_value": 0.0237846989184618,
+        "fraction_total": 0.017713647065993907
+      },
+      "inverse_rmse": {
+        "weighted_value": 0.11446443945169449,
+        "fraction_total": 0.08524735541135338
+      },
+      "inverse": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "relative": {
+        "weighted_value": 0.0013141436502337456,
+        "fraction_total": 0.0009787080716917884
+      },
+      "log": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "edge": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "teacher_edge": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      }
+    },
+    "V11": {
+      "metric": {
+        "weighted_value": 0.27365782856941223,
+        "fraction_total": 0.2097224449076301
+      },
+      "rmse": {
+        "weighted_value": 0.4773823022842407,
+        "fraction_total": 0.36585024486259055
+      },
+      "range": {
+        "weighted_value": 0.20197154581546783,
+        "fraction_total": 0.15478441311774646
+      },
+      "sparse": {
+        "weighted_value": 0.008473310619592667,
+        "fraction_total": 0.006493669225150707
+      },
+      "holdout": {
+        "weighted_value": 0.025117890909314156,
+        "fraction_total": 0.019249533331323454
+      },
+      "trust": {
+        "weighted_value": 0.007551217917352915,
+        "fraction_total": 0.005787007417022849
+      },
+      "metric_kd": {
+        "weighted_value": 0.014642720110714436,
+        "fraction_total": 0.011221703679265407
+      },
+      "boundary": {
+        "weighted_value": 0.08218660950660706,
+        "fraction_total": 0.06298514014563397
+      },
+      "barrier": {
+        "weighted_value": 0.0028515595477074385,
+        "fraction_total": 0.0021853423425568486
+      },
+      "tail": {
+        "weighted_value": 0.0742402896285057,
+        "fraction_total": 0.05689533945706785
+      },
+      "dynamics_aux": {
+        "weighted_value": 0.024167396128177643,
+        "fraction_total": 0.01852110509517917
+      },
+      "inverse_rmse": {
+        "weighted_value": 0.11131855100393295,
+        "fraction_total": 0.08531091108251602
+      },
+      "inverse": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "relative": {
+        "weighted_value": 0.0012959354789927602,
+        "fraction_total": 0.0009931627336141225
+      },
+      "log": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "edge": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      },
+      "teacher_edge": {
+        "weighted_value": 0.0,
+        "fraction_total": 0.0
+      }
+    }
+  },
+  "interpretation_limits": [
+    "single seed, shared validation for selection, no independent test GT",
+    "different chart/solver/horizon and fresh initialization order; not solver-only causality",
+    "stage GT supports differ across scales; same-scale comparisons only",
+    "training durations under contention are not isolated speed",
+    "solver tolerances bound chart numerical error, not final metric depth error"
+  ]
+}

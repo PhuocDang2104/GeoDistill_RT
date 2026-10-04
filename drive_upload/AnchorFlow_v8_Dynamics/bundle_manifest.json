@@ -1,0 +1,45 @@
+{
+  "name": "AnchorFlow_v8_Dynamics",
+  "default_model": "v8_dynamics",
+  "default_epochs": 30,
+  "early_stopping": {
+    "patience": 7,
+    "min_delta_m": 0.001,
+    "min_epochs": 15
+  },
+  "default_variants": [
+    "metric_kd"
+  ],
+  "available_models": [
+    "v8_dynamics",
+    "v8_frozen_feedback"
+  ],
+  "contains_data": false,
+  "contains_teacher_weights": false,
+  "contains_parent_student_checkpoint": false,
+  "initialization": "fresh_student_imagenet_rgb_only",
+  "source_sha256": "b40aefb6f4c34b94e8842ba2bdec228a1fdc4bb380e3abbe31082885a4225048",
+  "files": {
+    "model.py": "06cb6b873b0af9912cdb93352b6a776fb5c86b65cbab0f4136011c4e349a85f8",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "support.py": "c2e77258c5ee9b30671a2866fee38adc45513fb71e8c603ff4bdb2e0917977dd",
+    "data.py": "b50e1a224cd94edfd98c89ec8c504dc8e076fee9571ccb05f7fd5601bc24c0a3",
+    "metrics.py": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "losses.py": "42e6ab9f20b3806c76901e8f83cadd632590b917e6a0ca106359ea09e60181bc",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "run.py": "a21665280f2d9b7564dec750ac9080245171ff9377ade6f14e90df9f87444138",
+    "config.json": "7cd2bdc2b4bc978f64d4c4c14988073d7f67782c12ca4e901de0f7b52d0f26c5",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "test_contracts.py": "620d6c9edee039071629fafc8e0282884cec55990b9ba3718bd73143cddef81a",
+    "test_notebook.py": "323f1c6379771615b3a705d8337ca13948261d96b9d677eaba3a1b4162a8e22f",
+    "README.md": "ad49dfd30e6ddbd4e732e328c3b2e7c9ac8e95fe2e6c44e7483b4e168d0d5dbb",
+    "ARCHITECTURE.md": "1fbd58a9eb1be77917067c6b5f8433d2b0862d4eea129b7b46333d8075ee0d07",
+    "ANALYSIS_V7.md": "40d76b84702d9938caab838a618eb4e7cc0d0d313255766487de932a1cca94e0",
+    "VERIFICATION.md": "039ae681ea6b2d8caf3be4572e76fe2103ba30e6f8a31ac582b06c1d7bf6b4f3",
+    "v7_train_log.csv": "adf477da08c9087ba5eb15ea67bab71072d30dd2b0ac61aa4c2e150ef467b09b",
+    "notebook_contract.json": "b26e4be7607678ab0d495385ce035274a3936779bf016c519a11142f371a5d8b",
+    "local_verification.json": "ae6b7d64f9ef31c269c3ad7f84af61650a18e2c91bda176614a3e9043f3df82d",
+    "AnchorFlow_v8_Dynamics_TAR2000_Fresh30_EarlyStop.ipynb": "3b60aa1f1053370e5f3e4519d2f28098220910e493d1779f56f99f89d7d272e1"
+  }
+}

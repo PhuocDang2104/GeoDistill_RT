@@ -1,0 +1,481 @@
+{
+  "tests": 22,
+  "tests_returncode": 0,
+  "colab_staged_tests_returncode": 0,
+  "tests_log": "test_auto_bf16_native (test_contracts.Contracts.test_auto_bf16_native) ... ok\ntest_batch1_branch_guard (test_contracts.Contracts.test_batch1_branch_guard) ... ok\ntest_bounds_and_horizon (test_contracts.Contracts.test_bounds_and_horizon) ... ok\ntest_conditional_matches_masked_at_all_exits (test_contracts.Contracts.test_conditional_matches_masked_at_all_exits) ... ok\ntest_config_fresh40 (test_contracts.Contracts.test_config_fresh40) ... ok\ntest_controller_size (test_contracts.Contracts.test_controller_size) ... ok\ntest_diagnostics_summary (test_contracts.Contracts.test_diagnostics_summary) ... ok\ntest_disabled_relative_and_ramps_are_exact (test_contracts.Contracts.test_disabled_relative_and_ramps_are_exact) ... ok\ntest_early_stop_not_before20 (test_contracts.Contracts.test_early_stop_not_before20) ... ok\ntest_finite_backward_fp32_bf16 (test_contracts.Contracts.test_finite_backward_fp32_bf16) ... ok\ntest_fixed3_identical_loaded_baseline (test_contracts.Contracts.test_fixed3_identical_loaded_baseline) ... ok\ntest_fixed4_and_learned4 (test_contracts.Contracts.test_fixed4_and_learned4) ... ok\ntest_forced_exit2_really_two_calls (test_contracts.Contracts.test_forced_exit2_really_two_calls) ... ok\ntest_geometric_transport_exact (test_contracts.Contracts.test_geometric_transport_exact) ... ok\ntest_labels_future_benefit_detached (test_contracts.Contracts.test_labels_future_benefit_detached) ... ok\ntest_native_bf16_guard_on_t4 (test_contracts.Contracts.test_native_bf16_guard_on_t4) ... ok\ntest_no_gt_or_teacher_in_controller (test_contracts.Contracts.test_no_gt_or_teacher_in_controller) ... ok\ntest_no_masking_empty_sparse (test_contracts.Contracts.test_no_masking_empty_sparse) ... ok\ntest_projection_unchanged (test_contracts.Contracts.test_projection_unchanged) ... ok\ntest_static4_is_not_early_exit (test_contracts.Contracts.test_static4_is_not_early_exit) ... ok\ntest_time_is_actual_accumulation (test_contracts.Contracts.test_time_is_actual_accumulation) ... ok\ntest_training_loop_checkpoint_resume_and_protocol_guard (test_contracts.Contracts.test_training_loop_checkpoint_resume_and_protocol_guard) ... ok\n\n----------------------------------------------------------------------\nRan 22 tests in 7.613s\n\nOK\n",
+  "source_sha256": "64be55bb46aae74208b245d362004bb686ba4b8fdc4b431696b9337ddbf1073c",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "torch": "2.11.0+cpu",
+  "real_kitti_backward": {
+    "fp32": {
+      "finite": true,
+      "loss": 14.291754722595215,
+      "head_gradient_l1": {
+        "dynamics.reaction.weight": 26.256380081176758,
+        "dynamics.controller.net.4.bias": 0.05103035643696785,
+        "phase2.metric.4.weight": 2.536881446838379
+      },
+      "relative_pair_coverage": 0.1580727994441986
+    },
+    "bf16": {
+      "finite": true,
+      "loss": 14.292363166809082,
+      "head_gradient_l1": {
+        "dynamics.reaction.weight": 26.27737808227539,
+        "dynamics.controller.net.4.bias": 0.051032960414886475,
+        "phase2.metric.4.weight": 2.535031318664551
+      },
+      "relative_pair_coverage": 0.1580727994441986
+    }
+  },
+  "teacher_fixture": "Synthetic metric/relative targets; actual KITTI RGB/sparse/GT/K. No student checkpoint loaded for backward.",
+  "complexity_by_policy": {
+    "fixed3": {
+      "conv_linear_macs": {
+        "encoder": 536123456,
+        "context32": 25307392,
+        "sparse": 50561280,
+        "decoder": 1153171712,
+        "guidance": 17977344,
+        "dynamics": 386940928,
+        "up4_2": 152165376,
+        "phase2": 228997120,
+        "context2": 10272768,
+        "up2_1": 241410048,
+        "detail1": 511070208
+      },
+      "parameters": {
+        "encoder": 340992,
+        "sparse": 4896,
+        "context32": 52144,
+        "decoder": 149748,
+        "guidance": 200,
+        "dynamics": 11373,
+        "up4_2": 6016,
+        "phase2": 8948,
+        "context2": 400,
+        "up2_1": 2488,
+        "detail1": 5145
+      },
+      "total_parameters": 582350,
+      "total_conv_linear_macs": 3313997632,
+      "mac_exclusions": [
+        "functional 1->9 fixed neighbourhood convolutions",
+        "fixed directional shifts and plane transport",
+        "pooling",
+        "interpolation",
+        "softmax",
+        "finite differences",
+        "elementwise operations",
+        "memory traffic"
+      ]
+    },
+    "fixed4": {
+      "conv_linear_macs": {
+        "encoder": 536123456,
+        "context32": 25307392,
+        "sparse": 50561280,
+        "decoder": 1153171712,
+        "guidance": 17977344,
+        "dynamics": 441729024,
+        "up4_2": 152165376,
+        "phase2": 228997120,
+        "context2": 10272768,
+        "up2_1": 241410048,
+        "detail1": 511070208
+      },
+      "parameters": {
+        "encoder": 340992,
+        "sparse": 4896,
+        "context32": 52144,
+        "decoder": 149748,
+        "guidance": 200,
+        "dynamics": 11373,
+        "up4_2": 6016,
+        "phase2": 8948,
+        "context2": 400,
+        "up2_1": 2488,
+        "detail1": 5145
+      },
+      "total_parameters": 582350,
+      "total_conv_linear_macs": 3368785728,
+      "mac_exclusions": [
+        "functional 1->9 fixed neighbourhood convolutions",
+        "fixed directional shifts and plane transport",
+        "pooling",
+        "interpolation",
+        "softmax",
+        "finite differences",
+        "elementwise operations",
+        "memory traffic"
+      ]
+    },
+    "learned4": {
+      "conv_linear_macs": {
+        "encoder": 536123456,
+        "context32": 25307392,
+        "sparse": 50561280,
+        "decoder": 1153171712,
+        "guidance": 17977344,
+        "dynamics": 441730816,
+        "up4_2": 152165376,
+        "phase2": 228997120,
+        "context2": 10272768,
+        "up2_1": 241410048,
+        "detail1": 511070208
+      },
+      "parameters": {
+        "encoder": 340992,
+        "sparse": 4896,
+        "context32": 52144,
+        "decoder": 149748,
+        "guidance": 200,
+        "dynamics": 11373,
+        "up4_2": 6016,
+        "phase2": 8948,
+        "context2": 400,
+        "up2_1": 2488,
+        "detail1": 5145
+      },
+      "total_parameters": 582350,
+      "total_conv_linear_macs": 3368787520,
+      "mac_exclusions": [
+        "functional 1->9 fixed neighbourhood convolutions",
+        "fixed directional shifts and plane transport",
+        "pooling",
+        "interpolation",
+        "softmax",
+        "finite differences",
+        "elementwise operations",
+        "memory traffic"
+      ]
+    },
+    "adaptive": {
+      "conv_linear_macs": {
+        "encoder": 536123456,
+        "context32": 25307392,
+        "sparse": 50561280,
+        "decoder": 1153171712,
+        "guidance": 17977344,
+        "dynamics": 441732608,
+        "up4_2": 152165376,
+        "phase2": 228997120,
+        "context2": 10272768,
+        "up2_1": 241410048,
+        "detail1": 511070208
+      },
+      "parameters": {
+        "encoder": 340992,
+        "sparse": 4896,
+        "context32": 52144,
+        "decoder": 149748,
+        "guidance": 200,
+        "dynamics": 11373,
+        "up4_2": 6016,
+        "phase2": 8948,
+        "context2": 400,
+        "up2_1": 2488,
+        "detail1": 5145
+      },
+      "total_parameters": 582350,
+      "total_conv_linear_macs": 3368789312,
+      "mac_exclusions": [
+        "functional 1->9 fixed neighbourhood convolutions",
+        "fixed directional shifts and plane transport",
+        "pooling",
+        "interpolation",
+        "softmax",
+        "finite differences",
+        "elementwise operations",
+        "memory traffic"
+      ]
+    }
+  },
+  "onnx": {
+    "graphs": {
+      "masked_adaptive": {
+        "cases": {
+          "seed0_observed": {
+            "D4_step1": 0.000152587890625,
+            "D4_step2": 0.00018310546875,
+            "D4_step3": 0.00018310546875,
+            "D4_step4": 0.00028228759765625,
+            "D4": 0.00018310546875,
+            "D2_query": 0.0003643035888671875,
+            "D2": 0.00019073486328125,
+            "D1": 0.0001678466796875,
+            "D_full": 0.000293731689453125,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed0_empty": {
+            "D4_step1": 9.918212890625e-05,
+            "D4_step2": 9.918212890625e-05,
+            "D4_step3": 9.1552734375e-05,
+            "D4_step4": 9.918212890625e-05,
+            "D4": 9.1552734375e-05,
+            "D2_query": 9.918212890625e-05,
+            "D2": 8.392333984375e-05,
+            "D1": 8.392333984375e-05,
+            "D_full": 8.392333984375e-05,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed7_observed": {
+            "D4_step1": 0.000125885009765625,
+            "D4_step2": 0.000141143798828125,
+            "D4_step3": 0.000171661376953125,
+            "D4_step4": 0.0003662109375,
+            "D4": 0.000171661376953125,
+            "D2_query": 0.000347137451171875,
+            "D2": 0.000278472900390625,
+            "D1": 0.00017547607421875,
+            "D_full": 0.000179290771484375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed7_empty": {
+            "D4_step1": 0.0001220703125,
+            "D4_step2": 0.00011444091796875,
+            "D4_step3": 0.0001220703125,
+            "D4_step4": 0.0001220703125,
+            "D4": 0.0001220703125,
+            "D2_query": 0.000118255615234375,
+            "D2": 0.0001068115234375,
+            "D1": 0.0001068115234375,
+            "D_full": 0.0001068115234375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed42_observed": {
+            "D4_step1": 0.000148773193359375,
+            "D4_step2": 0.000209808349609375,
+            "D4_step3": 0.0002899169921875,
+            "D4_step4": 0.000274658203125,
+            "D4": 0.0002899169921875,
+            "D2_query": 0.0003204345703125,
+            "D2": 0.00018310546875,
+            "D1": 0.00016021728515625,
+            "D_full": 0.00026702880859375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed42_empty": {
+            "D4_step1": 0.000118255615234375,
+            "D4_step2": 0.00011444091796875,
+            "D4_step3": 0.00011444091796875,
+            "D4_step4": 0.00011444091796875,
+            "D4": 0.00011444091796875,
+            "D2_query": 0.00011444091796875,
+            "D2": 9.1552734375e-05,
+            "D1": 9.918212890625e-05,
+            "D_full": 9.918212890625e-05,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_0": {
+            "D4_step1": 0.000438690185546875,
+            "D4_step2": 0.0004100799560546875,
+            "D4_step3": 0.000408172607421875,
+            "D4_step4": 0.0004062652587890625,
+            "D4": 0.000408172607421875,
+            "D2_query": 0.00042724609375,
+            "D2": 0.000400543212890625,
+            "D1": 0.00043487548828125,
+            "D_full": 0.00043487548828125,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_199": {
+            "D4_step1": 0.00131988525390625,
+            "D4_step2": 0.00135040283203125,
+            "D4_step3": 0.001331329345703125,
+            "D4_step4": 0.0012969970703125,
+            "D4": 0.001331329345703125,
+            "D2_query": 0.0014190673828125,
+            "D2": 0.000885009765625,
+            "D1": 0.001018524169921875,
+            "D_full": 0.001171112060546875,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_399": {
+            "D4_step1": 3.814697265625e-05,
+            "D4_step2": 4.57763671875e-05,
+            "D4_step3": 5.14984130859375e-05,
+            "D4_step4": 4.57763671875e-05,
+            "D4": 5.14984130859375e-05,
+            "D2_query": 8.392333984375e-05,
+            "D2": 6.866455078125e-05,
+            "D1": 6.29425048828125e-05,
+            "D_full": 6.29425048828125e-05,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          }
+        },
+        "max_abs_m": 0.0014190673828125,
+        "opset": 17,
+        "conditional_compute_exported": false,
+        "onnxruntime_cpu_parity": true
+      },
+      "static4": {
+        "cases": {
+          "seed0_observed": {
+            "D4_step1": 0.000152587890625,
+            "D4_step2": 0.00018310546875,
+            "D4_step3": 0.00018310546875,
+            "D4_step4": 0.00028228759765625,
+            "D4": 0.00028228759765625,
+            "D2_query": 0.00045013427734375,
+            "D2": 0.00022125244140625,
+            "D1": 0.000156402587890625,
+            "D_full": 0.000270843505859375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed0_empty": {
+            "D4_step1": 9.918212890625e-05,
+            "D4_step2": 9.918212890625e-05,
+            "D4_step3": 9.1552734375e-05,
+            "D4_step4": 9.918212890625e-05,
+            "D4": 9.918212890625e-05,
+            "D2_query": 9.918212890625e-05,
+            "D2": 8.392333984375e-05,
+            "D1": 8.392333984375e-05,
+            "D_full": 8.392333984375e-05,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed7_observed": {
+            "D4_step1": 0.000125885009765625,
+            "D4_step2": 0.000141143798828125,
+            "D4_step3": 0.000171661376953125,
+            "D4_step4": 0.0003662109375,
+            "D4": 0.0003662109375,
+            "D2_query": 0.00054168701171875,
+            "D2": 0.0003204345703125,
+            "D1": 0.000186920166015625,
+            "D_full": 0.0001983642578125,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed7_empty": {
+            "D4_step1": 0.0001220703125,
+            "D4_step2": 0.00011444091796875,
+            "D4_step3": 0.0001220703125,
+            "D4_step4": 0.0001220703125,
+            "D4": 0.0001220703125,
+            "D2_query": 0.000118255615234375,
+            "D2": 0.0001068115234375,
+            "D1": 0.000110626220703125,
+            "D_full": 0.000110626220703125,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed42_observed": {
+            "D4_step1": 0.000148773193359375,
+            "D4_step2": 0.000209808349609375,
+            "D4_step3": 0.0002899169921875,
+            "D4_step4": 0.000274658203125,
+            "D4": 0.000274658203125,
+            "D2_query": 0.00045013427734375,
+            "D2": 0.000213623046875,
+            "D1": 0.000171661376953125,
+            "D_full": 0.000194549560546875,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "seed42_empty": {
+            "D4_step1": 0.000118255615234375,
+            "D4_step2": 0.00011444091796875,
+            "D4_step3": 0.00011444091796875,
+            "D4_step4": 0.00011444091796875,
+            "D4": 0.00011444091796875,
+            "D2_query": 0.00011444091796875,
+            "D2": 9.1552734375e-05,
+            "D1": 0.0001068115234375,
+            "D_full": 0.0001068115234375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_0": {
+            "D4_step1": 0.000438690185546875,
+            "D4_step2": 0.0004100799560546875,
+            "D4_step3": 0.000408172607421875,
+            "D4_step4": 0.0004062652587890625,
+            "D4": 0.0004062652587890625,
+            "D2_query": 0.000396728515625,
+            "D2": 0.0003871917724609375,
+            "D1": 0.0004291534423828125,
+            "D_full": 0.0004291534423828125,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_199": {
+            "D4_step1": 0.00131988525390625,
+            "D4_step2": 0.00135040283203125,
+            "D4_step3": 0.001331329345703125,
+            "D4_step4": 0.0012969970703125,
+            "D4": 0.0012969970703125,
+            "D2_query": 0.00138092041015625,
+            "D2": 0.00083160400390625,
+            "D1": 0.001018524169921875,
+            "D_full": 0.001216888427734375,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          },
+          "real_kitti_399": {
+            "D4_step1": 3.814697265625e-05,
+            "D4_step2": 4.57763671875e-05,
+            "D4_step3": 5.14984130859375e-05,
+            "D4_step4": 4.57763671875e-05,
+            "D4": 4.57763671875e-05,
+            "D2_query": 9.34600830078125e-05,
+            "D2": 7.05718994140625e-05,
+            "D1": 5.340576171875e-05,
+            "D_full": 5.340576171875e-05,
+            "adaptive_selected_nfe": 0.0,
+            "adaptive_terminal_time": 0.0
+          }
+        },
+        "max_abs_m": 0.00138092041015625,
+        "opset": 17,
+        "conditional_compute_exported": false,
+        "onnxruntime_cpu_parity": true
+      }
+    },
+    "loaded_reference": "actual V9.1 best local epoch1; diagnostic only",
+    "controller": "time-dependent synthetic diagnostic, not trained V10",
+    "student_weights_in_upload": false,
+    "fresh_v10_accuracy_measured": false
+  },
+  "gpu_training_tested": false,
+  "gpu_latency_measured": false,
+  "fresh_v10_training_accuracy_measured": false,
+  "generator_unchanged": true,
+  "verified_files": {
+    "01_Optional_Relative_Teacher_Resume_contract.json": "ac20c3d103bb69d90f39c99e91f15d3227d461d801db97251f60c430073ccf98",
+    "02_Train_V10_Fresh40_EarlyStop_contract.json": "d861c98d4d2b8b29e9117ac73281f27eca800249f86f2ff26da60c2b861731e6",
+    "adaptive_report.py": "c584db8a210d8d136bea2094dcf768c07af46a3b3d557c9d45dacfe939d4bede",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "config.json": "7ca93a26816ee26062af3fe30e4e32afac1da75a72c2ba637c43a3d9b3b7c688",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "data.py": "022cb786ec8316cedee09b825d7e34bd516485d05bf8982a9da4661115cc4476",
+    "generate_relative.py": "d12b751e56bbf8de77c9726c95a5014072f819466fbee23183be7393cc61d838",
+    "losses.py": "99791e0e54993c626adc20d933295ccc89c8107fc30a65741f094a03c1e1d19f",
+    "losses_baseline.py": "6c6e91f92fc0d0737b89c385ffd8887b30680069790adb0cfa90d08b57864b67",
+    "losses_v8.py": "42e6ab9f20b3806c76901e8f83cadd632590b917e6a0ca106359ea09e60181bc",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "metrics.py": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+    "model.py": "e8180447345410015b472b69ce09408416f2aa1ac990695e432cf2d12f36968f",
+    "model_baseline.py": "342438a16d5b2effb862e16232ce5e4d265cb1f67fed656a0e2cc667b57f56c7",
+    "model_v8.py": "06cb6b873b0af9912cdb93352b6a776fb5c86b65cbab0f4136011c4e349a85f8",
+    "model_v9_reference.py": "573ee254b23eb443f97fd2d53353574d35867cee169f82183627edb09c233c36",
+    "relative_data.py": "08f2f63ac3669e3c37e38f6a7487dde5e41d2e69166a7be9bca856bfa5c4dddc",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "run.py": "4c94580709c5501471d032eae6e158ec8aa2acb336776ec4c763faa42268554b",
+    "support.py": "c2e77258c5ee9b30671a2866fee38adc45513fb71e8c603ff4bdb2e0917977dd",
+    "teacher_requirements.txt": "6ab2ce63e334daad182d4f83cf2a753c37884951f23ccab36376034f1c9717ce",
+    "test_contracts.py": "84c515169cf4dc666a9ed23b058f4564c3cc117b0cf390a01eda6c97be3f7dd5"
+  }
+}

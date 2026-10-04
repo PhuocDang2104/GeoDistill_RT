@@ -1,0 +1,182 @@
+{
+  "tests": 22,
+  "tests_returncode": 0,
+  "tests_log": "INITIAL (not newly trained) soft=1.0000; hard=9.0694; pre=6.2755\nmetric_kd epoch=0 batch=1/1 loss=14.8346 KD=0.3070\nmetric_kd epoch=0 val_rmse=1.0000 m iRMSE=7.684 best=1.0000; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmptpn2s0zs\\drive\\AnchorFlow_v8_Dynamics_Fresh30_ES\\metric_kd\nmetric_kd epoch=1 batch=1/1 loss=14.7878 KD=0.2707\nmetric_kd epoch=1 val_rmse=1.0000 m iRMSE=7.631 best=1.0000; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmptpn2s0zs\\drive\\AnchorFlow_v8_Dynamics_Fresh30_ES\\metric_kd\nmetric_kd epoch=2 batch=1/1 loss=14.0821 KD=0.2344\nmetric_kd epoch=2 val_rmse=1.0000 m iRMSE=7.586 best=1.0000; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmptpn2s0zs\\drive\\AnchorFlow_v8_Dynamics_Fresh30_ES\\metric_kd\nEARLY STOP: 3 epochs completed; no meaningful gain for 2 epochs. Evaluation/test use best.pth, not last.pth.\nResume metric_kd: next epoch=3, best=1.0000 m\nRun already early-stopped; preserving best checkpoint. Use a new run name/recipe to train again.\nINITIAL (not newly trained) soft=5.5535; hard=8.3106; pre=5.5400\nmetric_kd epoch=0 batch=1/1 loss=11.6485 KD=0.2628\nmetric_kd epoch=0 val_rmse=5.4999 m iRMSE=6.933 best=5.4999; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmpxjunc9bq\\drive\\AnchorFlow_v8_Dynamics_Fresh30_ES\\metric_kd\nResume metric_kd: next epoch=1, best=5.4999 m\ntest_archive_traversal_rejected (test_contracts.Contracts.test_archive_traversal_rejected) ... ok\ntest_channels_last_bf16_gradients_and_six_components (test_contracts.Contracts.test_channels_last_bf16_gradients_and_six_components) ... ok\ntest_early_stop_full_trainer_checkpoint_and_resume (test_contracts.Contracts.test_early_stop_full_trainer_checkpoint_and_resume) ... ok\ntest_early_stop_patience_floor_and_small_cumulative_gains (test_contracts.Contracts.test_early_stop_patience_floor_and_small_cumulative_gains) ... ok\ntest_edge_reciprocity_and_boundary_flux (test_contracts.Contracts.test_edge_reciprocity_and_boundary_flux) ... ok\ntest_empty_sparse_and_invalid_sensor_bounds (test_contracts.Contracts.test_empty_sparse_and_invalid_sensor_bounds) ... ok\ntest_field_depends_on_current_state (test_contracts.Contracts.test_field_depends_on_current_state) ... C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\drive_upload\\AnchorFlow_v8_Dynamics\\test_contracts.py:77: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.\nConsider using tensor.detach() first. (Triggered internally at C:\\actions-runner\\_work\\pytorch\\pytorch\\pytorch\\torch\\csrc\\autograd\\generated\\python_variable_methods.cpp:837.)\n  self.assertGreater(float((f0-f1).abs().max()),1e-6)\nok\ntest_frozen_feedback_control_same_parameterization (test_contracts.Contracts.test_frozen_feedback_control_same_parameterization) ... ok\ntest_global_metrics_and_inverse_units (test_contracts.Contracts.test_global_metrics_and_inverse_units) ... ok\ntest_interface_and_no_old_correction_stack (test_contracts.Contracts.test_interface_and_no_old_correction_stack) ... ok\ntest_kd_forbids_gt_and_original_holdout_sensor (test_contracts.Contracts.test_kd_forbids_gt_and_original_holdout_sensor) ... ok\ntest_loss_tail_ramp_and_aux_supervision (test_contracts.Contracts.test_loss_tail_ramp_and_aux_supervision) ... ok\ntest_lr_and_flip_intrinsics (test_contracts.Contracts.test_lr_and_flip_intrinsics) ... ok\ntest_soft_sensor_fusion_and_hard_diagnostic (test_contracts.Contracts.test_soft_sensor_fusion_and_hard_diagnostic) ... ok\ntest_teacher_forbidden_on_val_test (test_contracts.Contracts.test_teacher_forbidden_on_val_test) ... ok\ntest_teacher_schema_and_canonical_id (test_contracts.Contracts.test_teacher_schema_and_canonical_id) ... ok\ntest_trainer_fresh_initialization_and_resume (test_contracts.Contracts.test_trainer_fresh_initialization_and_resume) ... ok\ntest_translation_composition_and_phase_order (test_contracts.Contracts.test_translation_composition_and_phase_order) ... ok\ntest_vector_field_is_called_three_times (test_contracts.Contracts.test_vector_field_is_called_three_times) ... ok\ntest_clean_cells_and_fresh_config (test_notebook.NotebookContracts.test_clean_cells_and_fresh_config) ... ok\ntest_colab_copy_and_test_reporting_contract (test_notebook.NotebookContracts.test_colab_copy_and_test_reporting_contract) ... ok\ntest_pretrained_flag_only_on_fresh_model (test_notebook.NotebookContracts.test_pretrained_flag_only_on_fresh_model) ... ok\n\n----------------------------------------------------------------------\nRan 22 tests in 6.982s\n\nOK\n",
+  "colab_copy_without_ipynb_tests_returncode": 0,
+  "source_sha256": "b40aefb6f4c34b94e8842ba2bdec228a1fdc4bb380e3abbe31082885a4225048",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "torch": "2.11.0+cpu",
+  "scope": "CPU synthetic contracts, trainer resume, actual KITTI RGB/sparse/GT, BF16 gradients, FP32 ONNX",
+  "real_kitti_samples": [
+    0,
+    199,
+    399
+  ],
+  "output_shapes": [
+    [
+      1,
+      1,
+      352,
+      1216
+    ],
+    [
+      1,
+      1,
+      352,
+      1216
+    ],
+    [
+      1,
+      1,
+      352,
+      1216
+    ]
+  ],
+  "real_kitti_bf16_loss": 7.7335524559021,
+  "real_kitti_bf16_gradients_finite": true,
+  "head_gradient_l1": {
+    "dynamics.state.weight": 0.1216353327035904,
+    "dynamics.reaction.weight": 28.81927490234375,
+    "dynamics.conductance.weight": 0.02539101243019104,
+    "phase2.blend.weight": 0.30552804470062256
+  },
+  "gradient_check_teacher": "Synthetic target; actual train-cache KD coverage is checked in Colab",
+  "dynamics_diagnostics": {
+    "dynamics_aux": 3.2413241863250732,
+    "dynamics_state_change_1": 0.009273180738091469,
+    "dynamics_forcing_1": 0.027253586798906326,
+    "dynamics_transport_1": 0.0006397564429789782,
+    "dynamics_mass_1": 0.12740419805049896,
+    "dynamics_sensor_error_m_1": 3.517848253250122,
+    "dynamics_state_change_2": 0.008670665323734283,
+    "dynamics_forcing_2": 0.025613851845264435,
+    "dynamics_transport_2": 0.0010268172482028604,
+    "dynamics_mass_2": 0.10508859157562256,
+    "dynamics_sensor_error_m_2": 2.7010953426361084,
+    "dynamics_state_change_3": 0.007524412125349045,
+    "dynamics_forcing_3": 0.022244460880756378,
+    "dynamics_transport_3": 0.0009301931131631136,
+    "dynamics_mass_3": 0.09963787347078323,
+    "dynamics_sensor_error_m_3": 2.113619089126587
+  },
+  "complexity": {
+    "conv_linear_macs": {
+      "encoder": 536123456,
+      "context32": 25307392,
+      "sparse": 50561280,
+      "decoder": 1153171712,
+      "guidance": 17977344,
+      "dynamics": 386940928,
+      "up4_2": 152165376,
+      "phase2": 129693696,
+      "context2": 10272768,
+      "up2_1": 241410048,
+      "detail1": 511070208
+    },
+    "parameters": {
+      "encoder": 340992,
+      "sparse": 4896,
+      "context32": 52144,
+      "decoder": 149748,
+      "guidance": 200,
+      "dynamics": 10891,
+      "up4_2": 6016,
+      "phase2": 5144,
+      "context2": 400,
+      "up2_1": 2488,
+      "detail1": 5145
+    },
+    "total_parameters": 578064,
+    "total_conv_linear_macs": 3214694208,
+    "mac_exclusions": [
+      "functional 1->9 fixed neighbourhood convolutions",
+      "fixed directional shifts and plane transport",
+      "pooling",
+      "interpolation",
+      "softmax",
+      "finite differences",
+      "elementwise operations",
+      "memory traffic"
+    ]
+  },
+  "onnx_opened_dynamics": {
+    "opset": 17,
+    "static_batch": 1,
+    "shape": [
+      352,
+      1216
+    ],
+    "precision": "fp32",
+    "max_abs_errors_m": [
+      3.0517578125e-05,
+      0.0001316070556640625
+    ],
+    "untrained_weights": true,
+    "onnxruntime_cpu_parity": true,
+    "teacher_inputs": false,
+    "inputs": [
+      "rgb",
+      "sparse",
+      "mask",
+      "K"
+    ],
+    "outputs": [
+      "depth_m"
+    ],
+    "operators": [
+      "Abs",
+      "Add",
+      "And",
+      "AveragePool",
+      "Cast",
+      "Clip",
+      "Concat",
+      "Constant",
+      "ConstantOfShape",
+      "Conv",
+      "DepthToSpace",
+      "Div",
+      "Exp",
+      "Expand",
+      "Gather",
+      "Greater",
+      "Identity",
+      "IsInf",
+      "IsNaN",
+      "Less",
+      "Log",
+      "Max",
+      "Min",
+      "Mul",
+      "Neg",
+      "Not",
+      "Or",
+      "Pad",
+      "Reciprocal",
+      "ReduceSum",
+      "Relu",
+      "Reshape",
+      "Resize",
+      "Shape",
+      "Sigmoid",
+      "Slice",
+      "Softmax",
+      "Softplus",
+      "Split",
+      "Sqrt",
+      "Squeeze",
+      "Sub",
+      "Tanh",
+      "Transpose",
+      "Unsqueeze",
+      "Where"
+    ],
+    "tensorrt_engine_built": false,
+    "target_device_latency_measured": false
+  },
+  "imagenet_download_tested_locally": false,
+  "student_checkpoint_loaded": false,
+  "cuda_fp16_training_tested": false,
+  "gpu_latency_measured": false,
+  "new_training_accuracy_measured": false
+}

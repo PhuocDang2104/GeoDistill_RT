@@ -51,3 +51,16 @@ docker/validation/
 *.onnx
 *.safetensors
 results/**/export_work/
+
+# Personal IDE settings and diagnostic scratch files are not team source.
+/.codex/
+/.env.*
+!/.env.example
+!/.env.*.example
+/smoke_gpu_failure_report.json
+
+# Raw runs/teacher audit clones/previews stay local. Existing tracked logs stay tracked.
+/results/*
+!/results/README.md
+!/results/benchmarks/
+!/results/anchorflow_pair_local_verification.json

@@ -1,0 +1,95 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "decoder": 1153171712,
+    "guidance": 17977344,
+    "dynamics": 386940928,
+    "up4_2": 152165376,
+    "phase2": 228997120,
+    "context2": 10272768,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "context32": 52144,
+    "decoder": 149748,
+    "guidance": 200,
+    "dynamics": 10891,
+    "up4_2": 6016,
+    "phase2": 8948,
+    "context2": 400,
+    "up2_1": 2488,
+    "detail1": 5145
+  },
+  "total_parameters": 581868,
+  "total_conv_linear_macs": 3313997632,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "fixed directional shifts and plane transport",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ],
+  "eager_component_median_ms": {
+    "encoder": 1.7903520464897156,
+    "sparse": 1.1812800168991089,
+    "context32": 0.21995200216770172,
+    "decoder": 1.3498079776763916,
+    "guidance": 0.1351199969649315,
+    "dynamics": 3.4807039499282837,
+    "up4_2": 0.3914399892091751,
+    "phase2": 1.3540319800376892,
+    "context2": 0.06878400221467018,
+    "up2_1": 0.37084800004959106,
+    "detail1": 0.5077280104160309
+  },
+  "device": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu130",
+  "batch": 1,
+  "shape": [
+    352,
+    1216
+  ],
+  "precision": "bf16",
+  "cpu_threads": 24,
+  "channels_last": true,
+  "compiled_total": false,
+  "runtime_backend": {
+    "torch": "2.11.0+cu130",
+    "cuda_build": "13.0",
+    "cudnn_version": 92700,
+    "cudnn_enabled": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": false,
+    "cudnn_allow_tf32": true,
+    "matmul_allow_tf32": true,
+    "environment": {
+      "LD_LIBRARY_PATH": "/usr/local/lib/python3.13/dist-packages/cv2/../../lib64:/usr/local/lib/python3.13/dist-packages/cv2/../../lib64:/usr/lib64-nvidia"
+    },
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "device_capability": [
+      12,
+      0
+    ],
+    "free_vram_mib": 96323.875,
+    "total_vram_mib": 97250.0625,
+    "process_allocated_mib": 10.64501953125,
+    "process_reserved_mib": 266.0
+  },
+  "untrained_weights": false,
+  "median_ms": 11.062160015106201,
+  "p95_ms": 11.098248386383057,
+  "runs": 100,
+  "peak_cuda_allocated_mib": 98.86865234375,
+  "inference_includes": "RGB encoder + sparse pyramid + F32 context + decoder + three shared jet Euler steps + phase query/detail + learned sensor fusion",
+  "phase_query": "five-jet consensus + sparse-innovation metric readout; minmod base jet",
+  "excludes": "disk I/O and host-to-device transfer; there is no teacher/prior model",
+  "component_timings_are_separate_eager_instrumented_pass": true
+}

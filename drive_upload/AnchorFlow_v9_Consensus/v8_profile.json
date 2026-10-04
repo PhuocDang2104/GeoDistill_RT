@@ -1,0 +1,72 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "decoder": 1153171712,
+    "guidance": 17977344,
+    "dynamics": 386940928,
+    "up4_2": 152165376,
+    "phase2": 129693696,
+    "context2": 10272768,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "context32": 52144,
+    "decoder": 149748,
+    "guidance": 200,
+    "dynamics": 10891,
+    "up4_2": 6016,
+    "phase2": 5144,
+    "context2": 400,
+    "up2_1": 2488,
+    "detail1": 5145
+  },
+  "total_parameters": 578064,
+  "total_conv_linear_macs": 3214694208,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "fixed directional shifts and plane transport",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ],
+  "eager_component_median_ms": {
+    "encoder": 1.8000319600105286,
+    "sparse": 1.1744320392608643,
+    "context32": 0.224543996155262,
+    "decoder": 1.323568046092987,
+    "guidance": 0.10551999881863594,
+    "dynamics": 3.4203200340270996,
+    "up4_2": 0.38286399841308594,
+    "phase2": 0.6757919788360596,
+    "context2": 0.05559999868273735,
+    "up2_1": 0.355663999915123,
+    "detail1": 0.5032159984111786
+  },
+  "device": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu130",
+  "batch": 1,
+  "shape": [
+    352,
+    1216
+  ],
+  "precision": "bf16",
+  "cpu_threads": 24,
+  "channels_last": true,
+  "compiled_total": false,
+  "untrained_weights": false,
+  "median_ms": 10.221216201782227,
+  "p95_ms": 10.265329790115356,
+  "runs": 100,
+  "peak_cuda_allocated_mib": 98.33642578125,
+  "inference_includes": "RGB encoder + sparse pyramid + F32 context + decoder + three shared jet Euler steps + phase query/detail + learned sensor fusion",
+  "excludes": "disk I/O and host-to-device transfer; there is no teacher/prior model",
+  "component_timings_are_separate_eager_instrumented_pass": true
+}

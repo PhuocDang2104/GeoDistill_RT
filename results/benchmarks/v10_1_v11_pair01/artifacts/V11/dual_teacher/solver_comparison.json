@@ -1,0 +1,209 @@
+[
+  {
+    "solver": "adaptive_train_solver",
+    "epoch": 29,
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9860213546358949,
+    "mae_m": 0.2569456812217162,
+    "irmse_km_inv": 3.2155151470012697,
+    "imae_km_inv": 1.0410830649237752,
+    "abs_rel": 0.013358985699777944,
+    "delta1": 0.9966958101697732,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1108588,
+        "pixel_fraction": 0.0436022949387752,
+        "sse_fraction": 0.9541532425772089,
+        "sse_m2": 23585853.514361978,
+        "mse_contribution_m2": 0.9276641469292095
+      },
+      "2": {
+        "pixels": 488494,
+        "pixel_fraction": 0.019213142721932815,
+        "sse_fraction": 0.9042059217821996,
+        "sse_m2": 22351198.38860464,
+        "mse_contribution_m2": 0.8791034580701005
+      },
+      "5": {
+        "pixels": 143857,
+        "pixel_fraction": 0.005658094209036526,
+        "sse_fraction": 0.7672761314989486,
+        "sse_m2": 18966410.881464005,
+        "mse_contribution_m2": 0.7459750973162157
+      },
+      "10": {
+        "pixels": 44751,
+        "pixel_fraction": 0.0017601185479232402,
+        "sse_fraction": 0.5719652627489964,
+        "sse_m2": 14138492.95954132,
+        "mse_contribution_m2": 0.5560864270691342
+      },
+      "20": {
+        "pixels": 9148,
+        "pixel_fraction": 0.0003598034563786687,
+        "sse_fraction": 0.2998204891714071,
+        "sse_m2": 7411306.5099487305,
+        "mse_contribution_m2": 0.29149690627036307
+      }
+    },
+    "method": "bosh3",
+    "library": "torchdiffeq==0.2.5",
+    "nfe_mean": 13.0,
+    "nfe_p50": 13.0,
+    "nfe_p95": 13.0,
+    "nfe_max": 13,
+    "nfe_histogram": {
+      "13": 400
+    },
+    "accepted_steps_mean": 4.0,
+    "rejected_steps_mean": 0.0,
+    "accepted_h_mean": 0.25,
+    "terminal_time_mean": 1.0,
+    "terminal_time_max_error": 0.0,
+    "learned_step_size": false,
+    "learned_stopping": false,
+    "fixed_terminal_time": 1.0,
+    "nfe_includes_rejected_trials": true,
+    "batch_step_policy": "one grid; worst sample/channel normalized RMS"
+  },
+  {
+    "solver": "fixed_midpoint8",
+    "epoch": 29,
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9859718639596837,
+    "mae_m": 0.25716539341079525,
+    "irmse_km_inv": 3.215281335631113,
+    "imae_km_inv": 1.043139165507847,
+    "abs_rel": 0.013380316869494011,
+    "delta1": 0.9966940402577118,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1108925,
+        "pixel_fraction": 0.0436155496135456,
+        "sse_fraction": 0.9540477138784204,
+        "sse_m2": 23580877.599993706,
+        "mse_contribution_m2": 0.9274684373546197
+      },
+      "2": {
+        "pixels": 488479,
+        "pixel_fraction": 0.019212552751245702,
+        "sse_fraction": 0.9040667262624653,
+        "sse_m2": 22345514.279948235,
+        "mse_contribution_m2": 0.8788798942374587
+      },
+      "5": {
+        "pixels": 143858,
+        "pixel_fraction": 0.005658133540415666,
+        "sse_fraction": 0.7671287532006801,
+        "sse_m2": 18960864.29380226,
+        "mse_contribution_m2": 0.7457569423739547
+      },
+      "10": {
+        "pixels": 44739,
+        "pixel_fraction": 0.0017596465713735525,
+        "sse_fraction": 0.5717794804949433,
+        "sse_m2": 14132481.790588379,
+        "mse_contribution_m2": 0.5558499995039675
+      },
+      "20": {
+        "pixels": 9151,
+        "pixel_fraction": 0.0003599214505160906,
+        "sse_fraction": 0.2997768770313603,
+        "sse_m2": 7409484.600982666,
+        "mse_contribution_m2": 0.29142524807805903
+      }
+    },
+    "method": "midpoint",
+    "library": "explicit fixed midpoint",
+    "nfe_mean": 8.0,
+    "nfe_p50": 8.0,
+    "nfe_p95": 8.0,
+    "nfe_max": 8,
+    "nfe_histogram": {
+      "8": 400
+    },
+    "accepted_steps_mean": 4.0,
+    "rejected_steps_mean": 0.0,
+    "accepted_h_mean": 0.25,
+    "terminal_time_mean": 1.0,
+    "terminal_time_max_error": 0.0,
+    "learned_step_size": false,
+    "learned_stopping": false,
+    "fixed_terminal_time": 1.0,
+    "nfe_includes_rejected_trials": true,
+    "batch_step_policy": "one grid; worst sample/channel normalized RMS"
+  },
+  {
+    "solver": "adaptive_tighter_reference",
+    "epoch": 29,
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9860213546358949,
+    "mae_m": 0.2569456812217162,
+    "irmse_km_inv": 3.2155151470012697,
+    "imae_km_inv": 1.0410830649237752,
+    "abs_rel": 0.013358985699777944,
+    "delta1": 0.9966958101697732,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1108588,
+        "pixel_fraction": 0.0436022949387752,
+        "sse_fraction": 0.9541532425772089,
+        "sse_m2": 23585853.514361978,
+        "mse_contribution_m2": 0.9276641469292095
+      },
+      "2": {
+        "pixels": 488494,
+        "pixel_fraction": 0.019213142721932815,
+        "sse_fraction": 0.9042059217821996,
+        "sse_m2": 22351198.38860464,
+        "mse_contribution_m2": 0.8791034580701005
+      },
+      "5": {
+        "pixels": 143857,
+        "pixel_fraction": 0.005658094209036526,
+        "sse_fraction": 0.7672761314989486,
+        "sse_m2": 18966410.881464005,
+        "mse_contribution_m2": 0.7459750973162157
+      },
+      "10": {
+        "pixels": 44751,
+        "pixel_fraction": 0.0017601185479232402,
+        "sse_fraction": 0.5719652627489964,
+        "sse_m2": 14138492.95954132,
+        "mse_contribution_m2": 0.5560864270691342
+      },
+      "20": {
+        "pixels": 9148,
+        "pixel_fraction": 0.0003598034563786687,
+        "sse_fraction": 0.2998204891714071,
+        "sse_m2": 7411306.5099487305,
+        "mse_contribution_m2": 0.29149690627036307
+      }
+    },
+    "method": "bosh3",
+    "library": "torchdiffeq==0.2.5",
+    "nfe_mean": 13.0,
+    "nfe_p50": 13.0,
+    "nfe_p95": 13.0,
+    "nfe_max": 13,
+    "nfe_histogram": {
+      "13": 400
+    },
+    "accepted_steps_mean": 4.0,
+    "rejected_steps_mean": 0.0,
+    "accepted_h_mean": 0.25,
+    "terminal_time_mean": 1.0,
+    "terminal_time_max_error": 0.0,
+    "learned_step_size": false,
+    "learned_stopping": false,
+    "fixed_terminal_time": 1.0,
+    "nfe_includes_rejected_trials": true,
+    "batch_step_policy": "one grid; worst sample/channel normalized RMS"
+  }
+]

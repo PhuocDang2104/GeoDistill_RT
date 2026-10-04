@@ -1,0 +1,47 @@
+{
+  "name": "AnchorFlow_v5_Piecewise",
+  "default_epochs": 15,
+  "default_model": "v5_piecewise",
+  "available_models": [
+    "v3",
+    "v5_transport",
+    "v5_piecewise"
+  ],
+  "default_variants": [
+    "metric_kd"
+  ],
+  "contains_data": false,
+  "contains_teacher_weights": false,
+  "contains_parent_student_checkpoint": true,
+  "parent_sha256": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+  "source_sha256": "6b465c587c8b541917adcad6a8149ccf2e0d470a8be989c95f39e5fecdc980e6",
+  "files": {
+    "model.py": "95fd39afcc33c2129295f86cfa8629069c0cc83b600129635ec69b7667ed1cab",
+    "model_v3.py": "753e7a4a9e37704ca1efad2395cf21a4b29266af826b3fb8356a6ad641cdbc5e",
+    "model_v5.py": "d39d5012ed1464678e4722ed8b84e32e3e5329e99f92df2b5fba4b1a4fe9f709",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "data.py": "b50e1a224cd94edfd98c89ec8c504dc8e076fee9571ccb05f7fd5601bc24c0a3",
+    "losses.py": "a37d9ff304b577938af64d4a0da97f94f088834ba29118c85dc5924ca0945461",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "metrics.py": "bd25ba0941b54788ca0f6bdbee8f4629a3276dcea581395c9316117bbdee0d7d",
+    "run.py": "45a9f36613f1097e6e1a4f6dae36c34803a2dcf2c50328ad16c7f6e647881286",
+    "config.json": "e5ead54bf70d8ab564a93cb8a0261b810343f52804175bdd9bd50e31706ef465",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "test_contracts.py": "aad3afc1b38aaeab5e78b2f10f6122f15195b13cffd2938e0dbf5bc6b35ee956",
+    "test_surface.py": "e284642f26dcf316bed1fc10e83ec80553055983023abdca48b3aaeb5bbefbdd",
+    "README.md": "78b28089c31e3c0941338eca2fa4e85293ef9260a686316571117be523f38724",
+    "ARCHITECTURE.md": "944d7df4b8bb960e70428db1fea806b88d79c69cb983d7987460deb9d04cd1a4",
+    "ANALYSIS_V4.md": "f6c4dc01e1b97cb1210bd5fc2780e9fdff8e14b43a0ef672ece2316bd5b35659",
+    "VERIFICATION.md": "1ef024f8e4485ad4e3fbde5f3e3abfabc7da7d900c9e66ca7333d38caf48572a",
+    "init_v3_best.pth": "1c767a871cb57336ccc49460f84f87afb81b30d95f7e746f34e7e908280a3d07",
+    "parent_val_metrics.json": "b0fe6bd3bd73f7a95347029f146fade9e70665406e6873b0fbfde83348d27eb6",
+    "v4_train_log.csv": "cbf446d83f1abb2a2322162a9c733c1db6a9ae14a48034e7500c701defe6c385",
+    "v4_val_metrics.json": "2b7eb98bbcc4642d0e8148b6849651e5a5663bad9535389c360d3a5fe51aa5c0",
+    "v4_profile.json": "f52f22bbed8ab033c3eeb145b34ed78c691f06565d77edd14be5c946cf65b52d",
+    "v3_profile_same_device.json": "6ea8c8833294b12d83ee54fca1573d5b0b6c6d4c59d180a8bc0f8eb47101e5d3",
+    "v4_gt_boundary_audit.json": "77bdb4108d7021b6ba910ff5b658d9a472efa5521e40fd5d0b20ca88132bd739",
+    "local_verification.json": "51b6176bf72c4f3132702375573cd8b7c0c03abf7b351b48226d5dac9302514c",
+    "AnchorFlow_v5_TAR2000_15ep.ipynb": "e0130bdb47ddeffc877f77bab48b729ee23574a14f4a8a93f07a30476e68ce96"
+  }
+}

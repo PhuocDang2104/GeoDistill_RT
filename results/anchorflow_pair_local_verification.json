@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "actual_train_runner_intervals_overlap": true,
+  "isolated_module_imports": true,
+  "shared_work_and_separate_outputs": true,
+  "gpu_training_tested": false,
+  "GPU_metrics_measured": false,
+  "children": [
+    {
+      "label": "V10_1",
+      "passed": true,
+      "device": "CPU; GPU guard and label mocked",
+      "dataset": "synthetic64x128, 2 train/val samples; NOT KITTI benchmark",
+      "optimizer_updates": 2,
+      "epochs_logged": [
+        0,
+        1
+      ],
+      "interruption_resume_verified": true,
+      "completed_resume_is_noop": true,
+      "started_unix": 1791113879.959952,
+      "finished_unix": 1791113886.6005943,
+      "sources_sha256": "1e745065606b4f5074813a45d65c70bd148321660c9702a2adc959a799d29e45",
+      "actual_NFE_logged": [
+        2.0,
+        2.0
+      ]
+    },
+    {
+      "label": "V11",
+      "passed": true,
+      "device": "CPU; GPU guard and label mocked",
+      "dataset": "synthetic64x128, 2 train/val samples; NOT KITTI benchmark",
+      "optimizer_updates": 2,
+      "epochs_logged": [
+        0,
+        1
+      ],
+      "interruption_resume_verified": true,
+      "completed_resume_is_noop": true,
+      "started_unix": 1791113879.959952,
+      "finished_unix": 1791113887.946192,
+      "sources_sha256": "2d01818cbbb93b873c9ef5d619a2e9ac3c7fe8c81857c35a3ac93c184156ac3d",
+      "actual_NFE_logged": [
+        13.0,
+        13.0
+      ]
+    }
+  ],
+  "processes": [
+    {
+      "label": "V10_1",
+      "action": "synthetic-runner-qa",
+      "pid": 27100,
+      "returncode": 0,
+      "started_unix": 1791113877.337398,
+      "finished_unix": 1791113887.7234154,
+      "wall_seconds": 10.386017322540283,
+      "console": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\anchorflow_pair_cpu_qa_4gshbk5n\\logs\\V10_1.log"
+    },
+    {
+      "label": "V11",
+      "action": "synthetic-runner-qa",
+      "pid": 27068,
+      "returncode": 0,
+      "started_unix": 1791113877.3470159,
+      "finished_unix": 1791113888.9315314,
+      "wall_seconds": 11.584515571594238,
+      "console": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\anchorflow_pair_cpu_qa_4gshbk5n\\logs\\V11.log"
+    }
+  ],
+  "notebook_cells": 16,
+  "limitation": "Synthetic CPU QA, not runtime/VRAM/accuracy evidence on Colab GPU."
+}

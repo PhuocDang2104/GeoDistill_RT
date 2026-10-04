@@ -1,0 +1,107 @@
+"""V6 recipe + squared-excess tail risk; GT priority and no validation masks removed."""
+import torch
+from torch.nn import functional as F
+from loss_helpers import pooled, mean_masked, huber, pair_gradient, teacher_weights, range_rmse
+from boundaries import boundary_mask,band_mask,balanced_barrier_loss
+
+
+def sensor_target(batch):
+    # Used ONLY by the training objective, never by the model/evaluator.
+    gt, sparse = batch["gt"].float(), batch["sparse"].float()
+    truth = torch.exp(-(sparse - gt).abs() / (.25 + .01 * gt.clamp_min(.1)))
+    return torch.where(batch["gt_mask"] > 0, truth, torch.ones_like(truth))
+
+
+def tail_risk(residual, valid, threshold=2.):
+    # Normalize ALL valid pixels, not a tiny/top-k tail count. No GPU sort.
+    return mean_masked(F.relu(residual.float().abs()-threshold).square(), valid.float())
+
+
+def objective(pred, batch, holdout_mask, epoch_progress, config):
+    gt, valid = batch["gt"].float(), batch["gt_mask"].float()
+    final, raw = pred["D_full"].float(), pred["D1"].float()
+    zero = final.sum() * 0
+    parts = {}
+    metric = zero
+    for name, coefficient in (("D16", .025), ("D8", .05), ("D4", .15), ("D2", .30), ("D1", .50), ("D_full", 1.)):
+        target, support = pooled(gt, valid, pred[name].shape[-2:])
+        term = mean_masked(huber(pred[name].float() - target), (support > 0).float())
+        parts[f"gt_{name}"] = term
+        metric = metric + coefficient * term
+    rmse = (mean_masked((final - gt).square(), valid) + 1e-6).sqrt() - .001
+    log = mean_masked(huber(final.clamp_min(.1).log() - gt.clamp_min(.1).log(), .1), valid)
+    edge = pair_gradient(final.clamp_min(.1).log(), gt.clamp_min(.1).log(), valid)
+    balanced, active_bins = range_rmse(final, gt, valid, config.get("range_min_pixels", 64))
+    quality = sensor_target(batch)
+    observed = batch["mask"] * (1 - holdout_mask)
+    # Normalize by observed count, so downweighting conflicts is not cancelled.
+    sparse = (huber(raw - batch["sparse"]) * observed * quality).sum() / observed.sum().clamp_min(1)
+    holdout = (huber(raw - batch["sparse"]) * holdout_mask * quality).sum() / holdout_mask.sum().clamp_min(1)
+    trust_mask = observed * valid
+    trust_weights = 1 + 3 * (1 - quality)
+    trust = (F.binary_cross_entropy_with_logits(pred["sensor_logits"].float(), quality, reduction="none")
+             * trust_mask * trust_weights).sum() / (trust_mask * trust_weights).sum().clamp_min(1)
+    kd, kd_edge, coverage, mean_conf = zero, zero, zero, zero
+    fraction = min(1., max(0., float(epoch_progress) / max(1, config["epochs"])))
+    kd_weight = config["kd_weight"] * (1 - .5 * fraction) if config["teacher_enabled"] else 0.
+    if config["teacher_enabled"]:
+        teacher, confidence, forbidden, eligible = teacher_weights(batch, config["kd_conf_min"])
+        coverage = eligible.float().mean()
+        mean_conf = confidence.sum() / eligible.sum().clamp_min(1)
+        for name, coefficient in (("D4", .25), ("D2", .50), ("D1", .25)):
+            depth = pred[name].float()
+            target, weight = pooled(teacher, confidence, depth.shape[-2:])
+            factor = gt.shape[-1] // depth.shape[-1]
+            blocked = F.max_pool2d(forbidden, factor, factor) if factor > 1 else forbidden
+            weight = weight * (blocked == 0)
+            term = huber(depth - target) + .2 * huber(depth.clamp_min(.1).log() - target.clamp_min(.1).log(), .1)
+            kd = kd + coefficient * (term * weight).sum() / (weight > 0).sum().clamp_min(1)
+            if name == "D2":
+                kd_edge = pair_gradient(depth.clamp_min(.1).log(), target.clamp_min(.1).log(), weight)
+    weighted = {"metric": metric, "rmse": config["rmse_weight"] * rmse,
+                "range": config["range_weight"] * balanced, "log": .2 * log, "edge": .05 * edge,
+                "sparse": .02 * sparse, "holdout": .05 * holdout, "trust": .02 * trust,
+                "metric_kd": kd_weight * kd,
+                "teacher_edge": (config["kd_edge_weight"] if config["teacher_enabled"] else 0) * kd_edge}
+    boundary_rmse,barrier,barrier_support,barrier_positive = zero,zero,zero,zero
+    if config.get("boundary_weight",0)>0:
+        band = band_mask(boundary_mask(gt,valid),3).float()*valid
+        boundary_rmse = (mean_masked((final-gt).square(),band)+1e-6).sqrt()-.001
+    if "surface_barrier_logits" in pred and config.get("model_name")!="v5_transport":
+        barrier,barrier_support,barrier_positive = balanced_barrier_loss(pred["surface_barrier_logits"],gt,valid)
+    weighted.update(boundary=config.get("boundary_weight",0)*boundary_rmse,
+                    barrier=config.get("barrier_weight",0)*barrier)
+    robust_mse = mean_masked(2*huber(final-gt,config.get("robust_mse_delta",20.)),valid)
+    weighted["robust_mse"] = config.get("robust_mse_weight",0)*robust_mse
+    tail = tail_risk(final-gt, valid, config.get("tail_threshold_m", 2.))
+    weighted["tail"] = config.get("tail_weight", 0)*tail
+    total = sum(weighted.values())
+    stats = {**parts, "total": total, "metric": metric, "rmse": rmse, "range": balanced,
+             "range_active_bins": active_bins, "sparse": sparse, "holdout": holdout, "trust": trust,
+             "metric_kd": kd, "kd_coverage": coverage, "kd_mean_confidence": mean_conf,
+             "lambda_kd": zero.detach() + kd_weight,
+             "sensor_gate_mean": pred["sensor_gate"].sum() / observed.sum().clamp_min(1),
+             "sensor_gt_conflict_fraction": ((quality < .5) * trust_mask).sum() / trust_mask.sum().clamp_min(1),
+             "abs_delta4_mean": pred["delta4"].abs().mean(), "abs_delta1_mean": pred["delta1"].abs().mean(),
+             "boundary_rmse":boundary_rmse,"barrier":barrier,"barrier_support":barrier_support,
+             "barrier_positive_fraction":barrier_positive,
+             "robust_mse":robust_mse,
+             "tail":tail,"tail_active_fraction":((final-gt).abs()>config.get("tail_threshold_m",2.)).float().mul(valid).sum()/valid.sum().clamp_min(1),
+             "jet_abs_delta4_mean":pred["jet_delta4"].abs().mean() if "jet_delta4" in pred else zero,
+             "jet_neighbour_mass":pred["jet_neighbour_mass"].mean() if "jet_neighbour_mass" in pred else zero,
+             "jet_gradient_abs":pred["jet_gradient_abs"].mean() if "jet_gradient_abs" in pred else zero,
+             "jet_hessian_abs":pred["jet_hessian_abs"].mean() if "jet_hessian_abs" in pred else zero,
+             "jet_phase_abs_delta_mean":pred["jet_phase_delta"].abs().mean() if "jet_phase_delta" in pred else zero,
+             "connection_abs_delta_mean":pred["connection_delta"].abs().mean() if "connection_delta" in pred else zero,
+             "connection_tangent_mean":pred["connection_tangent_magnitude"].mean() if "connection_tangent_magnitude" in pred else zero,
+             "connection_normal_mean":pred["connection_normal_magnitude"].mean() if "connection_normal_magnitude" in pred else zero,
+             "connection_neighbour_mass":pred["connection_neighbour_mass"].mean() if "connection_neighbour_mass" in pred else zero,
+             "phase2_abs_delta_mean":pred["phase2_delta"].abs().mean() if "phase2_delta" in pred else zero,
+             "surface_abs_delta_mean":pred["surface_delta"].abs().mean() if "surface_delta" in pred else zero,
+             "surface_amplitude":pred["surface_amplitude"].mean() if "surface_amplitude" in pred else zero,
+             "surface_barrier_mean":pred["surface_barrier_logits"].sigmoid().mean() if "surface_barrier_logits" in pred else zero,
+             "surface_transport_weight_mean":pred["surface_weights"].sum(1).mean() if "surface_weights" in pred else zero,
+             "surface_transport_abs_delta_mean":pred["surface_transport_delta"].abs().mean() if "surface_transport_delta" in pred else zero,
+             "surface_reaction_abs_delta_mean":pred["surface_reaction_delta"].abs().mean() if "surface_reaction_delta" in pred else zero,
+             **{f"weighted_{key}": value for key, value in weighted.items()}}
+    return total, {key: value.detach() for key, value in stats.items()}

@@ -1,0 +1,71 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "decoder": 1153171712,
+    "flow": 98019328,
+    "metric4": 178061312,
+    "guidance": 17977344,
+    "up4_2": 152165376,
+    "context2": 10272768,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "decoder": 149748,
+    "flow": 2915,
+    "guidance": 200,
+    "context2": 400,
+    "up4_2": 6016,
+    "up2_1": 2488,
+    "context32": 52144,
+    "metric4": 7073,
+    "detail1": 5145
+  },
+  "total_parameters": 572017,
+  "total_conv_linear_macs": 2974140224,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ],
+  "eager_component_median_ms": {
+    "encoder": 6.3897600173950195,
+    "sparse": 3.7186559438705444,
+    "decoder": 4.675071954727173,
+    "flow": 3.535871982574463,
+    "guidance": 0.35942399501800537,
+    "context2": 0.20838399976491928,
+    "up4_2": 1.2216320037841797,
+    "up2_1": 1.2072960138320923,
+    "context32": 0.8043519854545593,
+    "metric4": 1.1013120412826538,
+    "detail1": 1.718783974647522
+  },
+  "device": "NVIDIA A100-SXM4-40GB",
+  "torch": "2.11.0+cu130",
+  "batch": 1,
+  "shape": [
+    352,
+    1216
+  ],
+  "precision": "fp16",
+  "cpu_threads": 6,
+  "channels_last": true,
+  "compiled_total": false,
+  "untrained_weights": false,
+  "median_ms": 25.40441608428955,
+  "p95_ms": 26.26083927154541,
+  "runs": 100,
+  "peak_cuda_allocated_mib": 91.9453125,
+  "inference_includes": "RGB encoder + sparse preparation + context + decoder + flow + metric/detail refinement + learned sensor fusion",
+  "excludes": "disk I/O and host-to-device transfer; there is no teacher/prior model",
+  "component_timings_are_separate_eager_instrumented_pass": true
+}

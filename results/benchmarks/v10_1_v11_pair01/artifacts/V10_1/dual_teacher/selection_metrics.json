@@ -1,0 +1,7 @@
+{
+  "inverse_best": 3.1242354486343116,
+  "joint_best": 1.1041049332434603,
+  "joint_score_definition": "max(RMSE/0.9,iRMSE/3.2)",
+  "default_checkpoint": "best.pth (minimum RMSE)",
+  "targets_achieved_together": false
+}

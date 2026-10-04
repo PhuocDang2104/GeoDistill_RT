@@ -1,0 +1,243 @@
+{
+  "tests": 17,
+  "tests_returncode": 0,
+  "tests_log": "INITIAL (not newly trained) soft=4.7960; hard=8.1888; pre=4.7733\ndual_teacher epoch=0 batch=1/1 loss=11.4881 KD=0.2683\ndual_teacher epoch=0 val_rmse=4.7413 m iRMSE=6.143 best=4.7413; backed up to C:\\Users\\ADMIN\\AppData\\Local\\Temp\\tmpetgiuyl3\\drive\\AnchorFlow_v9_Consensus_DualTeacher_Fresh30_ES\\dual_teacher\nResume dual_teacher: next epoch=1, best=4.7413 m\nINITIAL (not newly trained) soft=6.3945; hard=9.0953; pre=6.3690\nINITIAL (not newly trained) soft=6.3945; hard=9.0953; pre=6.3690\ntest_candidate_origin_translation_and_phase_order (test_contracts.Contracts.test_candidate_origin_translation_and_phase_order) ... ok\ntest_config_and_fresh_contract (test_contracts.Contracts.test_config_and_fresh_contract) ... ok\ntest_consensus_gradients_bf16_and_empty_sparse (test_contracts.Contracts.test_consensus_gradients_bf16_and_empty_sparse) ... ok\ntest_constant_surface_zero_disagreement (test_contracts.Contracts.test_constant_surface_zero_disagreement) ... ok\ntest_early_stop_cumulative_gain_floor_and_raw_best_separation (test_contracts.Contracts.test_early_stop_cumulative_gain_floor_and_raw_best_separation) ... ok\ntest_fresh_train_resume_protocol_and_relative_logging (test_contracts.Contracts.test_fresh_train_resume_protocol_and_relative_logging) ... ok\ntest_no_student_dependency_in_teacher_and_pinned_revisions (test_contracts.Contracts.test_no_student_dependency_in_teacher_and_pinned_revisions) ... ok\ntest_nonfinite_gradient_aborts_before_optimizer_step (test_contracts.Contracts.test_nonfinite_gradient_aborts_before_optimizer_step) ... ok\ntest_nonfinite_loss_aborts_before_backward_checkpoint (test_contracts.Contracts.test_nonfinite_loss_aborts_before_backward_checkpoint) ... ok\ntest_relative_archive_hashes_train_cache_and_val_audit_only (test_contracts.Contracts.test_relative_archive_hashes_train_cache_and_val_audit_only) ... ok\ntest_relative_dtype_and_subset_mismatch_rejected (test_contracts.Contracts.test_relative_dtype_and_subset_mismatch_rejected) ... ok\ntest_relative_forbidden_and_missing_cache_fail (test_contracts.Contracts.test_relative_forbidden_and_missing_cache_fail) ... ok\ntest_relative_near_far_tta_and_positive_affine_invariance (test_contracts.Contracts.test_relative_near_far_tta_and_positive_affine_invariance) ... ok\ntest_relative_schema_and_train_only_access (test_contracts.Contracts.test_relative_schema_and_train_only_access) ... ok\ntest_rgb_flip_teacher_alignment (test_contracts.Contracts.test_rgb_flip_teacher_alignment) ... ok\ntest_two_notebook_snapshots_are_clean_and_parse_without_ui_files (test_contracts.Contracts.test_two_notebook_snapshots_are_clean_and_parse_without_ui_files) ... ok\ntest_v8_control_exact_objective (test_contracts.Contracts.test_v8_control_exact_objective) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 6.434s\n\nOK\n",
+  "colab_copy_without_ipynb_tests_returncode": 0,
+  "source_sha256": "067abc7c68a2802708f7e89976e1905d3eaf531c279057d3516a10cd15204b61",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "torch": "2.11.0+cpu",
+  "real_kitti_samples": [
+    0,
+    199,
+    399
+  ],
+  "output_shapes": [
+    [
+      1,
+      1,
+      352,
+      1216
+    ],
+    [
+      1,
+      1,
+      352,
+      1216
+    ],
+    [
+      1,
+      1,
+      352,
+      1216
+    ]
+  ],
+  "real_kitti_bf16_loss": 7.857502460479736,
+  "real_kitti_bf16_gradients_finite": true,
+  "head_gradient_l1": {
+    "dynamics.state.weight": 0.12670765817165375,
+    "dynamics.reaction.weight": 30.220399856567383,
+    "dynamics.conductance.weight": 0.024285688996315002,
+    "phase2.blend.weight": 0.2858755588531494,
+    "phase2.candidates.weight": 0.29956457018852234
+  },
+  "relative_pair_coverage_fixture": 0.02993345446884632,
+  "weighted_relative_fixture": 0.008706819266080856,
+  "fixture_note": "Real KITTI RGB/sparse/GT. Metric and relative teachers here are SYNTHETIC; not a training accuracy or teacher quality test.",
+  "complexity_v9": {
+    "conv_linear_macs": {
+      "encoder": 536123456,
+      "context32": 25307392,
+      "sparse": 50561280,
+      "decoder": 1153171712,
+      "guidance": 17977344,
+      "dynamics": 386940928,
+      "up4_2": 152165376,
+      "phase2": 142534656,
+      "context2": 10272768,
+      "up2_1": 241410048,
+      "detail1": 511070208
+    },
+    "parameters": {
+      "encoder": 340992,
+      "sparse": 4896,
+      "context32": 52144,
+      "decoder": 149748,
+      "guidance": 200,
+      "dynamics": 10891,
+      "up4_2": 6016,
+      "phase2": 5648,
+      "context2": 400,
+      "up2_1": 2488,
+      "detail1": 5145
+    },
+    "total_parameters": 578568,
+    "total_conv_linear_macs": 3227535168,
+    "mac_exclusions": [
+      "functional 1->9 fixed neighbourhood convolutions",
+      "fixed directional shifts and plane transport",
+      "pooling",
+      "interpolation",
+      "softmax",
+      "finite differences",
+      "elementwise operations",
+      "memory traffic"
+    ]
+  },
+  "complexity_v8_control": {
+    "conv_linear_macs": {
+      "encoder": 536123456,
+      "context32": 25307392,
+      "sparse": 50561280,
+      "decoder": 1153171712,
+      "guidance": 17977344,
+      "dynamics": 386940928,
+      "up4_2": 152165376,
+      "phase2": 129693696,
+      "context2": 10272768,
+      "up2_1": 241410048,
+      "detail1": 511070208
+    },
+    "parameters": {
+      "encoder": 340992,
+      "sparse": 4896,
+      "context32": 52144,
+      "decoder": 149748,
+      "guidance": 200,
+      "dynamics": 10891,
+      "up4_2": 6016,
+      "phase2": 5144,
+      "context2": 400,
+      "up2_1": 2488,
+      "detail1": 5145
+    },
+    "total_parameters": 578064,
+    "total_conv_linear_macs": 3214694208,
+    "mac_exclusions": [
+      "functional 1->9 fixed neighbourhood convolutions",
+      "fixed directional shifts and plane transport",
+      "pooling",
+      "interpolation",
+      "softmax",
+      "finite differences",
+      "elementwise operations",
+      "memory traffic"
+    ]
+  },
+  "onnx_opened_consensus": {
+    "opset": 17,
+    "static_batch": 1,
+    "shape": [
+      352,
+      1216
+    ],
+    "precision": "fp32",
+    "max_abs_errors_m": [
+      3.0517578125e-05,
+      0.000263214111328125
+    ],
+    "untrained_weights": true,
+    "onnxruntime_cpu_parity": true,
+    "teacher_inputs": false,
+    "inputs": [
+      "rgb",
+      "sparse",
+      "mask",
+      "K"
+    ],
+    "outputs": [
+      "depth_m"
+    ],
+    "operators": [
+      "Abs",
+      "Add",
+      "And",
+      "AveragePool",
+      "Cast",
+      "Clip",
+      "Concat",
+      "Constant",
+      "ConstantOfShape",
+      "Conv",
+      "DepthToSpace",
+      "Div",
+      "Exp",
+      "Expand",
+      "Gather",
+      "Greater",
+      "Identity",
+      "IsInf",
+      "IsNaN",
+      "Less",
+      "Log",
+      "Max",
+      "Min",
+      "Mul",
+      "Neg",
+      "Not",
+      "Or",
+      "Pad",
+      "Reciprocal",
+      "ReduceSum",
+      "Relu",
+      "Reshape",
+      "Resize",
+      "Shape",
+      "Sigmoid",
+      "Slice",
+      "Softmax",
+      "Softplus",
+      "Split",
+      "Sqrt",
+      "Squeeze",
+      "Sub",
+      "Tanh",
+      "Transpose",
+      "Unsqueeze",
+      "Where"
+    ],
+    "tensorrt_engine_built": false,
+    "target_device_latency_measured": false
+  },
+  "teacher_adapter": {
+    "model_id": "depth-anything/DA3MONO-LARGE",
+    "model_revision": "f465978e618db8cc79c83b8bbf24964857db1875",
+    "code_revision": "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4",
+    "official_tensor_keys_and_shapes_matched": 406,
+    "official_parameters": 334171394,
+    "random_weight_official_network_forward_shape": [
+      1,
+      1,
+      56,
+      112
+    ],
+    "pretrained_tensor_values_downloaded": false,
+    "pretrained_teacher_accuracy_tested": false,
+    "header_only_bytes": 48872,
+    "full_teacher_generation_tested": false
+  },
+  "student_checkpoint_loaded": false,
+  "gpu_training_tested": false,
+  "gpu_latency_measured": false,
+  "new_training_accuracy_measured": false,
+  "verified_files": {
+    "01_Generate_Relative_Teacher_DA3MONO_TAR2000_contract.json": "3fd7c88d0246ee6fdc9b2bfdaa43d34315715d01952f9f6380092f48fec4fedf",
+    "02_Train_V9_DualTeacher_Fresh30_CompareV8_contract.json": "ff456a0834dec8f29f18b765ddecc9747b7ea9e14482e767f7a2797dd95b8402",
+    "boundaries.py": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+    "config.json": "84202df84966586917642abf5c0a3feac4a9cba586a84f5d3ac75687cefac4bd",
+    "core.py": "001cd4d034081a345c296ab71bc0d6f4da5711cf7051d5a110a16798f4465b95",
+    "data.py": "022cb786ec8316cedee09b825d7e34bd516485d05bf8982a9da4661115cc4476",
+    "generate_relative.py": "d12b751e56bbf8de77c9726c95a5014072f819466fbee23183be7393cc61d838",
+    "losses.py": "b43a9122f95df42bd836c6ab4108334dc7b148406929c47dd384b787e572955a",
+    "losses_v8.py": "42e6ab9f20b3806c76901e8f83cadd632590b917e6a0ca106359ea09e60181bc",
+    "loss_helpers.py": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+    "metrics.py": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+    "model.py": "573ee254b23eb443f97fd2d53353574d35867cee169f82183627edb09c233c36",
+    "model_v8.py": "06cb6b873b0af9912cdb93352b6a776fb5c86b65cbab0f4136011c4e349a85f8",
+    "relative_data.py": "08f2f63ac3669e3c37e38f6a7487dde5e41d2e69166a7be9bca856bfa5c4dddc",
+    "requirements.txt": "a0edcafea8168f992466fd924580e498623cbd0b0cbd4047763b3c171320968b",
+    "run.py": "1a4739df215d044e84f5abdb82b7a9bb406c162ac41dc8c08a758be9430bb63c",
+    "support.py": "c2e77258c5ee9b30671a2866fee38adc45513fb71e8c603ff4bdb2e0917977dd",
+    "teacher_requirements.txt": "6ab2ce63e334daad182d4f83cf2a753c37884951f23ccab36376034f1c9717ce",
+    "test_contracts.py": "d4f1938aed3fb4a44c413824af184e47c56cb297e3fec718277cf8ea442f05ea"
+  }
+}

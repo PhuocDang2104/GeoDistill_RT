@@ -1,0 +1,109 @@
+{
+  "conv_linear_macs": {
+    "encoder": 536123456,
+    "context32": 25307392,
+    "sparse": 50561280,
+    "decoder": 1153171712,
+    "guidance": 17977344,
+    "dynamics": 333864960,
+    "up4_2": 152165376,
+    "phase2": 228997120,
+    "context2": 10272768,
+    "phase_context": 26002944,
+    "up2_1": 241410048,
+    "detail1": 511070208
+  },
+  "parameters": {
+    "encoder": 340992,
+    "sparse": 4896,
+    "context32": 52144,
+    "decoder": 149748,
+    "guidance": 200,
+    "dynamics": 10924,
+    "up4_2": 6016,
+    "phase2": 8948,
+    "context2": 400,
+    "up2_1": 2488,
+    "detail1": 5145,
+    "phase_context": 1044
+  },
+  "total_parameters": 582945,
+  "total_conv_linear_macs": 3286924608,
+  "mac_exclusions": [
+    "functional 1->9 fixed neighbourhood convolutions",
+    "fixed directional shifts and plane transport",
+    "pooling",
+    "interpolation",
+    "softmax",
+    "finite differences",
+    "elementwise operations",
+    "memory traffic"
+  ],
+  "eager_component_median_ms": {
+    "encoder": 6.836223840713501,
+    "sparse": 3.8507519960403442,
+    "context32": 0.8483840227127075,
+    "decoder": 4.97868800163269,
+    "guidance": 0.3819520026445389,
+    "dynamics": 7.547391891479492,
+    "up4_2": 1.2784639596939087,
+    "phase2": 3.7196799516677856,
+    "context2": 0.23244799673557281,
+    "up2_1": 1.3107199668884277,
+    "detail1": 1.7822719812393188,
+    "phase_context": 0.4787199944257736
+  },
+  "device": "NVIDIA A100-SXM4-80GB",
+  "torch": "2.11.0+cu130",
+  "batch": 1,
+  "shape": [
+    352,
+    1216
+  ],
+  "precision": "bf16",
+  "cpu_threads": 4,
+  "channels_last": true,
+  "compiled_total": false,
+  "runtime_backend": {
+    "torch": "2.11.0+cu130",
+    "cuda_build": "13.0",
+    "cudnn_version": 92700,
+    "cudnn_enabled": true,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": false,
+    "cudnn_allow_tf32": true,
+    "matmul_allow_tf32": true,
+    "environment": {
+      "CUDA_VISIBLE_DEVICES": "0",
+      "LD_LIBRARY_PATH": "/usr/local/lib/python3.13/dist-packages/cv2/../../lib64:/usr/lib64-nvidia"
+    },
+    "gpu": "NVIDIA A100-SXM4-80GB",
+    "device_capability": [
+      8,
+      0
+    ],
+    "native_bf16_supported": true,
+    "free_vram_mib": 79948.0,
+    "total_vram_mib": 81152.75,
+    "process_allocated_mib": 10.65576171875,
+    "process_reserved_mib": 266.0
+  },
+  "untrained_weights": false,
+  "median_ms": 33.88876724243164,
+  "p95_ms": 39.56884479522705,
+  "runs": 100,
+  "peak_cuda_allocated_mib": 108.5029296875,
+  "inference_includes": "RGB encoder + sparse pyramid + F32 context + decoder + fixed two/three shared jet Euler steps + five-jet query + context-guided phase lift/detail + soft sensor fusion",
+  "phase_query": "five-jet consensus + sparse-innovation metric readout; minmod base jet",
+  "excludes": "disk I/O and host-to-device transfer; there is no teacher/prior model",
+  "component_timings_are_separate_eager_instrumented_pass": true,
+  "real_scene_profile": {
+    "samples": 100,
+    "indices": "i*13 mod400",
+    "wall_median_ms": 35.11503000027005,
+    "wall_p95_ms": 38.79853875046137,
+    "executed_nfe": 2,
+    "includes_host_launch_and_finish_sync": true,
+    "excludes_io_and_h2d": true
+  }
+}

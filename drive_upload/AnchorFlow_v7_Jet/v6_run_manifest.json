@@ -1,0 +1,114 @@
+{
+  "protocol": {
+    "config": {
+      "architecture": "AnchorFlow-v6-RayConnection",
+      "metric_tar": "metric_coarse_train_2000.tar",
+      "encoder": "mobilenetv4_conv_small_050.e3000_r224_in1k",
+      "encoder_pretrained": false,
+      "freeze_encoder_bn": true,
+      "flow_steps": 3,
+      "epochs": 15,
+      "parent_epoch": 14,
+      "init_source": "drive_v5",
+      "init_architecture": "AnchorFlow-v5-PiecewiseSurface",
+      "init_sha256": "c5eedfd0fbd172a68263d4d2652ccd55c287c27ecfdcbb908fa2d5eb55de5997",
+      "batch_size": 4,
+      "accumulation": 1,
+      "seed": 42,
+      "learning_rate": 0.0001,
+      "encoder_lr_ratio": 0.1,
+      "new_lr_ratio": 2,
+      "weight_decay": 1e-05,
+      "warmup_epochs": 1,
+      "min_lr_ratio": 0.05,
+      "gradient_clip": 1,
+      "amp": "fp16",
+      "channels_last": true,
+      "fused_adamw": true,
+      "holdout_rate": 0.1,
+      "horizontal_flip": true,
+      "teacher_enabled": true,
+      "teacher_conf_min": 0.1,
+      "kd_conf_min": 0.5,
+      "min_teacher_pixels": 1024,
+      "kd_weight": 0.05,
+      "kd_edge_weight": 0.02,
+      "range_weight": 0.1,
+      "range_min_pixels": 64,
+      "rmse_weight": 0.25,
+      "model_name": "v6_connection",
+      "boundary_weight": 0.05,
+      "barrier_weight": 0.01,
+      "robust_mse_weight": 0.1,
+      "robust_mse_delta": 20.0,
+      "validation_diagnostics_every": 1,
+      "parent_cumulative_epoch": 44
+    },
+    "data": {
+      "train": 1600,
+      "val": 400,
+      "test": 1000,
+      "manifest_sha256": "f0f482799db63b1e89f4ef21be0aff71cc409bac8bde20259192f3bc1cd40ddb",
+      "teacher_report": {
+        "signature": {
+          "archive_bytes": 5726914560,
+          "archive_mtime_ns": 1784468459000000000,
+          "selected_sha256": "65565b3fdfa4fa48aba775bc8c9186fc25140ada6d9c4d62bd49c7804aaa7856",
+          "schema": 3,
+          "shape": [
+            352,
+            1216
+          ],
+          "confidence_threshold": 0.1
+        },
+        "inspected": 2000,
+        "cached_train": 1600,
+        "cached_val": 0,
+        "selected_teacher_content_sha256": "06bd17a84faa5020692873ee598498486d2030f588b7429321fa0a70d9ebb7a6",
+        "mean_valid_ratio": 0.9999665445574162,
+        "mean_confident_ratio": 0.9849477468974269,
+        "teacher_is_privileged_training_target": true,
+        "GT_overlap_is_not_independent_teacher_accuracy": true
+      },
+      "min_non_gt_teacher_pixels": 176221,
+      "median_non_gt_teacher_pixels": 307456.0,
+      "effective_kd_confidence_threshold": 0.5,
+      "size": [
+        352,
+        1216
+      ],
+      "depth_scale": 256,
+      "validation_teacher_used": false
+    },
+    "source_sha256": "2a0f3f8afafdf6bbcebc30f21c9988aa2d26e67a918cdb0dca637832b8ea1ba7"
+  },
+  "parameters": 612896,
+  "gpu": "NVIDIA A100-SXM4-40GB",
+  "torch": "2.11.0+cu130",
+  "teacher_at_inference": false,
+  "pretrained_normalization": [
+    0.5,
+    0.5,
+    0.5
+  ],
+  "parent_epoch": 14,
+  "parent_sha256": "c5eedfd0fbd172a68263d4d2652ccd55c287c27ecfdcbb908fa2d5eb55de5997",
+  "output_policy": "learned sensor reliability fusion",
+  "extra_epochs": 15,
+  "note": "V6 default warm-starts actual Drive V5. Fresh optimizer/schedule; exact no-op new heads. Historical V5 comparison mixes architecture, loss and batch recipe; optional V5 control shares the V6 recipe.",
+  "boundary_protocol": {
+    "absolute_jump_m": 1.0,
+    "relative_jump": 0.05,
+    "bands_chebyshev_px": [
+      1,
+      2,
+      3,
+      5,
+      10
+    ],
+    "quarter_max_relative_std": 0.05,
+    "quarter_min_gt_count": 2
+  },
+  "recipe_sha256": "d55db618ad34163e068310ada4c8b6d5153bb19eb413fd4503b5db2b10f883bd",
+  "model_name": "v6_connection"
+}

@@ -1,4 +1,10 @@
 *.sh text eol=lf
 
-# Frozen Drive bundle hashes cover exact bytes; do not rewrite line endings.
-drive_upload/AnchorFlow_v6_Connection/** -text whitespace=cr-at-eol
+# Markdown uses intentional two-space hard line breaks.
+*.md whitespace=cr-at-eol,-blank-at-eol
+
+# Frozen bundles retain exact bytes, including historical blank lines at EOF.
+drive_upload/** -text whitespace=cr-at-eol,-blank-at-eof
+drive_upload/**/*.md -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+# Curated benchmark evidence is also byte-locked by artifact_manifest.json.
+results/benchmarks/** -text whitespace=cr-at-eol
