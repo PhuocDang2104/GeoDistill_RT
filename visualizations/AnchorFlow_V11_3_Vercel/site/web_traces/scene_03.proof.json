@@ -1,0 +1,225 @@
+{
+  "architecture": "AnchorFlow V11_3",
+  "sample_id": "2011_09_26_drive_0032_sync_image_0000000327_image_03",
+  "validation_index": 160,
+  "scene_slot": 3,
+  "checkpoint_stage_epoch": 9,
+  "cumulative_epoch_index": 32,
+  "checkpoint_sha256": "c0914220e2c900eebf8fe918fdba21fde1faf2dbb3c73608d2a3efecaf7a5aad",
+  "source_sha256": "34d025bd12ca62603d52ac9e86d8f38572c62b038491b58466f389b0302f7b74",
+  "precision": "CPU FP32 replay, not native BF16 benchmark",
+  "frame_count": 41,
+  "jet_shape": [
+    6,
+    88,
+    304
+  ],
+  "fine_jet_shape": [
+    6,
+    176,
+    608
+  ],
+  "roi": {
+    "x": 65,
+    "y": 45,
+    "w": 16,
+    "h": 12
+  },
+  "fine_frames": [
+    "initial",
+    "internal midpoint RK stage (not exact half-time solution)",
+    "terminal"
+  ],
+  "solver": {
+    "method": "bosh3",
+    "nfe": 10,
+    "accepted_steps": 3,
+    "rejected_steps": 0,
+    "terminal_time": 1.0,
+    "accepted_h": [
+      0.25,
+      0.667225695214936,
+      0.08277430478506398
+    ],
+    "max_step": 1.0,
+    "forced_half": false
+  },
+  "fine_solver": {
+    "method": "fixed_midpoint_rk2",
+    "nfe": 2,
+    "fixed_steps": 1,
+    "step_size": 1.0,
+    "terminal_time": 1.0,
+    "rejected_steps": 0,
+    "tolerance_controlled": false,
+    "state_precision": "fp32",
+    "chart_state": true
+  },
+  "replay_max_difference_m": 0.0,
+  "field_decomposition_max_difference": 0.0,
+  "consensus_max_difference_m": 0.0,
+  "observer_rhs_calls_not_production_nfe": 41,
+  "not_full400_metrics": true,
+  "not_anonymous_test_scene": true,
+  "native_metrics": {
+    "D16": {
+      "rmse_m": 3.231561978412732,
+      "mae_m": 1.4343800965647022,
+      "pixels": 827
+    },
+    "D8": {
+      "rmse_m": 2.4431944160549364,
+      "mae_m": 1.1265347927955365,
+      "pixels": 2846
+    },
+    "D0": {
+      "rmse_m": 2.212238052054986,
+      "mae_m": 0.9660100764257801,
+      "pixels": 9198
+    },
+    "D4": {
+      "rmse_m": 2.1053173211214,
+      "mae_m": 0.7704797874821039,
+      "pixels": 9198
+    },
+    "D2_base": {
+      "rmse_m": 1.8392469452540612,
+      "mae_m": 0.7610503693974758,
+      "pixels": 25685
+    },
+    "D2_query": {
+      "rmse_m": 1.689165343278216,
+      "mae_m": 0.7224052130305769,
+      "pixels": 25685
+    },
+    "D2_pre_fine": {
+      "rmse_m": 1.6453737069872918,
+      "mae_m": 0.6262403774428558,
+      "pixels": 25685
+    },
+    "D2": {
+      "rmse_m": 1.6435351197164192,
+      "mae_m": 0.6285303244962984,
+      "pixels": 25685
+    },
+    "D1_base": {
+      "rmse_m": 1.5040222361074402,
+      "mae_m": 0.6572482385927612,
+      "pixels": 47939
+    },
+    "D1_pre_pir": {
+      "rmse_m": 1.4773199078597044,
+      "mae_m": 0.6278666671120794,
+      "pixels": 47939
+    },
+    "D1": {
+      "rmse_m": 1.4745920015759395,
+      "mae_m": 0.6234474883573584,
+      "pixels": 47939
+    },
+    "D_full": {
+      "rmse_m": 1.4491432644786577,
+      "mae_m": 0.604347569500988,
+      "pixels": 47939
+    },
+    "D_full_pre_pir": {
+      "rmse_m": 1.4510693400626415,
+      "mae_m": 0.6079253270003949,
+      "pixels": 47939
+    }
+  },
+  "stage_changes": [
+    {
+      "before": "D0",
+      "after": "D4",
+      "reference": "same grid",
+      "mean_abs_m": 2.0286061763763428,
+      "min_m": -28.39192771911621,
+      "max_m": 19.597660064697266
+    },
+    {
+      "before": "D4",
+      "after": "D2_base",
+      "reference": "nearest-expanded previous grid for display only",
+      "mean_abs_m": 1.0081435441970825,
+      "min_m": -19.561508178710938,
+      "max_m": 40.70612716674805
+    },
+    {
+      "before": "D2_base",
+      "after": "D2_query",
+      "reference": "same grid",
+      "mean_abs_m": 0.8934566378593445,
+      "min_m": -23.547470092773438,
+      "max_m": 12.331363677978516
+    },
+    {
+      "before": "D2_query",
+      "after": "D2_pre_fine",
+      "reference": "same grid",
+      "mean_abs_m": 0.632588803768158,
+      "min_m": -10.616504669189453,
+      "max_m": 24.38037109375
+    },
+    {
+      "before": "D2_pre_fine",
+      "after": "D2",
+      "reference": "same grid",
+      "mean_abs_m": 0.19931036233901978,
+      "min_m": -3.138469696044922,
+      "max_m": 2.0983638763427734
+    },
+    {
+      "before": "D2",
+      "after": "D1_base",
+      "reference": "nearest-expanded previous grid for display only",
+      "mean_abs_m": 0.29716771841049194,
+      "min_m": -18.73712158203125,
+      "max_m": 27.725799560546875
+    },
+    {
+      "before": "D1_base",
+      "after": "D1_pre_pir",
+      "reference": "same grid",
+      "mean_abs_m": 0.2902998626232147,
+      "min_m": -3.270111083984375,
+      "max_m": 2.7102890014648438
+    },
+    {
+      "before": "D1_pre_pir",
+      "after": "D1",
+      "reference": "same grid",
+      "mean_abs_m": 0.04454159736633301,
+      "min_m": -2.1863059997558594,
+      "max_m": 2.1169815063476562
+    },
+    {
+      "before": "D1",
+      "after": "D_full",
+      "reference": "same grid",
+      "mean_abs_m": 0.010498873889446259,
+      "min_m": -31.58559799194336,
+      "max_m": 17.5523738861084
+    }
+  ],
+  "web_contract": {
+    "native_depth": "lossless Float32, all pixels",
+    "coarse_value_trajectory": "41 Float32 observations, all pixels",
+    "coarse_six_coefficient_roi": [
+      65,
+      45,
+      16,
+      12
+    ],
+    "fine_value_chart": "actual initial/internal-mid/terminal chart channel0, all pixels",
+    "fine_six_coefficient_roi": [
+      130,
+      90,
+      32,
+      24
+    ],
+    "fine_dense_extension": "z(t)=z0+(t-t*t)*k1+t*t*k2; order2 continuous approximation, not exact ODE solution",
+    "lossless_bytes": 20048768,
+    "gzip_bytes": 8251108
+  }
+}

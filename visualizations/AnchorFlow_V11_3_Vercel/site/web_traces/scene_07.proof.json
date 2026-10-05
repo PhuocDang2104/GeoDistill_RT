@@ -1,0 +1,225 @@
+{
+  "architecture": "AnchorFlow V11_3",
+  "sample_id": "2011_09_26_drive_0028_sync_image_0000000291_image_02",
+  "validation_index": 120,
+  "scene_slot": 7,
+  "checkpoint_stage_epoch": 9,
+  "cumulative_epoch_index": 32,
+  "checkpoint_sha256": "c0914220e2c900eebf8fe918fdba21fde1faf2dbb3c73608d2a3efecaf7a5aad",
+  "source_sha256": "34d025bd12ca62603d52ac9e86d8f38572c62b038491b58466f389b0302f7b74",
+  "precision": "CPU FP32 replay, not native BF16 benchmark",
+  "frame_count": 41,
+  "jet_shape": [
+    6,
+    88,
+    304
+  ],
+  "fine_jet_shape": [
+    6,
+    176,
+    608
+  ],
+  "roi": {
+    "x": 65,
+    "y": 45,
+    "w": 16,
+    "h": 12
+  },
+  "fine_frames": [
+    "initial",
+    "internal midpoint RK stage (not exact half-time solution)",
+    "terminal"
+  ],
+  "solver": {
+    "method": "bosh3",
+    "nfe": 10,
+    "accepted_steps": 3,
+    "rejected_steps": 0,
+    "terminal_time": 1.0,
+    "accepted_h": [
+      0.25,
+      0.6523068108250314,
+      0.09769318917496861
+    ],
+    "max_step": 1.0,
+    "forced_half": false
+  },
+  "fine_solver": {
+    "method": "fixed_midpoint_rk2",
+    "nfe": 2,
+    "fixed_steps": 1,
+    "step_size": 1.0,
+    "terminal_time": 1.0,
+    "rejected_steps": 0,
+    "tolerance_controlled": false,
+    "state_precision": "fp32",
+    "chart_state": true
+  },
+  "replay_max_difference_m": 0.0,
+  "field_decomposition_max_difference": 0.0,
+  "consensus_max_difference_m": 0.0,
+  "observer_rhs_calls_not_production_nfe": 41,
+  "not_full400_metrics": true,
+  "not_anonymous_test_scene": true,
+  "native_metrics": {
+    "D16": {
+      "rmse_m": 2.3712155282411795,
+      "mae_m": 1.2482819270890197,
+      "pixels": 966
+    },
+    "D8": {
+      "rmse_m": 2.220893916134764,
+      "mae_m": 1.1689548870324367,
+      "pixels": 3306
+    },
+    "D0": {
+      "rmse_m": 2.041268483129822,
+      "mae_m": 1.0423086161341582,
+      "pixels": 9839
+    },
+    "D4": {
+      "rmse_m": 2.0516652556291377,
+      "mae_m": 0.901550583655738,
+      "pixels": 9839
+    },
+    "D2_base": {
+      "rmse_m": 1.8247273770925385,
+      "mae_m": 0.902361711354875,
+      "pixels": 24399
+    },
+    "D2_query": {
+      "rmse_m": 1.7147205338486682,
+      "mae_m": 0.8461068968259094,
+      "pixels": 24399
+    },
+    "D2_pre_fine": {
+      "rmse_m": 1.6758805045891236,
+      "mae_m": 0.7797768861476777,
+      "pixels": 24399
+    },
+    "D2": {
+      "rmse_m": 1.6775769643994871,
+      "mae_m": 0.7860373490911765,
+      "pixels": 24399
+    },
+    "D1_base": {
+      "rmse_m": 1.6450415706406214,
+      "mae_m": 0.8376331527122178,
+      "pixels": 42120
+    },
+    "D1_pre_pir": {
+      "rmse_m": 1.6211240362660202,
+      "mae_m": 0.8005699834592661,
+      "pixels": 42120
+    },
+    "D1": {
+      "rmse_m": 1.618354523585431,
+      "mae_m": 0.794930022156816,
+      "pixels": 42120
+    },
+    "D_full": {
+      "rmse_m": 1.6095012405822666,
+      "mae_m": 0.7727851473707759,
+      "pixels": 42120
+    },
+    "D_full_pre_pir": {
+      "rmse_m": 1.6100271733636737,
+      "mae_m": 0.7767526875986785,
+      "pixels": 42120
+    }
+  },
+  "stage_changes": [
+    {
+      "before": "D0",
+      "after": "D4",
+      "reference": "same grid",
+      "mean_abs_m": 1.3527226448059082,
+      "min_m": -8.140262603759766,
+      "max_m": 17.470558166503906
+    },
+    {
+      "before": "D4",
+      "after": "D2_base",
+      "reference": "nearest-expanded previous grid for display only",
+      "mean_abs_m": 0.848289966583252,
+      "min_m": -21.474857330322266,
+      "max_m": 16.916379928588867
+    },
+    {
+      "before": "D2_base",
+      "after": "D2_query",
+      "reference": "same grid",
+      "mean_abs_m": 0.675946056842804,
+      "min_m": -14.256195068359375,
+      "max_m": 8.131477355957031
+    },
+    {
+      "before": "D2_query",
+      "after": "D2_pre_fine",
+      "reference": "same grid",
+      "mean_abs_m": 0.47412553429603577,
+      "min_m": -7.236045837402344,
+      "max_m": 13.126201629638672
+    },
+    {
+      "before": "D2_pre_fine",
+      "after": "D2",
+      "reference": "same grid",
+      "mean_abs_m": 0.23222635686397552,
+      "min_m": -2.324321746826172,
+      "max_m": 2.0654335021972656
+    },
+    {
+      "before": "D2",
+      "after": "D1_base",
+      "reference": "nearest-expanded previous grid for display only",
+      "mean_abs_m": 0.25659510493278503,
+      "min_m": -24.179542541503906,
+      "max_m": 12.802970886230469
+    },
+    {
+      "before": "D1_base",
+      "after": "D1_pre_pir",
+      "reference": "same grid",
+      "mean_abs_m": 0.22061613202095032,
+      "min_m": -3.520233154296875,
+      "max_m": 2.5584487915039062
+    },
+    {
+      "before": "D1_pre_pir",
+      "after": "D1",
+      "reference": "same grid",
+      "mean_abs_m": 0.03400275856256485,
+      "min_m": -1.8230323791503906,
+      "max_m": 2.1457443237304688
+    },
+    {
+      "before": "D1",
+      "after": "D_full",
+      "reference": "same grid",
+      "mean_abs_m": 0.014152156189084053,
+      "min_m": -8.980443954467773,
+      "max_m": 10.989604949951172
+    }
+  ],
+  "web_contract": {
+    "native_depth": "lossless Float32, all pixels",
+    "coarse_value_trajectory": "41 Float32 observations, all pixels",
+    "coarse_six_coefficient_roi": [
+      65,
+      45,
+      16,
+      12
+    ],
+    "fine_value_chart": "actual initial/internal-mid/terminal chart channel0, all pixels",
+    "fine_six_coefficient_roi": [
+      130,
+      90,
+      32,
+      24
+    ],
+    "fine_dense_extension": "z(t)=z0+(t-t*t)*k1+t*t*k2; order2 continuous approximation, not exact ODE solution",
+    "lossless_bytes": 20048768,
+    "gzip_bytes": 8448967
+  }
+}

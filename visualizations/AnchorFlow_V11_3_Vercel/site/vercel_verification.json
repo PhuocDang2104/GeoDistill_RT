@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "browser": "154.0.8037.97",
+  "http_static_build": true,
+  "checked_scenes": [
+    {
+      "scene": 1,
+      "rmse_m": 0.6937508094035042
+    },
+    {
+      "scene": 2,
+      "rmse_m": 0.8988314724777682
+    },
+    {
+      "scene": 3,
+      "rmse_m": 1.4491432644785331
+    },
+    {
+      "scene": 4,
+      "rmse_m": 1.0612353333820388
+    },
+    {
+      "scene": 5,
+      "rmse_m": 0.6093142152489534
+    },
+    {
+      "scene": 6,
+      "rmse_m": 1.0319009142238227
+    },
+    {
+      "scene": 7,
+      "rmse_m": 1.609501240582145
+    },
+    {
+      "scene": 8,
+      "rmse_m": 0.8645097515567626
+    },
+    {
+      "scene": 9,
+      "rmse_m": 0.8968242127274494
+    },
+    {
+      "scene": 10,
+      "rmse_m": 0.4457838544295412
+    }
+  ],
+  "native_metric_tolerance": 1e-09,
+  "hero_full_width": true,
+  "fine_slider_ui": true,
+  "roi_no_fabrication": true,
+  "full_image_coefficients": true,
+  "two_way_jet_slider_sync": true,
+  "native_cell_footprint": true,
+  "fixed_trajectory_height_range": true,
+  "direct_wipe_drag_both_modes": true,
+  "hosted_png_export": true,
+  "complete_27_second_pipeline_playback": true,
+  "js_errors": [],
+  "http_failures": [],
+  "no_remote_deployment_performed": true
+}
