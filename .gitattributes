@@ -8,3 +8,6 @@ drive_upload/** -text whitespace=cr-at-eol,-blank-at-eof
 drive_upload/**/*.md -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
 # Curated benchmark evidence is also byte-locked by artifact_manifest.json.
 results/benchmarks/** -text whitespace=cr-at-eol
+
+# Production manifests verify raw bytes; clones must not rewrite line endings.
+production/AnchorFlow_V11_3_FullKITTI/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol

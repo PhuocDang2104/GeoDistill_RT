@@ -1,0 +1,21 @@
+services:
+  trainer:
+    image: anchorflow-v11-3-full:server-1
+    build:
+      context: .
+      args:
+        TORCH_CUDA_ARCH_LIST: ${CUDA_ARCH_LIST:-8.0;8.6;8.9;9.0+PTX}
+    command: [all, --config, /config/config.json]
+    gpus: all
+    init: true
+    restart: "no"
+    shm_size: 8gb
+    stop_grace_period: 10m
+    volumes:
+      - ${DATA_DIR:-./server-data}:/data
+      - ${RUNS_DIR:-./server-runs}:/runs
+      - ${CACHE_DIR:-./server-cache}:/cache
+      - ${CONFIG_FILE:-./config.json}:/config/config.json:ro
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: "3"}

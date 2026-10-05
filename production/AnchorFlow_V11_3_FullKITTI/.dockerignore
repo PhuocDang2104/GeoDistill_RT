@@ -1,0 +1,10 @@
+server-data
+server-runs
+server-cache
+server-config
+__pycache__
+**/__pycache__
+*.zip
+*.pth
+.env
+*.log

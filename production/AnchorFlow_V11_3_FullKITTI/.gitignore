@@ -1,0 +1,6 @@
+server-data/
+server-runs/
+server-cache/
+server-config/
+environment-freeze.txt
+*.log
