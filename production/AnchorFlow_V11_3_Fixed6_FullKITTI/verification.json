@@ -1,0 +1,33 @@
+{
+  "verified_at_utc": "2026-10-13T08:35:53.069721+00:00",
+  "passed_cpu_contracts": true,
+  "tests_passed": 16,
+  "seconds": 11.390999999974156,
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "parsed_python_files": 39,
+  "source_sha256": "ec6982e2470a3291bde1877faf31cf84cb62f52428895f81100fc7901ac0bba3",
+  "manifest_integrity": "Bundle integrity PASS",
+  "preserved_parent_files": 34,
+  "model_parameters": 584845,
+  "coarse_method": "classic_rk3_two_half_steps",
+  "coarse_nfe": 6,
+  "fine_nfe": 2,
+  "total_field_nfe": 8,
+  "horizon": 1.0,
+  "default_batch": 2,
+  "default_amp": "bf16",
+  "default_cuda_arch": "12.0",
+  "dry_run": "{\n  \"data\": \"C:\\\\Users\\\\ADMIN\\\\Desktop\\\\GeoDistill_RT\\\\fixed6-dry-only\\\\data\",\n  \"runs\": \"C:\\\\Users\\\\ADMIN\\\\Desktop\\\\GeoDistill_RT\\\\fixed6-dry-only\\\\runs\",\n  \"cache\": \"C:\\\\Users\\\\ADMIN\\\\Desktop\\\\GeoDistill_RT\\\\fixed6-dry-only\\\\cache\",\n  \"runtime_config\": \"C:\\\\Users\\\\ADMIN\\\\Desktop\\\\GeoDistill_RT\\\\fixed6-dry-only\\\\config\\\\v11_3_fixed6_b2.json\",\n  \"cuda_arch\": \"12.0\",\n  \"initialization\": \"fresh_imagenet_encoder\",\n  \"epochs\": 40,\n  \"batch_size\": 2,\n  \"coarse_nfe\": 6,\n  \"fine_nfe\": 2,\n  \"total_field_nfe\": 8,\n  \"results\": \"/runs/v11_3_fixed6_fresh40_b2\"\n}\nDry-run only: no files/containers/data changed.",
+  "docker_compose": "configuration PASS; image not built",
+  "bash": "syntax PASS",
+  "gpu_teacher_smoke_tested": false,
+  "gpu_student_smoke_tested": false,
+  "docker_image_built": false,
+  "full_training_run": false,
+  "limitations": [
+    "No 5060 Ti VRAM/latency measurement",
+    "Real teacher/student GPU gates required before full training",
+    "Fixed RK3 and B2 change training protocol; not matched adaptive B4 ablation",
+    "CPU resume evidence is not bitwise CUDA reproducibility"
+  ]
+}

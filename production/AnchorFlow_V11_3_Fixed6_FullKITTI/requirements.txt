@@ -1,0 +1,15 @@
+# CUDA torch/torchvision are supplied by the image; never reinstall a CPU wheel.
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+timm==1.0.26
+torchdiffeq==0.2.5
+huggingface-hub==0.36.0
+safetensors==0.6.2
+einops==0.8.1
+omegaconf==2.3.0
+addict==2.4.0
+scipy==1.15.3
+e3nn==0.5.8
+Pillow==11.3.0
+psutil==7.0.0
+ninja==1.11.1.4
