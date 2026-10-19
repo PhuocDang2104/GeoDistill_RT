@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-19",
+  "passed": true,
+  "device": "CPU",
+  "tests": 15,
+  "variant": "G_s4_upir_norel",
+  "parameters": 583880,
+  "coarse_nfe": 4,
+  "fine_nfe": 0,
+  "teacher_enabled": true,
+  "relative_enabled": false,
+  "relative_weight": 0,
+  "verified": [
+    "all U-PIR model/backward/ONNX/init contracts",
+    "relative loss never called and batch needs no relative tensors",
+    "metric teacher path retained, relative statistics exactly0",
+    "prepare never opens relative archive",
+    "comparison excludes ONLY relative metadata",
+    "all vendor and deployment bytes identical to original U-PIR"
+  ],
+  "not_verified": [
+    "A100 training/TRT/runtime/full400 accuracy",
+    "relative ablation metric effect"
+  ]
+}

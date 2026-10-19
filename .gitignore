@@ -50,6 +50,8 @@ docker/validation/
 *.pt
 *.onnx
 *.safetensors
+*.plan
+*.engine
 results/**/export_work/
 
 # Personal IDE settings and diagnostic scratch files are not team source.
@@ -64,3 +66,6 @@ results/**/export_work/
 !/results/README.md
 !/results/benchmarks/
 !/results/anchorflow_pair_local_verification.json
+
+# Recoverable retired releases; active baselines/evidence remain in Git.
+/.archive/

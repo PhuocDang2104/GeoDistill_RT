@@ -1,0 +1,2 @@
+# NVIDIA binary SDK, inference only. Keep the Colab-provided PyTorch CUDA installation.
+tensorrt-cu12==10.13.3.9.post1

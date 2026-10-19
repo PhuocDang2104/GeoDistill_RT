@@ -1,0 +1,82 @@
+{
+  "source": "AnchorFlow_v11_3_PhaseInnovation",
+  "files": {
+    "core.py": {
+      "original_sha256": "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d",
+      "capture_safe_constant_replacements": 0
+    },
+    "support.py": {
+      "original_sha256": "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6",
+      "capture_safe_constant_replacements": 0
+    },
+    "model_base.py": {
+      "original_sha256": "f968ea4e34b148fb2c2ef542239daed37085be711302179f53b716ad29e31493",
+      "capture_safe_constant_replacements": 0
+    },
+    "model_parent.py": {
+      "original_sha256": "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7",
+      "capture_safe_constant_replacements": 0
+    },
+    "model.py": {
+      "original_sha256": "af41d97d9192e6495794312c843414775300cde82edb5038cc8897cfbd6abe82",
+      "capture_safe_constant_replacements": 0
+    },
+    "phase_readout.py": {
+      "original_sha256": "d9a27d95a17af842e08ec4be76eecf2b981b5d861ccb8dab8b9b12707e44e5c3",
+      "capture_safe_constant_replacements": 0
+    },
+    "fine_geometry.py": {
+      "original_sha256": "dd3442acf5e64e1f3563dbd238f18da34bc16e8b11247a056d8359f982357d3e",
+      "capture_safe_constant_replacements": 2
+    },
+    "geometry.py": {
+      "original_sha256": "34bc88dca8c36117cf3963657ff8e07d315ce13b904cf8f4f4ca36b10d3f4407",
+      "capture_safe_constant_replacements": 7
+    },
+    "geometry_primitives.py": {
+      "original_sha256": "147f719c3cc34a98ca50233aa3d8cbbf7d49727e3e5003decae6718b5395c368",
+      "capture_safe_constant_replacements": 4
+    },
+    "ode_solver.py": {
+      "original_sha256": "406824645fa2c7869f305009408ff210531f6485bfae8737f5a5dba904cc9c37",
+      "capture_safe_constant_replacements": 3
+    },
+    "data.py": {
+      "original_sha256": "1721716a2af4e3984d267cf05715cfa417d18082875552e0b8a5eb32458bc07a",
+      "capture_safe_constant_replacements": 0
+    },
+    "relative_data.py": {
+      "original_sha256": "08f2f63ac3669e3c37e38f6a7487dde5e41d2e69166a7be9bca856bfa5c4dddc",
+      "capture_safe_constant_replacements": 0
+    },
+    "loss_helpers.py": {
+      "original_sha256": "b75950b47b5f4430b8594a4684b0d4b7a50f177ca45b6398d388c9bff15bddd4",
+      "capture_safe_constant_replacements": 3
+    },
+    "losses_parent.py": {
+      "original_sha256": "3fa49955b9f5edcc1aed0a0e4edbd9bf7fecb16837b1caeab6a02a4d73d9875b",
+      "capture_safe_constant_replacements": 0
+    },
+    "losses_legacy.py": {
+      "original_sha256": "0042026aab626fff1246dd6dfe7177f4fcd258715ff7cfbfc5abad10f23bd953",
+      "capture_safe_constant_replacements": 0
+    },
+    "relative_loss.py": {
+      "original_sha256": "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2",
+      "capture_safe_constant_replacements": 0
+    },
+    "metrics.py": {
+      "original_sha256": "25731994b78f5cde5608972c6a86bff2d649c8b1293a0c73da3bbbe78b04361b",
+      "capture_safe_constant_replacements": 0
+    },
+    "boundaries.py": {
+      "original_sha256": "b049871da151a6da0c79b100a7f1cc133ca0a49227885f56e29a2a171b3b62b5",
+      "capture_safe_constant_replacements": 0
+    },
+    "selection.py": {
+      "original_sha256": "b377ecbdfb01bb87f3a81eddd4f5a2df8af4fa8ebbc85729efbb30cc0fd81400",
+      "capture_safe_constant_replacements": 0
+    }
+  },
+  "changes": "Only Tensor.new_tensor -> device-local new_full/stack; no historical files changed."
+}

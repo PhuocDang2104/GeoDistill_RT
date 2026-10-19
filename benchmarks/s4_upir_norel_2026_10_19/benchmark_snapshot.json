@@ -1,0 +1,79 @@
+{
+  "variant": "G_s4_upir_norel",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9901505587384212,
+    "mae_m": 0.25898426662301094,
+    "irmse_km_inv": 3.172073529022247,
+    "imae_km_inv": 1.0476013500986818,
+    "abs_rel": 0.013387426779383208,
+    "delta1": 0.9966481405382547,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1121268,
+        "pixel_fraction": 0.04410101682627865,
+        "sse_fraction": 0.9542965673401239,
+        "sse_m2": 23787382.734713078,
+        "mse_contribution_m2": 0.9355905691027583
+      },
+      "2": {
+        "pixels": 493419,
+        "pixel_fraction": 0.019406849764200516,
+        "sse_fraction": 0.9041965146958392,
+        "sse_m2": 22538558.031716824,
+        "mse_contribution_m2": 0.8864725712290027
+      },
+      "5": {
+        "pixels": 145505,
+        "pixel_fraction": 0.005722912321860317,
+        "sse_fraction": 0.7672040866071782,
+        "sse_m2": 19123800.575567245,
+        "mse_contribution_m2": 0.7521654510478212
+      },
+      "10": {
+        "pixels": 45232,
+        "pixel_fraction": 0.001779036941289893,
+        "sse_fraction": 0.5711685174667934,
+        "sse_m2": 14237297.49848175,
+        "mse_contribution_m2": 0.5599725458510174
+      },
+      "20": {
+        "pixels": 9155,
+        "pixel_fraction": 0.00036007877603265324,
+        "sse_fraction": 0.2986056472256912,
+        "sse_m2": 7443227.881561279,
+        "mse_contribution_m2": 0.2927524178399458
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 3.803136110305786,
+      "p95_ms": 3.816499173641205,
+      "mean_ms": 3.8046720361709596,
+      "fps_from_median": 262.94089167363416
+    },
+    "host_enqueue": {
+      "median_ms": 0.12061600000379258,
+      "p95_ms": 0.13812540000799345,
+      "mean_ms": 0.12354342003163765,
+      "fps_from_median": 8290.77402640244
+    },
+    "synchronized_wall": {
+      "median_ms": 3.8267709996944177,
+      "p95_ms": 3.8445662503363565,
+      "mean_ms": 3.8290916833405695,
+      "fps_from_median": 261.31691707704846
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 908.15380859375,
+    "cuda_free_mib_after": 38217.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
