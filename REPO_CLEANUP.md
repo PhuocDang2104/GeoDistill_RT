@@ -1,5 +1,23 @@
 # Baseline and cleanup
 
+## D reconnected — completed relocation19/10/2026
+
+The S4 control archive is now cold-stored at:
+`D:\Research_Archive_2026_10_19\GeoDistill_RT\2026_10_19_baseline_G_controls`.
+The original `.archive/2026_10_19_baseline_G_controls` path is an NTFS junction,
+not duplicate payload on C. All270files/2,588,525bytes were checksummed before
+copy, after copy and through the junction before recording completion. The
+original C payload was removed only after verification; recovery is from D.
+Keep D connected to browse this archive. Do not recursive-delete the junction.
+New inventory: `benchmarks/storage_2026_10_19/archive_relocation.json`.
+Older manifests record the earlier C location; that path still resolves via junction.
+
+Dataset transfer is separate from archival cleanup. See
+[GeoLift_Data metric-only migration](docs/GeoLift_Data_MetricOnly_Transfer.md).
+`D:\GeoLift_MetricOnly_Transfer\GeoLift_Data` is a filtered COPY, not a move or
+deletion of original ZIPs. It currently needs the missing metric coarse TAR from
+the old Drive; do not call this incomplete staging folder training-ready.
+
 ## Current cleanup — 2026-10-19
 
 Current baseline is **G S4-U-PIR NoRelative**, not the historical RK3 Fixed6

@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-19",
+  "device": "CPU",
+  "passed": true,
+  "contract_tests": 15,
+  "onnxruntime": "1.30.0",
+  "full_resolution_onnx_numerical_parity": {
+    "G0_s4_upir": {
+      "mean_abs_m": 3.816885055130115e-06,
+      "max_abs_m": 1.71661376953125e-05,
+      "passed": true,
+      "shape": [
+        1,
+        1,
+        352,
+        1216
+      ],
+      "opset": 22,
+      "new_lanes_and_upir_active": true
+    },
+    "H_s4_dec16_8": {
+      "mean_abs_m": 3.7497898119909223e-06,
+      "max_abs_m": 1.71661376953125e-05,
+      "passed": true,
+      "shape": [
+        1,
+        1,
+        352,
+        1216
+      ],
+      "opset": 22,
+      "new_lanes_and_upir_active": true
+    },
+    "I_s4_dec16_8_4": {
+      "mean_abs_m": 3.793290261455695e-06,
+      "max_abs_m": 1.71661376953125e-05,
+      "passed": true,
+      "shape": [
+        1,
+        1,
+        352,
+        1216
+      ],
+      "opset": 22,
+      "new_lanes_and_upir_active": true
+    }
+  },
+  "not_verified": [
+    "A100 training",
+    "TensorRT parser/build/capture",
+    "trained accuracy",
+    "A100/Orin runtime"
+  ],
+  "baseline_G_untouched": true,
+  "relative_teacher_modules_packaged": false
+}

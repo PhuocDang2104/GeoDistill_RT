@@ -2,6 +2,9 @@
 
 ## Current
 
+- [Metric-only GeoLift_Data migration](GeoLift_Data_MetricOnly_Transfer.md): exact
+  file checklist for another Drive account; local filtered copy and missing teacher TAR.
+
 - [V11-derived S4-U-PIR NoRelative](AnchorFlow_V11_Baseline.md): equations, best_policy
   epoch27, metrics, attribution limits, TensorRT/CUDA Graph.
 - [Completed G run](../benchmarks/s4_upir_norel_2026_10_19/README.md): original logs,

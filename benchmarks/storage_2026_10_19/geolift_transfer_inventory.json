@@ -1,0 +1,105 @@
+{
+  "source": "D:\\GeoLift_Data",
+  "transfer_root": "D:\\GeoLift_MetricOnly_Transfer",
+  "zip_inventory": [
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-001.zip",
+      "bytes": 2125936446,
+      "entries": 35
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-005.zip",
+      "bytes": 710504319,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-006.zip",
+      "bytes": 740856717,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-007.zip",
+      "bytes": 1469501403,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-008.zip",
+      "bytes": 855905074,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-009.zip",
+      "bytes": 626203008,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-010.zip",
+      "bytes": 665687707,
+      "entries": 223
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-011.zip",
+      "bytes": 759173675,
+      "entries": 222
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-012.zip",
+      "bytes": 755062316,
+      "entries": 222
+    },
+    {
+      "zip": "GeoLift_Data-20261019T145015Z-1-013.zip",
+      "bytes": 713985086,
+      "entries": 222
+    }
+  ],
+  "required": {
+    "teacher_subset_2000/selected_2000_ids.json": [
+      {
+        "zip": "D:\\GeoLift_Data\\GeoLift_Data-20261019T145015Z-1-010.zip",
+        "member": "GeoLift_Data/teacher_subset_2000/selected_2000_ids.json",
+        "bytes": 247569,
+        "crc32": 3483845555
+      }
+    ],
+    "teacher_subset_2000/kitti_trainval_2000.tar": [
+      {
+        "zip": "D:\\GeoLift_Data\\GeoLift_Data-20261019T145015Z-1-001.zip",
+        "member": "GeoLift_Data/teacher_subset_2000/kitti_trainval_2000.tar",
+        "bytes": 2041970176,
+        "crc32": 3192611354
+      }
+    ],
+    "teacher_subset_2000/metric_coarse_train_2000.tar": [],
+    "test_1000/kitti_test_1000.tar": [
+      {
+        "zip": "D:\\GeoLift_Data\\GeoLift_Data-20261019T145015Z-1-007.zip",
+        "member": "GeoLift_Data/test_1000/kitti_test_1000.tar",
+        "bytes": 754094080,
+        "crc32": 3029952408
+      }
+    ]
+  },
+  "copied": [
+    {
+      "path": "GeoLift_Data/teacher_subset_2000/selected_2000_ids.json",
+      "bytes": 247569,
+      "sha256": "f0f482799db63b1e89f4ef21be0aff71cc409bac8bde20259192f3bc1cd40ddb"
+    },
+    {
+      "path": "GeoLift_Data/teacher_subset_2000/kitti_trainval_2000.tar",
+      "bytes": 2041970176,
+      "sha256": "a972b793c5608423dc0a2f0dcb2fd5de2bf8083743d549db5f3462cd27d9791b"
+    },
+    {
+      "path": "GeoLift_Data/test_1000/kitti_test_1000.tar",
+      "bytes": 754094080,
+      "sha256": "f30d2cb47e2fe33c88953946860654e1c082cea8e41ee50f9705cbd87486a2d6"
+    }
+  ],
+  "missing": [
+    "teacher_subset_2000/metric_coarse_train_2000.tar"
+  ],
+  "note": "Only metric teacher is needed, but RGB/sparse/GT/K + split JSON are still essential. Test1000 can be auto-downloaded by prepare.",
+  "ready_for_current_training": false
+}

@@ -128,11 +128,12 @@ Versus D: RMSE giảm2,72mm (0,274%), iRMSE giảm0,520%; MAE tăng0,071mm;
 latency chênh0,003ms, **chưa có bằng chứng speedup đáng kể**. Versus A latency
 giảm20,99%. RMSE<0,98 chưa đạt; iRMSE<3,2 đã đạt.
 
-**Đóng góp riêng U-PIR: chưa kết luận được.** Mean|w_u|≈0,505 ở epoch27,
-cue mean≈0,203: có hoạt động, không chứng minh accuracy gain. D→G đổi cả
-U-conditioning lẫn relative loss. Cần **D-NoRelative fresh30** cùng seed/recipe
-để isolate architecture; gói Orin kèm same-checkpoint cue-removal full400 audit
-để đo reliance trước. Một seed, validation lặp nhiều lần là development evidence,
+**U giúp checkpoint này; chưa isolate lợi ích kiến trúc khi retrain.** Audit full400
+đã sửa eval-mode được user báo cáo: original0,990151/3,172073/0,258984;
+tắt riêng U-input0,990889/3,191544/0,261689 (RMSE/iRMSE/MAE). Mean prediction
+change3,67cm là khác biệt hai dự đoán, không phải giảm lỗi3,67cm. D→G vẫn đổi
+cả U-conditioning lẫn relative loss. Cần **D-NoRelative fresh30** cùng seed/recipe
+để isolate architecture. Một seed, validation lặp nhiều lần là development evidence,
 không independent confirmation/leaderboard; không kết luận relative gây hại.
 
 Best epoch27, first iRMSE-feasible epoch24; relative terms=0 toàn30epochs.

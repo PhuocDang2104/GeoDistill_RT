@@ -100,6 +100,13 @@ Only400 exported frames reproduce the full400 support25,424,992;100-frame metric
 are labeled separately. Boundary/range diagnostics remain in the original A100
 benchmark; this portable runner reports global RMSE/iRMSE/MAE only.
 
+Eval-mode fix19/10/2026: exporter explicitly sets the wrapper and all BN children
+to eval BEFORE/AFTER legacy ONNX export. Discard references/audits produced by
+the older unfixed helper (original RMSE≈1.2246). Corrected user-reported full400
+audit: original0.990151/3.172073/0.258984 versus U-input-zero
+0.990889/3.191544/0.261689 (RMSE/iRMSE/MAE). This shows same-checkpoint reliance,
+not retrained architectural superiority. Actual Orin parity remains required.
+
 CPU tests/schema export are local checks; actual TensorRT parser/capture/performance
 must pass on the device. Unsupported ops/errors stop and save an unqualified report.
 

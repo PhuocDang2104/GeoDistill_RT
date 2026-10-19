@@ -1,0 +1,1362 @@
+﻿{
+    "date":  "2026-10-19",
+    "source":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\2026_10_19_baseline_G_controls",
+    "destination":  "D:\\Research_Archive_2026_10_19\\GeoDistill_RT\\2026_10_19_baseline_G_controls",
+    "source_now":  "NTFS junction to D; no duplicate payload on C",
+    "file_count":  270,
+    "payload_bytes":  2588525,
+    "verified_before_source_removal":  true,
+    "verified_through_junction":  true,
+    "files":  [
+                  {
+                      "path":  "restore_manifest.json",
+                      "bytes":  109228,
+                      "sha256":  "927fefe8ee4a3dd04ffac38816829664c6631dda0539a214651f0196c4852d7e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100.zip",
+                      "bytes":  76455,
+                      "sha256":  "bff2c381e77fba3a72b726bfce5501b3bdc15b70839ce81daddf79050ba3cd88"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100.zip",
+                      "bytes":  81374,
+                      "sha256":  "1497290608a0c2a7bb672bd9bd2853362f3a5c964cbdce90137de970d180daa4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100.zip",
+                      "bytes":  76333,
+                      "sha256":  "4f77a86880868e162dca7ca37b18a31056fc063b0bf4289e7831201e6eeaee3d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100.zip",
+                      "bytes":  97975,
+                      "sha256":  "8c2c7bb26e5fb555f318280d825f2e9f5648f34cf2f116cd5a6f4672505d1e40"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/ARCHITECTURE.md",
+                      "bytes":  4244,
+                      "sha256":  "6127aa956f480823d113d1f651804e258e06dbb39fc82d751e0bb4a51a8c4c07"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/bundle_manifest.json",
+                      "bytes":  3291,
+                      "sha256":  "749856181f48440ef8462c9f9cf07d82becba2eb5edf2537971bf5acfb96b66b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/config.json",
+                      "bytes":  2462,
+                      "sha256":  "f42fd767edafb29d3fe37424b4b073343c898acd2b6d47659d7f2bab14d13461"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/deployment.py",
+                      "bytes":  8711,
+                      "sha256":  "5e9a12819171f3a865548fd1b9a453c7c3d5ac57fa830a5fa5a16ba0c6c4416c"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/experiment.py",
+                      "bytes":  5228,
+                      "sha256":  "fefcb12151be162c5ae3ef8be89f91400cb1ad2283efb539b9d0f9a5f026f988"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/local_verification.json",
+                      "bytes":  1645,
+                      "sha256":  "65b64f642d93dc3efd4413fd27bc421a0a5c7474f65cb06bc77512b4533ac49e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/objective.py",
+                      "bytes":  1102,
+                      "sha256":  "9284e4023011d11754c65251a1b5e5d41ee3f747ce57ac05f55c529950e1d1b8"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/README.md",
+                      "bytes":  6434,
+                      "sha256":  "4d972f263af61dd3484c7731f19117dd7cdd91bc9a89b5984b7b44d2a4c50853"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/requirements-trt.txt",
+                      "bytes":  119,
+                      "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/requirements.txt",
+                      "bytes":  107,
+                      "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/run.py",
+                      "bytes":  18623,
+                      "sha256":  "590f692b1eff0abfccea553ed13b37c56944f0123a091bfa964a686a61b44f7e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/test_contracts.py",
+                      "bytes":  8300,
+                      "sha256":  "74d14d716cf69df385d6e1edccba565c083c936b3b0ca5629f5f45205eeafa5f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/train_graph.py",
+                      "bytes":  4382,
+                      "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/Train_S4_FineAblation_Fresh30_A100.ipynb",
+                      "bytes":  8966,
+                      "sha256":  "a0e60cae9f38fce05c61e5d509ea15d80faee1d26f272f71233469833b65565b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/trt_benchmark.py",
+                      "bytes":  9659,
+                      "sha256":  "d575d9e9c14cc093459a577cb2800d812d338dc6e76e9686eaf84bc6476a2a9d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor_provenance.json",
+                      "bytes":  3464,
+                      "sha256":  "e43bd05226be92ae174cadbd02cf64584a798a7b562ed3e360f2054ceeeb2294"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/boundaries.py",
+                      "bytes":  4321,
+                      "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/core.py",
+                      "bytes":  7010,
+                      "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/data.py",
+                      "bytes":  19291,
+                      "sha256":  "5cebe557855b70bf57146f737bb9140f1537aebea0b30b3263af595a1770bc5b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/device_constants.py",
+                      "bytes":  281,
+                      "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/fine_geometry.py",
+                      "bytes":  7192,
+                      "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/geometry.py",
+                      "bytes":  8071,
+                      "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/geometry_primitives.py",
+                      "bytes":  3231,
+                      "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/losses_legacy.py",
+                      "bytes":  7795,
+                      "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/losses_parent.py",
+                      "bytes":  6808,
+                      "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/loss_helpers.py",
+                      "bytes":  2750,
+                      "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/metrics.py",
+                      "bytes":  3727,
+                      "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/model.py",
+                      "bytes":  1300,
+                      "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/model_base.py",
+                      "bytes":  8785,
+                      "sha256":  "f968ea4e34b148fb2c2ef542239daed37085be711302179f53b716ad29e31493"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/model_parent.py",
+                      "bytes":  3288,
+                      "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/ode_solver.py",
+                      "bytes":  5032,
+                      "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/phase_readout.py",
+                      "bytes":  3936,
+                      "sha256":  "bde81abc043c84fa72293347246c96fe36375d194bb2cab8a687b671dbfa783d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/relative_data.py",
+                      "bytes":  4447,
+                      "sha256":  "989ba544af41e21a82fa23713b27c254bb5c5b926e107f25db6e9abda85b76ef"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/relative_loss.py",
+                      "bytes":  1755,
+                      "sha256":  "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/selection.py",
+                      "bytes":  2209,
+                      "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/support.py",
+                      "bytes":  2452,
+                      "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/boundaries.cpython-311.pyc",
+                      "bytes":  10769,
+                      "sha256":  "ecce417225b95dd52e5cd97a4ba8642c9eed79ffa71c4e66db5a67eff3006ad6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/core.cpython-311.pyc",
+                      "bytes":  17337,
+                      "sha256":  "b597580d1e03061d5a288e187b679c543d32f5869ee36aff8b46f112384003ac"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/data.cpython-311.pyc",
+                      "bytes":  36175,
+                      "sha256":  "ce187ff96b1cdafc047f8a04908f6dc74783da23702f7b7d3aba51ce5d9de78b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/device_constants.cpython-311.pyc",
+                      "bytes":  997,
+                      "sha256":  "22c48dba9f39a7ca958e340afa43187b0743fe14f18562f59dd4ba030dfbb8d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/fine_geometry.cpython-311.pyc",
+                      "bytes":  13597,
+                      "sha256":  "0bd5f442e0b52077fd9e27c076c0d6dc65152eff35a8480686ce2673dc2e9870"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/geometry.cpython-311.pyc",
+                      "bytes":  16136,
+                      "sha256":  "8d6417f8a570e91ebb68e9a895c73b3fdf2a57536368fb5c700046531f1b8f4f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/geometry_primitives.cpython-311.pyc",
+                      "bytes":  6506,
+                      "sha256":  "68e842ef7e761e6cea680986198a79da6906b0c2d182f70b6a2319cae5149694"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/losses_parent.cpython-311.pyc",
+                      "bytes":  13459,
+                      "sha256":  "f0ee9ad909e8ab24dc8ca1257271a83c4b0910cb98a3195e2eca399afb02086e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/loss_helpers.cpython-311.pyc",
+                      "bytes":  5741,
+                      "sha256":  "297da7d459f06fff5cb5b7db802317deedddea55d59b2ec1a22279b605f01389"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/metrics.cpython-311.pyc",
+                      "bytes":  7458,
+                      "sha256":  "2a5ad416dc3a87783ef026b949452dfdf56e9cc6303cb32d53f0e506404c07b7"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/model.cpython-311.pyc",
+                      "bytes":  3051,
+                      "sha256":  "b553f2cfe17f4d20884ad22808a5e2f8bcd0185f79340bfafa1841ed3655c4cf"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/model_base.cpython-311.pyc",
+                      "bytes":  19241,
+                      "sha256":  "d5e9084f8c1f7e4e81be2d90b8cb0ae1e19e519d2b61252fb2d720e2d9319452"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/model_parent.cpython-311.pyc",
+                      "bytes":  6943,
+                      "sha256":  "74a93e11effd62b5091cafea6fe513a8df36d347016424da2d5bffda0cefd4e1"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/ode_solver.cpython-311.pyc",
+                      "bytes":  6903,
+                      "sha256":  "bb62331bef3eaca7bdcd5c2e887227bc8670331c05f0c6b0b5116bfd688e2508"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/phase_readout.cpython-311.pyc",
+                      "bytes":  9007,
+                      "sha256":  "a55f250ec6c080c40ab30bb6250a7b295ef545138ebb73f8eb3b64bdd38ca0ca"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/relative_loss.cpython-311.pyc",
+                      "bytes":  4264,
+                      "sha256":  "d9afbe1bd33277186a58dd06f7c7de2d15e3fc039e403c6de6c40b23628b9c4d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/selection.cpython-311.pyc",
+                      "bytes":  3665,
+                      "sha256":  "bc199fda768515f35d7e27e7a158f3b2d2fd461fbbfe4b3ac1a363a3e7eb9fd4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/vendor/__pycache__/support.cpython-311.pyc",
+                      "bytes":  5671,
+                      "sha256":  "d76606898fd88d681850cddecf535064d13345f1bf0dd79d391781c632725aec"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/deployment.cpython-311.pyc",
+                      "bytes":  21012,
+                      "sha256":  "bd842680d591fb0193d11fa892e638f1159d5bc3af400da085017b178f83355e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/experiment.cpython-311.pyc",
+                      "bytes":  12364,
+                      "sha256":  "d5d79399a3f161d0b52b40c6d44f1bc1ada7e784095220e9ade116992d41d384"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/objective.cpython-311.pyc",
+                      "bytes":  2249,
+                      "sha256":  "ed15934d0a2aaf099e7e6874fffe862801c420c95481e6537ae159994b750c02"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/run.cpython-311.pyc",
+                      "bytes":  35680,
+                      "sha256":  "a5415fd69436d8964de83a675ceda92a37b73435a23e9e2bde6d6c5d8656d660"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/test_contracts.cpython-311.pyc",
+                      "bytes":  22454,
+                      "sha256":  "458bedf6ba554aea1aa868d32c5bc0291de747545d31b3f3add1c9ea4f7f5e13"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/train_graph.cpython-311.pyc",
+                      "bytes":  8641,
+                      "sha256":  "5a12569dc50903f3db78154c105e77a53329b8d785dae2a692c68f20cc437a32"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_FineAblation_30ep_A100/__pycache__/trt_benchmark.cpython-311.pyc",
+                      "bytes":  20079,
+                      "sha256":  "c20af7129d2e63734fa5130607b64cfc04bd78ec3b97b8794c26d9c4a57b663c"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/bundle_manifest.json",
+                      "bytes":  3585,
+                      "sha256":  "f80233679724ab4e065b25a9264623b722ca028343aaf81ea52c19f9b218578d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/compare_history.py",
+                      "bytes":  7903,
+                      "sha256":  "cdd6eeea849594780bfb20e02c25be0d1d7145ff50726a2287becafb0ea883c2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/config.json",
+                      "bytes":  2713,
+                      "sha256":  "023e0766eed5598a9e52995f64f093f3f1ce59131330840b3606239a63ec5fe0"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/deployment.py",
+                      "bytes":  7886,
+                      "sha256":  "cd9a9c427d27bcf266941944df95d035cd578f5f60d0a614c829211e3a20251d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/experiment.py",
+                      "bytes":  3206,
+                      "sha256":  "04d359a0caf4eb1f1d3a5eef216d22018d9fc77183b6ec36bdb3ded5188ad831"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/historical_reference.json",
+                      "bytes":  1975,
+                      "sha256":  "04bc93987ca44e91da9c87b4170fbdaf78fc21f44c559ded3cbf8db9cb1bd318"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/jpir_provenance.json",
+                      "bytes":  5183,
+                      "sha256":  "20f5c7cd7938ffe51d385e42cccca1b46785bcc9f5a5ea753af9885f22478a57"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/local_verification.json",
+                      "bytes":  1627,
+                      "sha256":  "07119454b97f91a25dfb887715e47e6755a976bbe81cd9baaa55cb452023af90"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/objective.py",
+                      "bytes":  1102,
+                      "sha256":  "9284e4023011d11754c65251a1b5e5d41ee3f747ce57ac05f55c529950e1d1b8"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/README.md",
+                      "bytes":  6950,
+                      "sha256":  "f3537768981d1d355b455b4ad0a1c6e53050aa63d1621264f34e86a1f4ed4816"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/requirements-trt.txt",
+                      "bytes":  119,
+                      "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/requirements.txt",
+                      "bytes":  107,
+                      "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/run.py",
+                      "bytes":  20051,
+                      "sha256":  "1ca83cfa5af6df1dfd0758408d5405685f03cf437b1a76d8ba90955595c3318c"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/test_contracts.py",
+                      "bytes":  11737,
+                      "sha256":  "b9e28c48c0c856785e9258a8e39001a4e8a56d14479907c2a71fb4d2be0b7b5a"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/train_graph.py",
+                      "bytes":  4382,
+                      "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/Train_S4_JPIR_Fresh26_A100.ipynb",
+                      "bytes":  9665,
+                      "sha256":  "84e26410efe2038180884f8b56812319bed1e18da3e8aae9cdc63bcf3179b33b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/trt_benchmark.py",
+                      "bytes":  10050,
+                      "sha256":  "c87aca9e6934f249d9f75a687a8683849cc6dc83f9ddf6a677a75aece08e7aaa"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor_provenance.json",
+                      "bytes":  3464,
+                      "sha256":  "e43bd05226be92ae174cadbd02cf64584a798a7b562ed3e360f2054ceeeb2294"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/boundaries.py",
+                      "bytes":  4321,
+                      "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/core.py",
+                      "bytes":  7010,
+                      "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/data.py",
+                      "bytes":  19291,
+                      "sha256":  "5cebe557855b70bf57146f737bb9140f1537aebea0b30b3263af595a1770bc5b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/device_constants.py",
+                      "bytes":  281,
+                      "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/fine_geometry.py",
+                      "bytes":  7192,
+                      "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/geometry.py",
+                      "bytes":  8071,
+                      "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/geometry_primitives.py",
+                      "bytes":  3231,
+                      "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/losses_legacy.py",
+                      "bytes":  7795,
+                      "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/losses_parent.py",
+                      "bytes":  6808,
+                      "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/loss_helpers.py",
+                      "bytes":  2750,
+                      "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/metrics.py",
+                      "bytes":  3727,
+                      "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/model.py",
+                      "bytes":  1300,
+                      "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/model_base.py",
+                      "bytes":  9013,
+                      "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/model_parent.py",
+                      "bytes":  3288,
+                      "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/ode_solver.py",
+                      "bytes":  5032,
+                      "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/phase_readout.py",
+                      "bytes":  4698,
+                      "sha256":  "b565a3e9eecc4a74f754ae51c83b7e5ecde45e848b37678061e61d2306c65a55"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/relative_data.py",
+                      "bytes":  4447,
+                      "sha256":  "989ba544af41e21a82fa23713b27c254bb5c5b926e107f25db6e9abda85b76ef"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/relative_loss.py",
+                      "bytes":  1755,
+                      "sha256":  "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/selection.py",
+                      "bytes":  2209,
+                      "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/support.py",
+                      "bytes":  2452,
+                      "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/boundaries.cpython-311.pyc",
+                      "bytes":  10763,
+                      "sha256":  "53cb704aec9e92c5b9804947178ede2e9d731043664aab2f0d492726ede5327f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/core.cpython-311.pyc",
+                      "bytes":  17337,
+                      "sha256":  "b597580d1e03061d5a288e187b679c543d32f5869ee36aff8b46f112384003ac"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/data.cpython-311.pyc",
+                      "bytes":  36169,
+                      "sha256":  "5573c9de56be2f16ed1f345c662fd229c7d8e87d7daa7b89c6a2d94848c3c80d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/device_constants.cpython-311.pyc",
+                      "bytes":  997,
+                      "sha256":  "22c48dba9f39a7ca958e340afa43187b0743fe14f18562f59dd4ba030dfbb8d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/fine_geometry.cpython-311.pyc",
+                      "bytes":  13597,
+                      "sha256":  "0bd5f442e0b52077fd9e27c076c0d6dc65152eff35a8480686ce2673dc2e9870"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/geometry.cpython-311.pyc",
+                      "bytes":  16136,
+                      "sha256":  "8d6417f8a570e91ebb68e9a895c73b3fdf2a57536368fb5c700046531f1b8f4f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/geometry_primitives.cpython-311.pyc",
+                      "bytes":  6506,
+                      "sha256":  "68e842ef7e761e6cea680986198a79da6906b0c2d182f70b6a2319cae5149694"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/losses_parent.cpython-311.pyc",
+                      "bytes":  13453,
+                      "sha256":  "06017e078171e42cba026c2d1ba63b112e1d02cb4545a9d03b1f832f0ab5d148"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/loss_helpers.cpython-311.pyc",
+                      "bytes":  5735,
+                      "sha256":  "c7490b901c90c165eac672496dcc5bb4fd1dade019738fffe2c18ded24082b9e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/metrics.cpython-311.pyc",
+                      "bytes":  7452,
+                      "sha256":  "0970756bcf19843535cc7825aa1b4d0f88db9fe77b49c6803406a2934edda6e3"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/model.cpython-311.pyc",
+                      "bytes":  3051,
+                      "sha256":  "b553f2cfe17f4d20884ad22808a5e2f8bcd0185f79340bfafa1841ed3655c4cf"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/model_base.cpython-311.pyc",
+                      "bytes":  19368,
+                      "sha256":  "8b27a00a1dce62552e594984305af628a80b6339b225ef22e1b2c267078a29d4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/model_parent.cpython-311.pyc",
+                      "bytes":  6943,
+                      "sha256":  "74a93e11effd62b5091cafea6fe513a8df36d347016424da2d5bffda0cefd4e1"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/ode_solver.cpython-311.pyc",
+                      "bytes":  6903,
+                      "sha256":  "bb62331bef3eaca7bdcd5c2e887227bc8670331c05f0c6b0b5116bfd688e2508"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/phase_readout.cpython-311.pyc",
+                      "bytes":  9993,
+                      "sha256":  "ab8e081f99fe7d28bbeda04d8c625f31315b09aafcc19b7f563cd66cf7e607e4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/relative_loss.cpython-311.pyc",
+                      "bytes":  4258,
+                      "sha256":  "af7130298fba53c57980ef85b90cd854f9423e9614e4fe4d8d6261f16cdf396d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/selection.cpython-311.pyc",
+                      "bytes":  3659,
+                      "sha256":  "e995a1ca797e646622365da8fc84c03163dc9e8bb7d5aa4bbec02df0a92595d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/vendor/__pycache__/support.cpython-311.pyc",
+                      "bytes":  5671,
+                      "sha256":  "d76606898fd88d681850cddecf535064d13345f1bf0dd79d391781c632725aec"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/compare_history.cpython-311.pyc",
+                      "bytes":  13670,
+                      "sha256":  "309413a6662aec6610a4e6e09fe292c14d55903f176cef5797b9facc71fd2282"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/deployment.cpython-311.pyc",
+                      "bytes":  19101,
+                      "sha256":  "74a2d6d836e99d16f20ac5b50cef14039f6666431392b1418b15c68647dc7bf2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/experiment.cpython-311.pyc",
+                      "bytes":  7723,
+                      "sha256":  "ded4f000f7b66bb6a0bdbea675bceda856b6329f09f3c3df73298424aa658807"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/objective.cpython-311.pyc",
+                      "bytes":  2241,
+                      "sha256":  "becb83bc499c788df3d7e5c65881ea15b24596336941521671589b8802538a1e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/run.cpython-311.pyc",
+                      "bytes":  39203,
+                      "sha256":  "b64bc7fbef8c9f88464efd7ef373da54c4698706e401e5f1d809918bbd8031ae"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_JPIR_26ep_A100/__pycache__/test_contracts.cpython-311.pyc",
+                      "bytes":  32606,
+                      "sha256":  "35288257d896b5feaaf479736639a64985ba041dd0da427c2322db3ade2ef317"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/bundle_manifest.json",
+                      "bytes":  3490,
+                      "sha256":  "c1d1b604331a3b9b9f7105e534d83ea17bda717657120d7f96c463658fbbe25a"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/compare_history.py",
+                      "bytes":  7035,
+                      "sha256":  "ac9dbfd8980f1295b902a928cb1dbe0f97a25aa15fcc48ec905f2eb3554ed2ce"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/config.json",
+                      "bytes":  2574,
+                      "sha256":  "99f7c5b039fa010628d3ae5d4a1d1db5ea0c5068147cbe9acf52340b74ceba20"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/deployment.py",
+                      "bytes":  7886,
+                      "sha256":  "cd9a9c427d27bcf266941944df95d035cd578f5f60d0a614c829211e3a20251d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/experiment.py",
+                      "bytes":  3057,
+                      "sha256":  "7ad34b2c6b98cbfc9310a0fa99eda7c338ff24e4bbfc261bb4a38b7def9df0f0"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/historical_reference.json",
+                      "bytes":  1659,
+                      "sha256":  "c5281e308d71073fabc113698b3144806666921046707fb42e03530a712a0cf2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/local_verification.json",
+                      "bytes":  1130,
+                      "sha256":  "85d532ec7ab563aa0d18e07e34bf85e5d642cb370306f23a4df7f11990d09fce"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/objective.py",
+                      "bytes":  1102,
+                      "sha256":  "9284e4023011d11754c65251a1b5e5d41ee3f747ce57ac05f55c529950e1d1b8"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/README.md",
+                      "bytes":  5275,
+                      "sha256":  "13f90c4092b32e39e925e0342752ce4154e3485b962c59aefbd5f75c795bd5e8"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/requirements-trt.txt",
+                      "bytes":  119,
+                      "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/requirements.txt",
+                      "bytes":  107,
+                      "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/run.py",
+                      "bytes":  18683,
+                      "sha256":  "2fe937239f6a158a89982853acdacf43a03941eed7da17d56b917c5be2c93d0e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/test_contracts.py",
+                      "bytes":  7608,
+                      "sha256":  "217627e67c6514decdf0c20c3929e254f85560a16f0cb79f553c78c6cc6af7a4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/train_graph.py",
+                      "bytes":  4382,
+                      "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/Train_S4_NoFine_Fresh30_A100.ipynb",
+                      "bytes":  9447,
+                      "sha256":  "5bd6dc52c0340d70973d95645ad12ee48f6a4c1d440f434311b4a706f1afa414"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/trt_benchmark.py",
+                      "bytes":  9906,
+                      "sha256":  "44c87ca8804424ded95051859bd6c048e85b39e8d69cb6b43cb85bda38df8ba0"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor_provenance.json",
+                      "bytes":  3464,
+                      "sha256":  "e43bd05226be92ae174cadbd02cf64584a798a7b562ed3e360f2054ceeeb2294"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/boundaries.py",
+                      "bytes":  4321,
+                      "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/core.py",
+                      "bytes":  7010,
+                      "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/data.py",
+                      "bytes":  19291,
+                      "sha256":  "5cebe557855b70bf57146f737bb9140f1537aebea0b30b3263af595a1770bc5b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/device_constants.py",
+                      "bytes":  281,
+                      "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/fine_geometry.py",
+                      "bytes":  7192,
+                      "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/geometry.py",
+                      "bytes":  8071,
+                      "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/geometry_primitives.py",
+                      "bytes":  3231,
+                      "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/losses_legacy.py",
+                      "bytes":  7795,
+                      "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/losses_parent.py",
+                      "bytes":  6808,
+                      "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/loss_helpers.py",
+                      "bytes":  2750,
+                      "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/metrics.py",
+                      "bytes":  3727,
+                      "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/model.py",
+                      "bytes":  1300,
+                      "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/model_base.py",
+                      "bytes":  8785,
+                      "sha256":  "f968ea4e34b148fb2c2ef542239daed37085be711302179f53b716ad29e31493"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/model_parent.py",
+                      "bytes":  3288,
+                      "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/ode_solver.py",
+                      "bytes":  5032,
+                      "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/phase_readout.py",
+                      "bytes":  3936,
+                      "sha256":  "bde81abc043c84fa72293347246c96fe36375d194bb2cab8a687b671dbfa783d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/relative_data.py",
+                      "bytes":  4447,
+                      "sha256":  "989ba544af41e21a82fa23713b27c254bb5c5b926e107f25db6e9abda85b76ef"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/relative_loss.py",
+                      "bytes":  1755,
+                      "sha256":  "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/selection.py",
+                      "bytes":  2209,
+                      "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/support.py",
+                      "bytes":  2452,
+                      "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/boundaries.cpython-311.pyc",
+                      "bytes":  10763,
+                      "sha256":  "53cb704aec9e92c5b9804947178ede2e9d731043664aab2f0d492726ede5327f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/core.cpython-311.pyc",
+                      "bytes":  17337,
+                      "sha256":  "b597580d1e03061d5a288e187b679c543d32f5869ee36aff8b46f112384003ac"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/data.cpython-311.pyc",
+                      "bytes":  36169,
+                      "sha256":  "5573c9de56be2f16ed1f345c662fd229c7d8e87d7daa7b89c6a2d94848c3c80d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/device_constants.cpython-311.pyc",
+                      "bytes":  997,
+                      "sha256":  "22c48dba9f39a7ca958e340afa43187b0743fe14f18562f59dd4ba030dfbb8d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/fine_geometry.cpython-311.pyc",
+                      "bytes":  13597,
+                      "sha256":  "0bd5f442e0b52077fd9e27c076c0d6dc65152eff35a8480686ce2673dc2e9870"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/geometry.cpython-311.pyc",
+                      "bytes":  16136,
+                      "sha256":  "8d6417f8a570e91ebb68e9a895c73b3fdf2a57536368fb5c700046531f1b8f4f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/geometry_primitives.cpython-311.pyc",
+                      "bytes":  6506,
+                      "sha256":  "68e842ef7e761e6cea680986198a79da6906b0c2d182f70b6a2319cae5149694"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/losses_parent.cpython-311.pyc",
+                      "bytes":  13453,
+                      "sha256":  "06017e078171e42cba026c2d1ba63b112e1d02cb4545a9d03b1f832f0ab5d148"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/loss_helpers.cpython-311.pyc",
+                      "bytes":  5735,
+                      "sha256":  "c7490b901c90c165eac672496dcc5bb4fd1dade019738fffe2c18ded24082b9e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/metrics.cpython-311.pyc",
+                      "bytes":  7452,
+                      "sha256":  "0970756bcf19843535cc7825aa1b4d0f88db9fe77b49c6803406a2934edda6e3"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/model.cpython-311.pyc",
+                      "bytes":  3051,
+                      "sha256":  "b553f2cfe17f4d20884ad22808a5e2f8bcd0185f79340bfafa1841ed3655c4cf"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/model_base.cpython-311.pyc",
+                      "bytes":  19241,
+                      "sha256":  "d5e9084f8c1f7e4e81be2d90b8cb0ae1e19e519d2b61252fb2d720e2d9319452"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/model_parent.cpython-311.pyc",
+                      "bytes":  6943,
+                      "sha256":  "74a93e11effd62b5091cafea6fe513a8df36d347016424da2d5bffda0cefd4e1"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/ode_solver.cpython-311.pyc",
+                      "bytes":  6903,
+                      "sha256":  "bb62331bef3eaca7bdcd5c2e887227bc8670331c05f0c6b0b5116bfd688e2508"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/phase_readout.cpython-311.pyc",
+                      "bytes":  9007,
+                      "sha256":  "a55f250ec6c080c40ab30bb6250a7b295ef545138ebb73f8eb3b64bdd38ca0ca"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/relative_loss.cpython-311.pyc",
+                      "bytes":  4258,
+                      "sha256":  "af7130298fba53c57980ef85b90cd854f9423e9614e4fe4d8d6261f16cdf396d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/selection.cpython-311.pyc",
+                      "bytes":  3659,
+                      "sha256":  "e995a1ca797e646622365da8fc84c03163dc9e8bb7d5aa4bbec02df0a92595d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/vendor/__pycache__/support.cpython-311.pyc",
+                      "bytes":  5671,
+                      "sha256":  "d76606898fd88d681850cddecf535064d13345f1bf0dd79d391781c632725aec"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/compare_history.cpython-311.pyc",
+                      "bytes":  12628,
+                      "sha256":  "12418d7abf48c25a8ff13040b1a589d3e1c11fc321e6379a6c41cb2b19fc2bea"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/deployment.cpython-311.pyc",
+                      "bytes":  19103,
+                      "sha256":  "002b6e7ef222a8870ce6b55835ed87230427d8da8389bd7f7ef55340dae16ec4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/experiment.cpython-311.pyc",
+                      "bytes":  7483,
+                      "sha256":  "314518bb3e1afdb59a18b221af57f0133dc4ff4a716fe5381819680b982f0d3a"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/objective.cpython-311.pyc",
+                      "bytes":  2243,
+                      "sha256":  "d0c80dca318c5c1561d72b73aed188db1ae3854aec4db9bfabb6314895361195"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/run.cpython-311.pyc",
+                      "bytes":  35728,
+                      "sha256":  "5d56c5ce21cb348e85617e8cca0ccd3bcd25dc57ce564f75a833c14f2a01ee8d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_NoFine_30ep_A100/__pycache__/test_contracts.cpython-311.pyc",
+                      "bytes":  22676,
+                      "sha256":  "2c550f286297135707f5a4801c123a88198bd9a788ccfb9ca5dc90760ec271d0"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/benchmark_s4_trt_fp32_recovery.py",
+                      "bytes":  9402,
+                      "sha256":  "a19c8d25d11aedc8009cdbd9dc9673aff67fc7867e77f3c4475777af1ee8222e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/msg_chn_trt_graph_cell.py",
+                      "bytes":  12148,
+                      "sha256":  "20304684f6ba306a147ce24145b22f09e1c8dde09b35746352e9adeb28403fdc"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/README.md",
+                      "bytes":  3008,
+                      "sha256":  "65961a79ce5baeee94a327cd80353b2c298f4f1f3cd5869f6fae7ec4c217167d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/test_recovery.py",
+                      "bytes":  2528,
+                      "sha256":  "ff882753bc5a3811c744a7df3194563f595691f6abb04ef2c0e4c11444a34605"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/__pycache__/benchmark_s4_trt_fp32_recovery.cpython-311.pyc",
+                      "bytes":  17049,
+                      "sha256":  "18e2bdb504b91990e6f9724c5188950d669a3d90c8478d696a364426f3c9b613"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/__pycache__/msg_chn_trt_graph_cell.cpython-311.pyc",
+                      "bytes":  26260,
+                      "sha256":  "498e81bde047947bf558826b7a4bafb812bcfe75cd3fe06cd5579cb7a370c6e4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_TRT_Recovery/__pycache__/test_recovery.cpython-311.pyc",
+                      "bytes":  7130,
+                      "sha256":  "a56281d72210501aa36c90fb3d1b1c67163709794edef2a449759c1f3618080b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/ANALYSIS.md",
+                      "bytes":  5844,
+                      "sha256":  "70962310d6665387fbe83e8bc7eec6ff0046104a5064f2c2e126a10af7d20005"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/bundle_manifest.json",
+                      "bytes":  3777,
+                      "sha256":  "1c12639019ade33b55246c3143a950682e77b918412de43e00d7c13811732bd8"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/compare_history.py",
+                      "bytes":  8698,
+                      "sha256":  "b0941580333224f608d6abb8759ffb4181fb64f5c3c4347e9f4d23a36709921e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/config.json",
+                      "bytes":  2891,
+                      "sha256":  "88f19a648125df06f75e26a39daff98e8e474d84de2026f2e85505823eec6ac5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/deployment.py",
+                      "bytes":  7886,
+                      "sha256":  "cd9a9c427d27bcf266941944df95d035cd578f5f60d0a614c829211e3a20251d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/experiment.py",
+                      "bytes":  3289,
+                      "sha256":  "370f722fde7c2e671845a9eb3814e3d8ca75cf063ae41a7cc240c897181bf1aa"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/historical_reference.json",
+                      "bytes":  2287,
+                      "sha256":  "b67c82f001360c4c0ad59615d6194c6b9443ac6d77e5b4c8066b0d3c26bcf09f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/local_verification.json",
+                      "bytes":  1260,
+                      "sha256":  "437a97970e914fff5d59e17b22328a3436bdf71b19dd6a75d93284f907b54ec1"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/objective.py",
+                      "bytes":  1273,
+                      "sha256":  "adcd71981ff7de5debe4b8f264721388ed67b046a6d407b9c76b5bb228c070fb"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/README.md",
+                      "bytes":  4454,
+                      "sha256":  "96f8ba18e2d6350962f7bfa282c4efb8058135cc59a1828f20484d5dbe1d085a"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/requirements-trt.txt",
+                      "bytes":  119,
+                      "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/requirements.txt",
+                      "bytes":  107,
+                      "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/run.py",
+                      "bytes":  20178,
+                      "sha256":  "6c2a21643de8208ede3d575e63c049692140f9a42b7a21debb386c546e2405c0"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/test_contracts.py",
+                      "bytes":  9511,
+                      "sha256":  "5e7041672ca893c1054441875612199d91fceaeeadc533b42865b8d01f01dbd5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/train_graph.py",
+                      "bytes":  4382,
+                      "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/Train_S4_UPIR_Fresh30_A100.ipynb",
+                      "bytes":  10215,
+                      "sha256":  "244f79081c8d4a21d952eaa6e191a5711c7beb5e9c52051aedaf7a209a6e3678"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/trt_benchmark.py",
+                      "bytes":  10078,
+                      "sha256":  "4de444f609d612cf8d1565a0203fa5d45d706ab7d1a738e9c7ef0bdf57a47e6a"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/upir_provenance.json",
+                      "bytes":  5234,
+                      "sha256":  "9821f5cb99050676cdb417247792f937af0ee4a2fcd75ee209c076509be4dc43"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor_provenance.json",
+                      "bytes":  3464,
+                      "sha256":  "e43bd05226be92ae174cadbd02cf64584a798a7b562ed3e360f2054ceeeb2294"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/evidence/jpir_train_log.csv",
+                      "bytes":  31728,
+                      "sha256":  "3996ab099b7ef3442b5b6c30e1da9ad14f30427ae2bcc689d23906a6ebd432ad"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/boundaries.py",
+                      "bytes":  4321,
+                      "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/core.py",
+                      "bytes":  7010,
+                      "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/data.py",
+                      "bytes":  19291,
+                      "sha256":  "5cebe557855b70bf57146f737bb9140f1537aebea0b30b3263af595a1770bc5b"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/device_constants.py",
+                      "bytes":  281,
+                      "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/fine_geometry.py",
+                      "bytes":  7192,
+                      "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/geometry.py",
+                      "bytes":  8071,
+                      "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/geometry_primitives.py",
+                      "bytes":  3231,
+                      "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/losses_legacy.py",
+                      "bytes":  7795,
+                      "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/losses_parent.py",
+                      "bytes":  6808,
+                      "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/loss_helpers.py",
+                      "bytes":  2750,
+                      "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/metrics.py",
+                      "bytes":  3727,
+                      "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/model.py",
+                      "bytes":  1300,
+                      "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/model_base.py",
+                      "bytes":  9013,
+                      "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/model_parent.py",
+                      "bytes":  3288,
+                      "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/ode_solver.py",
+                      "bytes":  5032,
+                      "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/phase_readout.py",
+                      "bytes":  5189,
+                      "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/relative_data.py",
+                      "bytes":  4447,
+                      "sha256":  "989ba544af41e21a82fa23713b27c254bb5c5b926e107f25db6e9abda85b76ef"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/relative_loss.py",
+                      "bytes":  1755,
+                      "sha256":  "ce1f44ed5b42e76d2676596b4185badb16c733714b15ea90f4c3186c65bf96d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/selection.py",
+                      "bytes":  2209,
+                      "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/support.py",
+                      "bytes":  2452,
+                      "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/boundaries.cpython-311.pyc",
+                      "bytes":  10763,
+                      "sha256":  "53cb704aec9e92c5b9804947178ede2e9d731043664aab2f0d492726ede5327f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/core.cpython-311.pyc",
+                      "bytes":  17337,
+                      "sha256":  "b597580d1e03061d5a288e187b679c543d32f5869ee36aff8b46f112384003ac"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/data.cpython-311.pyc",
+                      "bytes":  36169,
+                      "sha256":  "5573c9de56be2f16ed1f345c662fd229c7d8e87d7daa7b89c6a2d94848c3c80d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/device_constants.cpython-311.pyc",
+                      "bytes":  997,
+                      "sha256":  "22c48dba9f39a7ca958e340afa43187b0743fe14f18562f59dd4ba030dfbb8d2"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/fine_geometry.cpython-311.pyc",
+                      "bytes":  13597,
+                      "sha256":  "0bd5f442e0b52077fd9e27c076c0d6dc65152eff35a8480686ce2673dc2e9870"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/geometry.cpython-311.pyc",
+                      "bytes":  16136,
+                      "sha256":  "8d6417f8a570e91ebb68e9a895c73b3fdf2a57536368fb5c700046531f1b8f4f"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/geometry_primitives.cpython-311.pyc",
+                      "bytes":  6506,
+                      "sha256":  "68e842ef7e761e6cea680986198a79da6906b0c2d182f70b6a2319cae5149694"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/losses_parent.cpython-311.pyc",
+                      "bytes":  13453,
+                      "sha256":  "06017e078171e42cba026c2d1ba63b112e1d02cb4545a9d03b1f832f0ab5d148"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/loss_helpers.cpython-311.pyc",
+                      "bytes":  5735,
+                      "sha256":  "c7490b901c90c165eac672496dcc5bb4fd1dade019738fffe2c18ded24082b9e"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/metrics.cpython-311.pyc",
+                      "bytes":  7452,
+                      "sha256":  "0970756bcf19843535cc7825aa1b4d0f88db9fe77b49c6803406a2934edda6e3"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/model.cpython-311.pyc",
+                      "bytes":  3051,
+                      "sha256":  "b553f2cfe17f4d20884ad22808a5e2f8bcd0185f79340bfafa1841ed3655c4cf"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/model_base.cpython-311.pyc",
+                      "bytes":  19368,
+                      "sha256":  "8b27a00a1dce62552e594984305af628a80b6339b225ef22e1b2c267078a29d4"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/model_parent.cpython-311.pyc",
+                      "bytes":  6943,
+                      "sha256":  "74a93e11effd62b5091cafea6fe513a8df36d347016424da2d5bffda0cefd4e1"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/ode_solver.cpython-311.pyc",
+                      "bytes":  6903,
+                      "sha256":  "bb62331bef3eaca7bdcd5c2e887227bc8670331c05f0c6b0b5116bfd688e2508"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/phase_readout.cpython-311.pyc",
+                      "bytes":  11239,
+                      "sha256":  "52b4673c603e0348b3828ed0ac38970bb7023a8be968dd7767be797b2108c29c"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/relative_loss.cpython-311.pyc",
+                      "bytes":  4258,
+                      "sha256":  "af7130298fba53c57980ef85b90cd854f9423e9614e4fe4d8d6261f16cdf396d"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/selection.cpython-311.pyc",
+                      "bytes":  3659,
+                      "sha256":  "e995a1ca797e646622365da8fc84c03163dc9e8bb7d5aa4bbec02df0a92595d5"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/vendor/__pycache__/support.cpython-311.pyc",
+                      "bytes":  5671,
+                      "sha256":  "d76606898fd88d681850cddecf535064d13345f1bf0dd79d391781c632725aec"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/compare_history.cpython-311.pyc",
+                      "bytes":  15024,
+                      "sha256":  "497162b2cb17578c920c0658364656f0b0632dfe83fa5071246472cec7ea1e83"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/deployment.cpython-311.pyc",
+                      "bytes":  19101,
+                      "sha256":  "885ae7b29608e7400a5c7f7ce676b18db09fd770715dcd77f2d5d69e0b0c8e74"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/experiment.cpython-311.pyc",
+                      "bytes":  7906,
+                      "sha256":  "a5e72ebb4d7e7710782ffb26824c5c014b8525011e9747dd8156c777a7f48d72"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/objective.cpython-311.pyc",
+                      "bytes":  2542,
+                      "sha256":  "b8e0af2577788df27f93d4b6c8a742975be5447257ee76555074f60ed0d90f33"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/run.cpython-311.pyc",
+                      "bytes":  39137,
+                      "sha256":  "31969ed7b129c405f4730f87643befd0dad5f4fc1fae3dd709d3d78f2cc33801"
+                  },
+                  {
+                      "path":  "drive_upload/AnchorFlow_S4_UPIR_30ep_A100/__pycache__/test_contracts.cpython-311.pyc",
+                      "bytes":  28772,
+                      "sha256":  "66553aaba90ca032fcec354335ae19f332af90048c6eefa1958e93def121f101"
+                  },
+                  {
+                      "path":  "scripts/package_s4_fine_ablation.py",
+                      "bytes":  2881,
+                      "sha256":  "df273b41d1f988556977ccde1c5f19785d0625462417c48d166220b5129a166f"
+                  },
+                  {
+                      "path":  "scripts/package_s4_jpir.py",
+                      "bytes":  4909,
+                      "sha256":  "bd8eb48f025fb35173ed77dfdbc7417f9c60a59ee90d2d377d97c0223fddb967"
+                  },
+                  {
+                      "path":  "scripts/package_s4_nofine.py",
+                      "bytes":  9271,
+                      "sha256":  "8d8133946396b7b7cc92b2d64b737db5bb591e4ed5f566a1b02ed66197b8e83b"
+                  },
+                  {
+                      "path":  "scripts/package_s4_upir.py",
+                      "bytes":  5578,
+                      "sha256":  "255c44710e72f5c322c1e024d37a017256cffa6208e95144720c1b598e65c1b4"
+                  },
+                  {
+                      "path":  "scripts/package_s4_upir_norel.py",
+                      "bytes":  4913,
+                      "sha256":  "ff2bbc22246b1ebd96da5e017c40c6450bfc64f4296950a05098a49f69585584"
+                  },
+                  {
+                      "path":  "scripts/verify_s4_fine_ablation.py",
+                      "bytes":  3535,
+                      "sha256":  "e1fa138dbed74e19d222c65892a9c8628e6d881f054b8c13404040a67fda43cd"
+                  },
+                  {
+                      "path":  "scripts/verify_s4_jpir.py",
+                      "bytes":  2756,
+                      "sha256":  "eaa22fa241e009d9f5f8cc58a9ea742a9e0313e39bcaaa4b24165da44edc65fa"
+                  },
+                  {
+                      "path":  "scripts/verify_s4_nofine.py",
+                      "bytes":  2220,
+                      "sha256":  "3dbf7a8a8afa4b317e8b3210cf1be2cab7e4853ac10bbb0e4c3f754e120717a0"
+                  },
+                  {
+                      "path":  "scripts/verify_s4_upir.py",
+                      "bytes":  2336,
+                      "sha256":  "ec61441a9f216cfe9ead4b404472e6d736c776517fcc63ebc2db9ccae70a537f"
+                  },
+                  {
+                      "path":  "scripts/verify_s4_upir_norel.py",
+                      "bytes":  1608,
+                      "sha256":  "9310906d6ec846a3712dba37e87eea8ad533561ee7a64bd53b509a764d35180b"
+                  }
+              ]
+}

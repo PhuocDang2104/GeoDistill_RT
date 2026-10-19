@@ -14,6 +14,24 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def export_onnx_eval(module, values, target, input_names):
+    """Legacy export restores root mode recursively: root MUST already be eval.
+
+    Original DepthOnly() wrapper defaults to training=True even when its child is
+    eval. Do not let export switch BN to train for subsequent reference/audit frames.
+    """
+    import torch
+    import onnx
+    module.eval()
+    torch.onnx.export(module, values, str(target), input_names=list(input_names),
+        output_names=['D_full'], opset_version=17, dynamo=False,
+        dynamic_axes=None, do_constant_folding=True)
+    module.eval()
+    if any(child.training for child in module.modules()):
+        raise RuntimeError('Deployment/BN unexpectedly left eval mode')
+    onnx.checker.check_model(onnx.load(str(target)), full_check=True)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--code', type=Path, default=Path('/content/anchorflow_s4_upir_norel_code'))
@@ -40,7 +58,7 @@ def main():
     variant = 'G_s4_upir_norel'
     # Retain strict source/config/data checks; never replace source hash in ckpt.
     model, ckpt, checkpoint = run.load_checkpoint(cfg, variant, device)
-    module = typed_deployment(model)
+    module = typed_deployment(model).eval()
     a.output.mkdir(parents=True)
     (a.output/'samples').mkdir()
     files, audit = {}, None
@@ -61,10 +79,7 @@ def main():
             pred = module(*values)
             if i == 0:
                 target = a.output/'model_fp32_op17.onnx'
-                torch.onnx.export(module, values, str(target), input_names=list(E.INPUTS),
-                    output_names=['D_full'], opset_version=17, dynamo=False,
-                    dynamic_axes=None, do_constant_folding=True)
-                onnx.checker.check_model(onnx.load(str(target)), full_check=True)
+                export_onnx_eval(module, values, target, E.INPUTS)
                 files[target.name] = sha(target)
             if i < a.frames:
                 arrays = {k: v.cpu().numpy() for k, v in zip(E.INPUTS, values)}

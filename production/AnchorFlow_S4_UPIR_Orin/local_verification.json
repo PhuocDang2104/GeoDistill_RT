@@ -18,7 +18,8 @@
   "schema_full_check": true,
   "trained_weights_used": false,
   "weights_unchanged": true,
+  "production_helper_eval_bn_regression": true,
   "numerical_onnx_parity": "Not run: target TensorRT versus exported real FP32 references is mandatory",
   "orin_runtime_tested": false,
-  "seconds": 4.61244219999935
+  "seconds": 66.09644479999952
 }
