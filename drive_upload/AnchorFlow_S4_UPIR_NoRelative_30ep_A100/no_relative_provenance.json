@@ -1,0 +1,9 @@
+{
+  "parent": "AnchorFlow_S4_UPIR_30ep_A100",
+  "architecture_vendor_bytes_identical": true,
+  "deployment_bytes_identical": true,
+  "teacher_enabled": true,
+  "relative_enabled": false,
+  "relative_weight": 0,
+  "source_change": "Loss/cache treatment and labeling only; resume protocol intentionally new."
+}

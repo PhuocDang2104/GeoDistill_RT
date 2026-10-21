@@ -12,3 +12,7 @@ results/benchmarks/** -text whitespace=cr-at-eol
 # Production manifests verify raw bytes; clones must not rewrite line endings.
 production/AnchorFlow_V11_3_FullKITTI/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
 production/AnchorFlow_V11_3_Fixed6_FullKITTI/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+
+# Original user evidence is hashed byte-for-byte on every platform.
+benchmarks/s4_upir_norel_2026_10_19/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+benchmarks/q1_n1fast_2026_10_21/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol

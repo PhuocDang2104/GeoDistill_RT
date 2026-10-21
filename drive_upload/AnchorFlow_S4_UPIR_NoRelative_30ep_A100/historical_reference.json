@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "origin": "User supplied console reports 2026-10-19; snapshot, not newly remeasured",
+  "precision": "explicit_FP32_TF32_OFF",
+  "timing_scope": "synchronized_wall; GPU resident; includes D2D; excludes file decode/preprocess/H2D",
+  "val_images": 400,
+  "gt_pixels": 25424992,
+  "warmup": 100,
+  "iterations": 300,
+  "timed_images": 100,
+  "rows": [
+    {"variant":"A_s4_rk2","checkpoint_epoch":22,"rmse_m":0.991838017522171,"irmse_km_inv":3.1853637995462614,"mae_m":0.2588938104432992,"boundary3_rmse_m":1.683244485896983,"median_ms":4.843328500101052,"p95_ms":4.86044554977525,"parameters":584845,"pixel_max_gate_m":0.06,"training":"subset1600_fresh30"},
+    {"variant":"B_s4_rescnn","checkpoint_epoch":29,"rmse_m":0.9909024913355665,"irmse_km_inv":3.174047723812042,"mae_m":0.25837869334927277,"boundary3_rmse_m":1.6848155585164024,"median_ms":4.029537499718572,"p95_ms":4.049768899312767,"parameters":584714,"pixel_max_gate_m":0.06,"training":"subset1600_fresh30"},
+    {"variant":"C_s4_phasecnn","checkpoint_epoch":22,"rmse_m":0.9921577387453692,"irmse_km_inv":3.198326002011262,"mae_m":0.25912704948915694,"boundary3_rmse_m":1.6888505993508538,"median_ms":3.9468824998039054,"p95_ms":3.9638913495764427,"parameters":585920,"pixel_max_gate_m":0.06,"training":"subset1600_fresh30"},
+    {"variant":"D_s4_nofine","checkpoint_epoch":22,"rmse_m":0.9928712374665186,"irmse_km_inv":3.1886472066843767,"mae_m":0.25891316820573945,"boundary3_rmse_m":1.6864297405168753,"median_ms":3.8297754999803146,"p95_ms":3.8841742002205137,"parameters":583864,"pixel_max_gate_m":0.06,"training":"subset1600_fresh30"},
+    {"variant":"E_s4_jpir","checkpoint_epoch":25,"rmse_m":0.9942121219536622,"irmse_km_inv":3.243492316963981,"mae_m":0.26084545662598285,"boundary3_rmse_m":1.6842366618469709,"median_ms":3.8153860000420536,"p95_ms":3.858851199970559,"parameters":583868,"pixel_max_gate_m":0.06,"training":"subset1600_fresh26"},
+    {"variant":"MSG_CHN_pretrained","checkpoint_epoch":null,"rmse_m":0.8164916702258606,"irmse_km_inv":2.7457622276896227,"mae_m":0.2324506745318546,"boundary3_rmse_m":null,"median_ms":4.018764499505778,"p95_ms":4.040321350521481,"parameters":null,"pixel_max_gate_m":0.05,"training":"official_full_KITTI_pretrained_not_matched_overlap_unaudited"}
+  ]
+}

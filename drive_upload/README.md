@@ -1,20 +1,30 @@
-# Drive upload bundles
+# Active Drive package: Q1_s4_n1_fast
 
-## Current
+Upload the WHOLE [N1-Fast/Q1 frozen folder](AnchorFlow_S4_UPIR_N1Fast_30ep_A100/README.md)
+to MyDrive and open `Train_N1Fast_Fresh30_A100.ipynb`. The README/notebook inside
+are original completed experimental bytes; [current adoption is recorded separately](../production/AnchorFlow_S4_Q1_Fast/README.md).
+Do not edit their sources/config/manifest to change the historical status text.
 
-| Folder | Vai trò |
-|---|---|
-| [AnchorFlow_v11_NODE](AnchorFlow_v11_NODE/README.md) | Baseline nghiên cứu chính; fresh40 + early stop; true solver-controlled NODE |
-| [AnchorFlow_v10_1_LiteMetric](AnchorFlow_v10_1_LiteMetric/README.md) | Control learned-h Euler2, nhanh hơn; dùng cùng data/loss |
+582888params,coarse4NFE/fine0,seed42,B4,fresh30/resume,ImageNet,metric teacher only,
+relative OFF. Same400 TensorRT FP32+CUDA Graph accuracy/runtime protocol. Keep the
+oldN1 Drive run for preflight/reference measurement; local archived control folders
+are not required by this completed, self-contained snapshot.
 
-Upload nguyên folder đầy đủ vào **MyDrive**, không chỉ notebook/model.py. Notebook bên trong tự kiểm tra checksum. [Paired notebook](../notebooks/AnchorFlow_Compare_V10_1_V11_Fresh40.ipynb) đặt cạnh hai folder trên; đọc [hướng dẫn](../docs/AnchorFlow_V10_1_V11_Benchmark.md).
+```bash
+python scripts/package_current_baseline.py
+```
 
-Kết quả/insight mới nhất: [V11 technical baseline](../docs/AnchorFlow_V11.md). Spec/verification bên trong folder là **frozen release snapshot** trước benchmark; không chỉnh chúng chỉ để đổi wording rồi làm checksum/resume hỏng.
+This command verifies/repackages Q1 without any retired parent generator and
+without changing frozen bytes. Dataset/checkpoint/ONNX/engines are not in Git/ZIP.
+[GeoLift_Data checklist](../docs/GeoLift_Data_MetricOnly_Transfer.md).
 
-## Historical
+## Retained historical compatibility
 
-`AnchorFlow_Research`, `AnchorFlow_v5_Piecewise`, `AnchorFlow_v6_Connection`, `AnchorFlow_v7_Jet`, `AnchorFlow_v8_Dynamics`, `AnchorFlow_v9_Consensus`, `AnchorFlow_v9_1_MetricRefine`, `AnchorFlow_v10_AdaptiveJet` được giữ để tái lập. Không coi notebook historical là flow train mới nhất; xem [documentation index](../docs/README.md).
+- [G NoRelative folder](AnchorFlow_S4_UPIR_NoRelative_30ep_A100/README.md) remains
+  immutable for historical reproduction and the old G Orin exporter.
+- V11/V11.3 and prior device-audit folders are legacy controls, not current baseline.
+- DecoderCapacity/1M/D4Split/Edge600/N1-parent/PhaseFusion source folders, ZIPs and
+  generators were cold-stored, not irreversibly erased. [Archive receipt/recovery](../benchmarks/q1_n1fast_2026_10_21/CLEANUP.md).
 
-Git giữ code/config/doc/notebook và raw metric nhỏ của bundle, không giữ ZIP/checkpoint/teacher weights/data. `.gitattributes` bảo toàn exact bytes để clone trên Windows/Linux không phá bundle SHA256.
-
-Các historical warm-start bundle có thể cần parent checkpoint ngoài Git (ví dụ V9.1 `parent_v9_best_weights.pth`); phải lấy lại asset đúng SHA từ Drive/original ZIP trước khi dùng. Hai current fresh bundles V10.1/V11 không cần parent checkpoint. Manifest V9.1 đã được reseal từ proof/runtime fix có sẵn khi publish, không đổi model weights/forward trong lần này.
+Only [Q1](../docs/AnchorFlow_V11_Baseline.md) is the current adopted development
+baseline. Full-KITTI and Q1 Orin qualification are pending.

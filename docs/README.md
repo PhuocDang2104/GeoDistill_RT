@@ -1,27 +1,28 @@
-# Documentation index
+# Documentation
 
-## Current baseline
+## Current: Q1_s4_n1_fast
 
-- [AnchorFlow V11](AnchorFlow_V11.md): nguyên lý hiện tại, source, training và kết quả paired run đã audit.
-- [V10.1 / V11 benchmark](AnchorFlow_V10_1_V11_Benchmark.md): upload paths, concurrent train, isolated evaluation/profile và resume.
-- [V10.1 LiteMetric](AnchorFlow_V10_1.md): learned-h Euler2, control về runtime/near range.
+- [Canonical baseline](AnchorFlow_V11_Baseline.md): reported RMSE0.978691,
+  iRMSE3.170880,wallmean3.846668ms,582888params,coarse4NFE/fine0.
+- [Code-matched theory](AnchorFlow_Q1_Theory.md): bounded local jet/chart,
+  midpoint solver,U-PIR,cardinal/stencil/moment equivalence and claim limits.
+- [Evidence and attribution](../benchmarks/q1_n1fast_2026_10_21/README.md): old/fresh
+  ×original/fast same-session table, raw console/hash, missing private artifacts.
+- [Private deployment artifacts](../production/AnchorFlow_S4_Q1_Fast/README.md).
+- [Frozen train/benchmark folder](../drive_upload/AnchorFlow_S4_UPIR_N1Fast_30ep_A100/README.md).
+- [Metric-only GeoLift_Data checklist](GeoLift_Data_MetricOnly_Transfer.md).
+- [Cleanup and recovery](../benchmarks/q1_n1fast_2026_10_21/CLEANUP.md).
 
-## Historical snapshots — not current entrypoints
+## Historical — not current Q1 solver/architecture contracts
 
-Các phiên bản giữ nguyên để tái lập và ablation, không xóa code hoặc rewrite source đã train:
+- [G NoRelative baseline](history/AnchorFlow_S4_G_NoRelative_2026_10_19.md).
+- [G completed evidence](../benchmarks/s4_upir_norel_2026_10_19/README.md).
+- [Legacy G Orin helper](../production/AnchorFlow_S4_UPIR_Orin/README.md): not Q1-compatible.
+- [Fixed6 RK3+fine2](history/AnchorFlow_V11_Fixed6_2026_10_14.md).
+- [V11.3 adaptive](AnchorFlow_V11_3.md),[V11 original](AnchorFlow_V11.md).
+- [S6 A100 audit](AnchorFlow_S6_A100_Inference.md).
+- [Old fullKITTI production](AnchorFlow_V11_3_Production.md),
+  [Fixed6 server](AnchorFlow_V11_3_Fixed6_Production.md).
 
-| Version | Technical document |
-|---|---|
-| AnchorFlow Research V3/V4 | [Research](AnchorFlow_Research.md) |
-| V6 Connection | [V6](AnchorFlow_V6.md) |
-| V7 static jet | [V7](AnchorFlow_V7.md) |
-| V8 learned dynamics | [V8](AnchorFlow_V8.md) |
-| V9 consensus / V9.1 metric refine | [V9](AnchorFlow_V9.md) / [V9.1](AnchorFlow_V9_1.md) |
-| V10 learned adaptive budget | [V10](AnchorFlow_V10.md) |
-| GeoLift S2 / S3 | [S2](GeoLift-RT_v2.1_Baseline.md) / [S3](GeoLift-S3_Lite_Baseline.md) |
-
-`anchort-flow.md` và root `v*_suggest.md` là đề xuất/lịch sử research; không dùng thay implementation contract V11. Spec trong frozen bundle có thể mô tả thời điểm trước train: metric mới nhất nằm ở `AnchorFlow_V11.md` và curated benchmark.
-
-## Operations / references
-
-[Server runbook](Server_Training_Runbook.md), [server validation](Server_Training_Validation.md), [Vast setup](Vast_Training_Step_by_Step.md), [RTX5060 plan](RTX5060_Server_Training_Plan.md). Server adapter hiện có là GeoLift workflow, không tự chuyển sang V11. Papers tại `papers/` được giữ làm tài liệu nền tảng, không là nguồn metric của model repo.
+Historical D junctions can be disconnected; that is not proof their data is deleted
+or unnecessary. Q1's self-contained frozen bundle does not depend on those paths.

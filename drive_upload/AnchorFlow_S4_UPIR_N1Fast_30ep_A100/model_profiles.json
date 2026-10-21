@@ -1,0 +1,88 @@
+{
+  "variant": "Q1_s4_n1_fast",
+  "parameters": 582888,
+  "trainable_parameters": 582888,
+  "coarse_nfe": 4,
+  "fine_nfe": 0,
+  "fine_module": null,
+  "new_layers": 0,
+  "blocks": [
+    {
+      "block": "decoder.fuse.2.refine",
+      "hidden": 96,
+      "base_hidden": 192,
+      "resolution": [
+        22,
+        76
+      ],
+      "delta_parameters": -19680,
+      "delta_conv_macs": -32262912
+    },
+    {
+      "block": "decoder.fuse.1.refine",
+      "hidden": 64,
+      "base_hidden": 128,
+      "resolution": [
+        44,
+        152
+      ],
+      "delta_parameters": -9024,
+      "delta_conv_macs": -58640384
+    },
+    {
+      "block": "decoder.refine8",
+      "hidden": 64,
+      "base_hidden": 128,
+      "resolution": [
+        44,
+        152
+      ],
+      "delta_parameters": -9024,
+      "delta_conv_macs": -58640384
+    },
+    {
+      "block": "context32.body.1",
+      "hidden": 32,
+      "base_hidden": 128,
+      "resolution": [
+        11,
+        38
+      ],
+      "delta_parameters": -13536,
+      "delta_conv_macs": -5497536
+    },
+    {
+      "block": "decoder.fuse.0.refine",
+      "hidden": 512,
+      "base_hidden": 96,
+      "resolution": [
+        88,
+        304
+      ],
+      "delta_parameters": 45344,
+      "delta_conv_macs": 1168527360
+    },
+    {
+      "block": "dynamics.context.1",
+      "hidden": 128,
+      "base_hidden": 64,
+      "resolution": [
+        88,
+        304
+      ],
+      "delta_parameters": 4928,
+      "delta_conv_macs": 124985344
+    }
+  ],
+  "extra_decoder_conv_macs_at_352x1216": 1138471488,
+  "extra_parameters": -992,
+  "mac_scope": "Additional/removed conv MACs across listed blocks vs G0; not total model FLOPs or latency",
+  "initialization": "Copied retained slices, zero outgoing added lanes; shrinking is NOT function preserving",
+  "common_hash_scope": "Historical Edge600 retained intersection, same scope as M3",
+  "parent_variant": "M3_s4_trimlow_fuse768_jetctx",
+  "parent_parameters": 610792,
+  "only_change_vs_M3": "decoder.fuse.0.refine hidden768->512; Jet-context128 unchanged",
+  "change_vs_N1": "No neural architecture/training change; deployment-only operator rewrites and TRT builder search",
+  "removed_parameters_vs_M3": 27904,
+  "removed_conv_macs_vs_M3": 719093760
+}

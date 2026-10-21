@@ -1,0 +1,25 @@
+{
+  "device": "CPU",
+  "passed": true,
+  "parameters": 583880,
+  "input_shape": [
+    1,
+    3,
+    352,
+    1216
+  ],
+  "output_shape": [
+    1,
+    1,
+    352,
+    1216
+  ],
+  "opset": 17,
+  "schema_full_check": true,
+  "trained_weights_used": false,
+  "weights_unchanged": true,
+  "production_helper_eval_bn_regression": true,
+  "numerical_onnx_parity": "Not run: target TensorRT versus exported real FP32 references is mandatory",
+  "orin_runtime_tested": false,
+  "seconds": 66.09644479999952
+}

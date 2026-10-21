@@ -1,0 +1,187 @@
+{
+  "evidence_level": "user_supplied_console_snapshot",
+  "user_console_sha256": "b0ab20ff21d6e37bb69ca3a6a3a01b642b90a8a0ee19dcf284d47977ab61c4a9",
+  "benchmark_session_id": "ec751356850d497baefa6ef881c0eb57",
+  "measurement": {
+    "variant": "Q1_s4_n1_fast",
+    "metrics": {
+      "pixels": 25424992,
+      "squared_error_fraction_global": 1.0,
+      "rmse_m": 0.9786909354631096,
+      "mae_m": 0.25582589206580214,
+      "irmse_km_inv": 3.1708796716217647,
+      "imae_km_inv": 1.0410073212436963,
+      "abs_rel": 0.013260718048485451,
+      "delta1": 0.9967566951446828,
+      "pred_below_0_1": 0,
+      "error_tail": {
+        "1": {
+          "pixels": 1098096,
+          "pixel_fraction": 0.0431896301088315,
+          "sse_fraction": 0.953374015541806,
+          "sse_m2": 23217490.032740474,
+          "mse_contribution_m2": 0.9131759031719843
+        },
+        "2": {
+          "pixels": 481957,
+          "pixel_fraction": 0.01895603349649038,
+          "sse_fraction": 0.9030378148640135,
+          "sse_m2": 21991653.982595444,
+          "mse_contribution_m2": 0.8649620807194529
+        },
+        "5": {
+          "pixels": 141089,
+          "pixel_fraction": 0.005549224951575206,
+          "sse_fraction": 0.7659398005184701,
+          "sse_m2": 18652909.974802017,
+          "mse_contribution_m2": 0.7336446742953554
+        },
+        "10": {
+          "pixels": 44116,
+          "pixel_fraction": 0.0017351431221689273,
+          "sse_fraction": 0.571844653168314,
+          "sse_m2": 13926116.423118591,
+          "mse_contribution_m2": 0.5477333649945137
+        },
+        "20": {
+          "pixels": 9233,
+          "pixel_fraction": 0.00036314662360562396,
+          "sse_fraction": 0.3012337787173969,
+          "sse_m2": 7335937.565826416,
+          "mse_contribution_m2": 0.28853254175365783
+        }
+      }
+    },
+    "targets": {
+      "actual": {
+        "rmse_m": 0.9786909354631096,
+        "irmse_km_inv": 3.1708796716217647,
+        "mean_wall_ms": 3.84666829333734,
+        "parameters": 582888
+      },
+      "checks": {
+        "rmse_lt_0_98": true,
+        "irmse_lt_3_2": true,
+        "mean_wall_le_3_9ms": true,
+        "parameters_exact": true
+      },
+      "all_passed": true,
+      "note": "Strict unrounded quality thresholds; <=3.9ms cap also accepts faster models. No guarantee.",
+      "reverse_repeat_mean_ms": 3.845360023331826,
+      "reverse_repeat_within_3_9ms": true,
+      "stable_speed_target_passed": true
+    },
+    "original_wall": {
+      "median_ms": 4.226121500096269,
+      "p95_ms": 4.251437149741832,
+      "mean_ms": 4.22939082333869,
+      "fps_from_median": 236.62358026791713
+    }
+  },
+  "comparison": {
+    "rows": [
+      {
+        "variant": "N1_s4_m3_f512",
+        "backend": "trt_original",
+        "parameters": 582888,
+        "rmse_m": 0.9796221292150672,
+        "irmse_km_inv": 3.1806014249641446,
+        "mae_m": 0.2570363506195257,
+        "boundary3_rmse_m": 1.6789226917354838,
+        "mean_ms": 4.211658506656022,
+        "median_ms": 4.209017499761103,
+        "p95_ms": 4.229285799988247,
+        "fps_from_mean": 237.43615452668342,
+        "benchmark_session_id": "ec751356850d497baefa6ef881c0eb57"
+      },
+      {
+        "variant": "N1_s4_m3_f512",
+        "backend": "trt_fast",
+        "parameters": 582888,
+        "rmse_m": 0.9796221329433121,
+        "irmse_km_inv": 3.180601228172267,
+        "mae_m": 0.25703634700316713,
+        "boundary3_rmse_m": 1.67892270861529,
+        "mean_ms": 3.8507278566673144,
+        "median_ms": 3.844770500109007,
+        "p95_ms": 3.8903526998183224,
+        "fps_from_mean": 259.69116417005614,
+        "benchmark_session_id": "ec751356850d497baefa6ef881c0eb57"
+      },
+      {
+        "variant": "Q1_s4_n1_fast",
+        "backend": "trt_original",
+        "parameters": 582888,
+        "rmse_m": 0.9786909260529391,
+        "irmse_km_inv": 3.170879590658628,
+        "mae_m": 0.2558258912370008,
+        "boundary3_rmse_m": 1.6671663976444084,
+        "mean_ms": 4.22939082333869,
+        "median_ms": 4.226121500096269,
+        "p95_ms": 4.251437149741832,
+        "fps_from_mean": 236.44067000897257,
+        "benchmark_session_id": "ec751356850d497baefa6ef881c0eb57"
+      },
+      {
+        "variant": "Q1_s4_n1_fast",
+        "backend": "trt_fast",
+        "parameters": 582888,
+        "rmse_m": 0.9786909354631096,
+        "irmse_km_inv": 3.1708796716217647,
+        "mae_m": 0.25582589206580214,
+        "boundary3_rmse_m": 1.6671664041687762,
+        "mean_ms": 3.84666829333734,
+        "median_ms": 3.843643499976679,
+        "p95_ms": 3.8612094999052715,
+        "fps_from_mean": 259.9652280213659,
+        "benchmark_session_id": "ec751356850d497baefa6ef881c0eb57"
+      }
+    ],
+    "selection": {
+      "selected_variant": "Q1_s4_n1_fast",
+      "targets": {
+        "actual": {
+          "rmse_m": 0.9786909354631096,
+          "irmse_km_inv": 3.1708796716217647,
+          "mean_wall_ms": 3.84666829333734,
+          "parameters": 582888
+        },
+        "checks": {
+          "rmse_lt_0_98": true,
+          "irmse_lt_3_2": true,
+          "mean_wall_le_3_9ms": true,
+          "parameters_exact": true
+        },
+        "all_passed": true,
+        "note": "Strict unrounded quality thresholds; <=3.9ms cap also accepts faster models. No guarantee."
+      },
+      "reverse_repeat_within_3_9ms": true,
+      "status": "subset_development_candidate_only",
+      "full_KITTI_baseline_promoted": false,
+      "next": "Confirm another seed and lock independent full-KITTI validation; no automatic promotion."
+    }
+  },
+  "attribution": {
+    "same_Q1_checkpoint_wall_reduction_pct": 9.049117142104834,
+    "same_Q1_checkpoint_rmse_drift_m": 9.410170531687356e-09,
+    "same_Q1_checkpoint_irmse_drift_km_inv": 8.096313663941146e-08,
+    "fresh_Q1_vs_old_N1_fast_rmse_improvement_pct": 0.09505680291284566,
+    "quality_attribution": "Different trained weights; NOT evidence that deployment rewrites improve accuracy",
+    "speed_attribution": "Combined operator rewrites + builderlevel3->5; both use CUDA Graph/auxstreams0"
+  },
+  "independent_A100_rerun_by_local_agent": false,
+  "full_GPU_report_available_locally": false,
+  "trained_checkpoint_available_locally": false,
+  "missing": [
+    "actual_checkpoint_sha256",
+    "actual_ONNX_engine_sha256",
+    "selected_checkpoint_epoch",
+    "full400_per_image_report"
+  ],
+  "not_established": [
+    "full_KITTI_training_or_test",
+    "multi_seed_confirmation",
+    "Orin_runtime",
+    "isolated_fastop_or_Graph_speedup"
+  ]
+}
