@@ -15,3 +15,4 @@ production/AnchorFlow_V11_3_Fixed6_FullKITTI/** -text whitespace=cr-at-eol,-blan
 
 # Original user evidence is hashed byte-for-byte on every platform.
 benchmarks/s4_upir_norel_2026_10_19/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol
+benchmarks/q1_n1fast_2026_10_21/** -text whitespace=cr-at-eol,-blank-at-eof,-blank-at-eol

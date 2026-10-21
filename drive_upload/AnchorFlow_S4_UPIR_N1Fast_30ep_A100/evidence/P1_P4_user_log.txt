@@ -1,0 +1,637 @@
+Unexpected keys (norm_head.num_batches_tracked, classifier.bias, classifier.weight, conv_head.weight, norm_head.bias, norm_head.running_mean, norm_head.running_var, norm_head.weight) found while loading pretrained weights. This may be expected if model is being adapted.
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-22:14:35] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+M3_s4_trimlow_fuse768_jetctx TensorRT graph accuracy 100/400
+M3_s4_trimlow_fuse768_jetctx TensorRT graph accuracy 200/400
+M3_s4_trimlow_fuse768_jetctx TensorRT graph accuracy 300/400
+M3_s4_trimlow_fuse768_jetctx TensorRT graph accuracy 400/400
+{
+  "variant": "M3_s4_trimlow_fuse768_jetctx",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9740778811575401,
+    "mae_m": 0.2565765950071276,
+    "irmse_km_inv": 3.1347294289612186,
+    "imae_km_inv": 1.0436481219993967,
+    "abs_rel": 0.013250930180064707,
+    "delta1": 0.9967777374325231,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1101401,
+        "pixel_fraction": 0.04331962031689135,
+        "sse_fraction": 0.9526230361058424,
+        "sse_m2": 22981018.25425613,
+        "mse_contribution_m2": 0.9038751419963527
+      },
+      "2": {
+        "pixels": 482687,
+        "pixel_fraction": 0.018984745403263056,
+        "sse_fraction": 0.9015698217743648,
+        "sse_m2": 21749413.720225334,
+        "mse_contribution_m2": 0.8554344371170435
+      },
+      "5": {
+        "pixels": 141555,
+        "pixel_fraction": 0.005567553374254749,
+        "sse_fraction": 0.7627349936972777,
+        "sse_m2": 18400171.05293846,
+        "mse_contribution_m2": 0.7237041039359408
+      },
+      "10": {
+        "pixels": 43910,
+        "pixel_fraction": 0.0017270408580659534,
+        "sse_fraction": 0.5653701614309842,
+        "sse_m2": 13638954.242980957,
+        "mse_contribution_m2": 0.5364388804126647
+      },
+      "20": {
+        "pixels": 8715,
+        "pixel_fraction": 0.0003427729692107671,
+        "sse_fraction": 0.2913259940557795,
+        "sse_m2": 7027929.971862793,
+        "mse_contribution_m2": 0.2764181782972751
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 4.405760049819946,
+      "p95_ms": 4.437196969985962,
+      "mean_ms": 4.410105179150899,
+      "fps_from_median": 226.9755930173428
+    },
+    "host_enqueue": {
+      "median_ms": 0.13646699972014176,
+      "p95_ms": 0.1867606490122853,
+      "mean_ms": 0.14278695666992766,
+      "fps_from_median": 7327.778891971973
+    },
+    "synchronized_wall": {
+      "median_ms": 4.433208498994645,
+      "p95_ms": 4.47693134929068,
+      "mean_ms": 4.439177479944192,
+      "fps_from_median": 225.57026140926558
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 907.44091796875,
+    "cuda_free_mib_after": 37789.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-22:20:02] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+P1_pack128 TensorRT graph accuracy 100/400
+P1_pack128 TensorRT graph accuracy 200/400
+P1_pack128 TensorRT graph accuracy 300/400
+P1_pack128 TensorRT graph accuracy 400/400
+{
+  "variant": "P1_pack128",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9863501902951728,
+    "mae_m": 0.25865595877084085,
+    "irmse_km_inv": 3.2486535078321537,
+    "imae_km_inv": 1.0527106611892638,
+    "abs_rel": 0.013367376242447174,
+    "delta1": 0.9966014148598356,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1111079,
+        "pixel_fraction": 0.043700269404214565,
+        "sse_fraction": 0.953829250446588,
+        "sse_m2": 23593573.63250625,
+        "mse_contribution_m2": 0.9279677898229526
+      },
+      "2": {
+        "pixels": 491355,
+        "pixel_fraction": 0.019325669797654214,
+        "sse_fraction": 0.9039323079546059,
+        "sse_m2": 22359341.00001955,
+        "mse_contribution_m2": 0.8794237182068553
+      },
+      "5": {
+        "pixels": 145977,
+        "pixel_fraction": 0.0057414767328147044,
+        "sse_fraction": 0.7670290884367833,
+        "sse_m2": 18972952.724855423,
+        "mse_contribution_m2": 0.7462323970389223
+      },
+      "10": {
+        "pixels": 45221,
+        "pixel_fraction": 0.0017786042961193459,
+        "sse_fraction": 0.5682311119137251,
+        "sse_m2": 14055558.238479614,
+        "mse_contribution_m2": 0.5528244901111321
+      },
+      "20": {
+        "pixels": 9253,
+        "pixel_fraction": 0.00036393325118843695,
+        "sse_fraction": 0.2949622515344407,
+        "sse_m2": 7296079.038391113,
+        "mse_contribution_m2": 0.2869648508991119
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 3.7765119075775146,
+      "p95_ms": 3.7949952483177185,
+      "mean_ms": 3.780119869709015,
+      "fps_from_median": 264.79461060178704
+    },
+    "host_enqueue": {
+      "median_ms": 0.1217895005538594,
+      "p95_ms": 0.14453025059992797,
+      "mean_ms": 0.12653090668512354,
+      "fps_from_median": 8210.888421845251
+    },
+    "synchronized_wall": {
+      "median_ms": 3.80054899960669,
+      "p95_ms": 3.823501400711393,
+      "mean_ms": 3.8051114533482178,
+      "fps_from_median": 263.11988086549803
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 907.17431640625,
+    "cuda_free_mib_after": 38223.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-22:25:27] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+P2_pack160 TensorRT graph accuracy 100/400
+P2_pack160 TensorRT graph accuracy 200/400
+P2_pack160 TensorRT graph accuracy 300/400
+P2_pack160 TensorRT graph accuracy 400/400
+{
+  "variant": "P2_pack160",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9965126155484361,
+    "mae_m": 0.2582872149862,
+    "irmse_km_inv": 3.2617075177907147,
+    "imae_km_inv": 1.0516221376625545,
+    "abs_rel": 0.013339437398927732,
+    "delta1": 0.9965763607713229,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1107983,
+        "pixel_fraction": 0.04357849945439511,
+        "sse_fraction": 0.9552625240559226,
+        "sse_m2": 24118437.42057395,
+        "mse_contribution_m2": 0.9486114064686412
+      },
+      "2": {
+        "pixels": 491001,
+        "pixel_fraction": 0.019311746489438425,
+        "sse_fraction": 0.9065942034254267,
+        "sse_m2": 22889661.229807854,
+        "mse_contribution_m2": 0.9002819442306158
+      },
+      "5": {
+        "pixels": 146022,
+        "pixel_fraction": 0.005743246644876034,
+        "sse_fraction": 0.7725847245304212,
+        "sse_m2": 19506194.22560692,
+        "mse_contribution_m2": 0.7672055206785087
+      },
+      "10": {
+        "pixels": 45954,
+        "pixel_fraction": 0.0018074341970294426,
+        "sse_fraction": 0.5791015685559429,
+        "sse_m2": 14621137.739257812,
+        "mse_contribution_m2": 0.5750695118904192
+      },
+      "20": {
+        "pixels": 9795,
+        "pixel_fraction": 0.0003852508586826694,
+        "sse_fraction": 0.3097685055538072,
+        "sse_m2": 7821025.244812012,
+        "mse_contribution_m2": 0.30761170917229835
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 3.7990400791168213,
+      "p95_ms": 3.8236672282218933,
+      "mean_ms": 3.802760550181071,
+      "fps_from_median": 263.22438804922376
+    },
+    "host_enqueue": {
+      "median_ms": 0.1295589991059387,
+      "p95_ms": 0.16199670053538284,
+      "mean_ms": 0.13439449667809336,
+      "fps_from_median": 7718.491242606104
+    },
+    "synchronized_wall": {
+      "median_ms": 3.825210000286461,
+      "p95_ms": 3.853409700877819,
+      "mean_ms": 3.828940953383911,
+      "fps_from_median": 261.42355581134433
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 908.21630859375,
+    "cuda_free_mib_after": 38221.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-22:31:11] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+P3_pack128_local96 TensorRT graph accuracy 100/400
+P3_pack128_local96 TensorRT graph accuracy 200/400
+P3_pack128_local96 TensorRT graph accuracy 300/400
+P3_pack128_local96 TensorRT graph accuracy 400/400
+{
+  "variant": "P3_pack128_local96",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9923682276221155,
+    "mae_m": 0.2586754186345342,
+    "irmse_km_inv": 3.2616993426776424,
+    "imae_km_inv": 1.0541551134945792,
+    "abs_rel": 0.013353905523515367,
+    "delta1": 0.9966189173235531,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1112372,
+        "pixel_fraction": 0.043751124877443426,
+        "sse_fraction": 0.9545724961464722,
+        "sse_m2": 23900965.45660448,
+        "mse_contribution_m2": 0.9400579342012961
+      },
+      "2": {
+        "pixels": 492013,
+        "pixel_fraction": 0.01935154984512876,
+        "sse_fraction": 0.9052596457791487,
+        "sse_m2": 22666250.714713097,
+        "mse_contribution_m2": 0.891494900557416
+      },
+      "5": {
+        "pixels": 145633,
+        "pixel_fraction": 0.0057279467383903205,
+        "sse_fraction": 0.7695930442197801,
+        "sse_m2": 19269376.437929153,
+        "mse_contribution_m2": 0.7578911504841045
+      },
+      "10": {
+        "pixels": 45725,
+        "pixel_fraction": 0.0017984273112062335,
+        "sse_fraction": 0.5751697956538345,
+        "sse_m2": 14401329.886520386,
+        "mse_contribution_m2": 0.5664241658963112
+      },
+      "20": {
+        "pixels": 9434,
+        "pixel_fraction": 0.00037105223081289465,
+        "sse_fraction": 0.30211455288000283,
+        "sse_m2": 7564464.219818115,
+        "mse_contribution_m2": 0.29752081022554955
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 3.910655975341797,
+      "p95_ms": 3.9239680767059326,
+      "mean_ms": 3.9124855319658915,
+      "fps_from_median": 255.71157532275606
+    },
+    "host_enqueue": {
+      "median_ms": 0.1214654994328157,
+      "p95_ms": 0.136707650108292,
+      "mean_ms": 0.12342683666550631,
+      "fps_from_median": 8232.790419250812
+    },
+    "synchronized_wall": {
+      "median_ms": 3.93419299962261,
+      "p95_ms": 3.949105700394284,
+      "mean_ms": 3.936285323343327,
+      "fps_from_median": 254.18173437244326
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 906.32861328125,
+    "cuda_free_mib_after": 38213.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-22:36:37] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+P4_pack160_local96 TensorRT graph accuracy 100/400
+P4_pack160_local96 TensorRT graph accuracy 200/400
+P4_pack160_local96 TensorRT graph accuracy 300/400
+P4_pack160_local96 TensorRT graph accuracy 400/400
+{
+  "variant": "P4_pack160_local96",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9882316855168676,
+    "mae_m": 0.25848917254781173,
+    "irmse_km_inv": 3.256349258494153,
+    "imae_km_inv": 1.0549711490594345,
+    "abs_rel": 0.013381582801908331,
+    "delta1": 0.9966256823207653,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1110791,
+        "pixel_fraction": 0.043688941967022055,
+        "sse_fraction": 0.9540867433486723,
+        "sse_m2": 23690064.080580115,
+        "mse_contribution_m2": 0.931762892219597
+      },
+      "2": {
+        "pixels": 490717,
+        "pixel_fraction": 0.019300576377762477,
+        "sse_fraction": 0.9043642484862764,
+        "sse_m2": 22455449.830095768,
+        "mse_contribution_m2": 0.8832038110413474
+      },
+      "5": {
+        "pixels": 144980,
+        "pixel_fraction": 0.005702263347811477,
+        "sse_fraction": 0.7675565604277914,
+        "sse_m2": 19058501.995513916,
+        "mse_contribution_m2": 0.7495971678383976
+      },
+      "10": {
+        "pixels": 45128,
+        "pixel_fraction": 0.0017749464778592653,
+        "sse_fraction": 0.571459432851092,
+        "sse_m2": 14189391.769744873,
+        "mse_contribution_m2": 0.5580883474710582
+      },
+      "20": {
+        "pixels": 9154,
+        "pixel_fraction": 0.00036003944465351256,
+        "sse_fraction": 0.29766861289561714,
+        "sse_m2": 7391139.8134765625,
+        "mse_contribution_m2": 0.2907037222854018
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 3.905535936355591,
+      "p95_ms": 3.9270913004875183,
+      "mean_ms": 3.909092655181885,
+      "fps_from_median": 256.0468054310465
+    },
+    "host_enqueue": {
+      "median_ms": 0.12227649949636543,
+      "p95_ms": 0.14922089940228037,
+      "mean_ms": 0.12756626996027384,
+      "fps_from_median": 8178.186357303467
+    },
+    "synchronized_wall": {
+      "median_ms": 3.9295784999922034,
+      "p95_ms": 3.954621700995631,
+      "mean_ms": 3.9336437300031926,
+      "fps_from_median": 254.4802196983682
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 907.37060546875,
+    "cuda_free_mib_after": 38213.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Unexpected keys (norm_head.num_batches_tracked, classifier.bias, classifier.weight, conv_head.weight, norm_head.bias, norm_head.running_mean, norm_head.running_var, norm_head.weight) found while loading pretrained weights. This may be expected if model is being adapted.
+[
+  {
+    "variant": "M3_s4_trimlow_fuse768_jetctx",
+    "parameters": 610792,
+    "rmse_m": 0.9740778811575401,
+    "irmse_km_inv": 3.1347294289612186,
+    "mae_m": 0.2565765950071276,
+    "boundary3_rmse_m": 1.6826260020019503,
+    "far80_120_rmse_m": 9.045413747505775,
+    "mean_ms": 4.439177479944192,
+    "median_ms": 4.433208498994645,
+    "p95_ms": 4.47693134929068,
+    "fps_from_mean": 225.26695643909505,
+    "fps_from_median": 225.57026140926558,
+    "checkpoint_epoch_0based": 27,
+    "trained_this_run": false,
+    "measurement": "current_same_session",
+    "matched_training_verified": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "benchmark_session_id": "ed3c68a1957542879bf0b5c279bbd7f5",
+    "packed_hidden": 0,
+    "local96": false,
+    "all_four_metrics_no_worse_than_M3": true,
+    "mean_latency_at_most_3_9ms": false,
+    "deployment_target_passed": false,
+    "pareto_rmse_irmse_latency": true
+  },
+  {
+    "variant": "P1_pack128",
+    "parameters": 578184,
+    "rmse_m": 0.9863501902951728,
+    "irmse_km_inv": 3.2486535078321537,
+    "mae_m": 0.25865595877084085,
+    "boundary3_rmse_m": 1.6843380526999192,
+    "far80_120_rmse_m": 9.297192134288197,
+    "mean_ms": 3.8051114533482178,
+    "median_ms": 3.80054899960669,
+    "p95_ms": 3.823501400711393,
+    "fps_from_mean": 262.80439147717306,
+    "fps_from_median": 263.11988086549803,
+    "checkpoint_epoch_0based": 27,
+    "trained_this_run": true,
+    "measurement": "current_same_session",
+    "matched_training_verified": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "benchmark_session_id": "ed3c68a1957542879bf0b5c279bbd7f5",
+    "packed_hidden": 128,
+    "local96": false,
+    "all_four_metrics_no_worse_than_M3": false,
+    "mean_latency_at_most_3_9ms": true,
+    "deployment_target_passed": false,
+    "pareto_rmse_irmse_latency": true
+  },
+  {
+    "variant": "P2_pack160",
+    "parameters": 590888,
+    "rmse_m": 0.9965126155484361,
+    "irmse_km_inv": 3.2617075177907147,
+    "mae_m": 0.2582872149862,
+    "boundary3_rmse_m": 1.700018580020614,
+    "far80_120_rmse_m": 8.923968907475311,
+    "mean_ms": 3.828940953383911,
+    "median_ms": 3.825210000286461,
+    "p95_ms": 3.853409700877819,
+    "fps_from_mean": 261.1688224432471,
+    "fps_from_median": 261.42355581134433,
+    "checkpoint_epoch_0based": 28,
+    "trained_this_run": true,
+    "measurement": "current_same_session",
+    "matched_training_verified": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "benchmark_session_id": "ed3c68a1957542879bf0b5c279bbd7f5",
+    "packed_hidden": 160,
+    "local96": false,
+    "all_four_metrics_no_worse_than_M3": false,
+    "mean_latency_at_most_3_9ms": true,
+    "deployment_target_passed": false,
+    "pareto_rmse_irmse_latency": false
+  },
+  {
+    "variant": "P3_pack128_local96",
+    "parameters": 588744,
+    "rmse_m": 0.9923682276221155,
+    "irmse_km_inv": 3.2616993426776424,
+    "mae_m": 0.2586754186345342,
+    "boundary3_rmse_m": 1.6981083940013568,
+    "far80_120_rmse_m": 9.022496493907783,
+    "mean_ms": 3.936285323343327,
+    "median_ms": 3.93419299962261,
+    "p95_ms": 3.949105700394284,
+    "fps_from_mean": 254.0466246361021,
+    "fps_from_median": 254.18173437244326,
+    "checkpoint_epoch_0based": 27,
+    "trained_this_run": true,
+    "measurement": "current_same_session",
+    "matched_training_verified": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "benchmark_session_id": "ed3c68a1957542879bf0b5c279bbd7f5",
+    "packed_hidden": 128,
+    "local96": true,
+    "all_four_metrics_no_worse_than_M3": false,
+    "mean_latency_at_most_3_9ms": false,
+    "deployment_target_passed": false,
+    "pareto_rmse_irmse_latency": false
+  },
+  {
+    "variant": "P4_pack160_local96",
+    "parameters": 601448,
+    "rmse_m": 0.9882316855168676,
+    "irmse_km_inv": 3.256349258494153,
+    "mae_m": 0.25848917254781173,
+    "boundary3_rmse_m": 1.6861544491096792,
+    "far80_120_rmse_m": 9.170524058134596,
+    "mean_ms": 3.9336437300031926,
+    "median_ms": 3.9295784999922034,
+    "p95_ms": 3.954621700995631,
+    "fps_from_mean": 254.217226733746,
+    "fps_from_median": 254.4802196983682,
+    "checkpoint_epoch_0based": 27,
+    "trained_this_run": true,
+    "measurement": "current_same_session",
+    "matched_training_verified": true,
+    "gpu": "NVIDIA A100-SXM4-40GB",
+    "benchmark_session_id": "ed3c68a1957542879bf0b5c279bbd7f5",
+    "packed_hidden": 160,
+    "local96": true,
+    "all_four_metrics_no_worse_than_M3": false,
+    "mean_latency_at_most_3_9ms": false,
+    "deployment_target_passed": false,
+    "pareto_rmse_irmse_latency": false
+  }
+]
+variant	parameters	rmse_m	irmse_km_inv	mae_m	boundary3_rmse_m	mean_ms	fps_from_mean	deployment_target_passed	pareto_rmse_irmse_latency
+0	M3_s4_trimlow_fuse768_jetctx	610792	0.974078	3.134729	0.256577	1.682626	4.439177	225.266956	False	True
+1	P1_pack128	578184	0.986350	3.248654	0.258656	1.684338	3.805111	262.804391	False	True
+2	P2_pack160	590888	0.996513	3.261708	0.258287	1.700019	3.828941	261.168822	False	False
+3	P3_pack128_local96	588744	0.992368	3.261699	0.258675	1.698108	3.936285	254.046625	False	False
+4	P4_pack160_local96	601448	0.988232	3.256349	0.258489	1.686154	3.933644	254.217227	False	False
+
+{'P1_pack128': {'delta_rmse_candidate_minus_reference_m': 0.012272309137632331,
+  'image_bootstrap_95pct_interval_m': [0.005465529102950242,
+   0.019247638607476955],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'P2_pack160': {'delta_rmse_candidate_minus_reference_m': 0.022434734390895827,
+  'image_bootstrap_95pct_interval_m': [0.015487873549430953,
+   0.029430673600048144],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'P3_pack128_local96': {'delta_rmse_candidate_minus_reference_m': 0.01829034646457539,
+  'image_bootstrap_95pct_interval_m': [0.011301592506038174,
+   0.025281088475497277],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'P4_pack160_local96': {'delta_rmse_candidate_minus_reference_m': 0.014153804359327338,
+  'image_bootstrap_95pct_interval_m': [0.00719392844687892,
+   0.021379194502669705],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'}}
+{'width_no_local_P2_minus_P1': {'delta_rmse_candidate_minus_reference_m': 0.010162425253263496,
+  'image_bootstrap_95pct_interval_m': [0.003073157231367588,
+   0.01684292654913798],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'width_with_local_P4_minus_P3': {'delta_rmse_candidate_minus_reference_m': -0.004136542105248053,
+  'image_bootstrap_95pct_interval_m': [-0.011339437648090814,
+   0.003372183837355748],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'local_at128_P3_minus_P1': {'delta_rmse_candidate_minus_reference_m': 0.00601803732694306,
+  'image_bootstrap_95pct_interval_m': [-0.0027504307292264525,
+   0.014302701212803368],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'},
+ 'local_at160_P4_minus_P2': {'delta_rmse_candidate_minus_reference_m': -0.00828093003156849,
+  'image_bootstrap_95pct_interval_m': [-0.015056387597777518,
+   -0.000939510099905439],
+  'caveat': 'One seed, repeated development400 selection; image bootstrap ignores sequence dependence and is not independent confirmation.'}}
+{'contrast': 'P4-P3-P2+P1, mean squared error; negative=superadditive error reduction',
+ 'interaction_mse_m2': -0.028343529986212104,
+ 'image_bootstrap_95pct_interval_m2': [-0.05031214239517164,
+  -0.004955336322370021],
+ 'caveat': 'No independent multi-seed/sequence confirmation; contrast interval may contain0.'}
+{'candidate_for_confirmation_only': None,
+ 'all_eligible': [],
+ 'automatic_baseline_promotion': False,
+ 'if_none': 'Keep M3/K1 references; do not launch full-KITTI merely because one column wins.',
+ 'next': 'Confirm shortlisted arm with another seed and independent/official validation before full-KITTI; exclude all development-val IDs from full training or use a locked official validation protocol.',
+ 'data_warning': 'Same1600/400 training-derived development split. Not official KITTI test evidence or statistical equivalence.'}
+Comparison: /content/drive/MyDrive/GeoLift_RT_Runs/S4_UPIR_PhaseFusion_Fresh30_pair01/comparison.csv
+Full-resolution previews: /content/drive/MyDrive/GeoLift_RT_Runs/S4_UPIR_PhaseFusion_Fresh30_pair01/comparison_previews

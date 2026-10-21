@@ -8,7 +8,7 @@ from torch.nn import functional as F
 import experiment as E
 
 
-def typed_deployment(model):
+def typed_deployment(model,fast=True):
     """New model copy. Trained checkpoint/weights/BN state remain untouched."""
     # Clear transient telemetry: backward smoke leaves non-leaf tensors here.
     # These caches are not parameters/buffers or inputs to the next prediction.
@@ -19,7 +19,11 @@ def typed_deployment(model):
     model.set_diagnostics(False)
     # D uses the FP32 recovery protocol from the completed A/B/C runs. No mixed
     # BF16 Conv export and no manual BN folding; weights/checkpoint untouched.
-    return DepthOnly(model.float(),native_amp=False).eval()
+    model=model.float()
+    if fast:
+        from fast_ops import enable_fast_ops
+        enable_fast_ops(model)
+    return DepthOnly(model,native_amp=False).eval()
 
 
 class DepthOnly(nn.Module):
@@ -32,15 +36,16 @@ class DepthOnly(nn.Module):
             return self.model(rgb,sparse,mask,K)["D_full"]
 
 
-def export_onnx(module,sample,path,opset=22):
+def export_onnx(module,sample,path,opset=22,input_names=None):
     import onnx
     module.eval()
     if opset<22:
         raise ValueError("Standard ONNX Conv requires opset22+ for BF16 type validity")
     with torch.no_grad():
         # Same legacy-export + official opset conversion as historical recovery.
-        torch.onnx.export(module,tuple(sample[k] for k in E.INPUTS),str(path),
-            input_names=list(E.INPUTS),output_names=["D_full"],opset_version=20,
+        names=tuple(input_names or E.INPUTS)
+        torch.onnx.export(module,tuple(sample[k] for k in names),str(path),
+            input_names=list(names),output_names=["D_full"],opset_version=20,
             dynamic_axes=None,dynamo=False,do_constant_folding=True)
     module.eval()
     if any(child.training for child in module.modules()):
@@ -52,7 +57,7 @@ def export_onnx(module,sample,path,opset=22):
     onnx.save(graph,str(path))
 
 
-def build_engine(onnx_path,engine_path,workspace_gib=4,tf32=False):
+def build_engine(onnx_path,engine_path,workspace_gib=4,tf32=False,optimization_level=5):
     import tensorrt as trt
     major=int(trt.__version__.split(".")[0])
     if major!=10:
@@ -65,6 +70,9 @@ def build_engine(onnx_path,engine_path,workspace_gib=4,tf32=False):
         raise RuntimeError("TensorRT ONNX parser:\n"+"\n".join(str(parser.get_error(i))
                            for i in range(parser.num_errors)))
     config=builder.create_builder_config()
+    if optimization_level not in (3,5):raise ValueError('Registered builder levels3/5 only')
+    config.builder_optimization_level=optimization_level
+    config.max_aux_streams=0
     config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE,int(workspace_gib*2**30))
     if tf32:config.set_flag(trt.BuilderFlag.TF32)
     else:config.clear_flag(trt.BuilderFlag.TF32)
@@ -79,12 +87,12 @@ def build_engine(onnx_path,engine_path,workspace_gib=4,tf32=False):
         inspector.get_engine_information(trt.LayerInformationFormat.JSON),encoding="utf-8")
     return {"tensorrt":trt.__version__,"strongly_typed":True,"tf32":tf32,
             "precision":"explicit FP32 entire engine, TF32 OFF; no BF16 Conv",
-            "workspace_gib":workspace_gib}
+            "workspace_gib":workspace_gib,"builder_optimization_level":optimization_level,"max_aux_streams":0}
 
 
 class TRTRunner:
     """Fixed FP32 input/output buffers. H2D excluded; D2D staging INCLUDED."""
-    def __init__(self,path,sample,capture=False):
+    def __init__(self,path,sample,capture=False,input_names=None):
         import tensorrt as trt
         self.logger=trt.Logger(trt.Logger.WARNING)
         self.runtime=trt.Runtime(self.logger)
@@ -92,8 +100,9 @@ class TRTRunner:
         if self.engine is None:raise RuntimeError("Cannot deserialize TensorRT engine")
         self.context=self.engine.create_execution_context()
         self.stream=torch.cuda.current_stream()
-        self.inputs={k:sample[k].float().contiguous().clone() for k in E.INPUTS}
-        expected=set(E.INPUTS)|{"D_full"}
+        self.input_names=tuple(input_names or E.INPUTS)
+        self.inputs={k:sample[k].float().contiguous().clone() for k in self.input_names}
+        expected=set(self.input_names)|{"D_full"}
         actual={self.engine.get_tensor_name(i) for i in range(self.engine.num_io_tensors)}
         if actual!=expected:raise RuntimeError(f"TensorRT IO mismatch: {actual}")
         for name,value in self.inputs.items():
@@ -123,7 +132,7 @@ class TRTRunner:
             raise RuntimeError("TensorRT execute_async_v3 failed")
 
     def __call__(self,batch):
-        for name in E.INPUTS:self.inputs[name].copy_(batch[name],non_blocking=True)
+        for name in self.input_names:self.inputs[name].copy_(batch[name],non_blocking=True)
         if self.graph is not None:self.graph.replay()
         else:self._enqueue()
         return self.output

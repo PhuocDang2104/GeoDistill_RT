@@ -167,6 +167,8 @@ def load_checkpoint(cfg, variant, device):
 
 
 def train(cfg, variant):
+    if variant not in E.TRAIN_VARIANTS:
+        raise ValueError('Only N1_s4_m3_f512 may train in this package.')
     from train_graph import TrainingForward
     device = setup(cfg)
     E.assert_config(cfg)
@@ -286,7 +288,8 @@ def train(cfg, variant):
 def smoke(cfg, variant):
     from train_graph import TrainingForward
     device = setup(cfg)
-    model = E.make_model(cfg,variant,device,pretrained=False).train()
+    # Same ImageNet training start / historical Edge600 intersection as M3.
+    model = E.make_model(cfg,variant,device,pretrained=True).train()
     initial_hash=E.common_weight_hash(model)
     E.seed_all(cfg["seed"])
     E.freeze_encoder_bn(model)
@@ -300,7 +303,7 @@ def smoke(cfg, variant):
                                       for p in model.parameters()):
         raise RuntimeError("GPU smoke failed")
     root=run_dir(cfg,variant);root.mkdir(parents=True,exist_ok=True)
-    write_json(root/"smoke_report.json",{"passed":True,"loss":float(loss.detach()),
+    write_json(root/"smoke_report.json",{"passed":True,"encoder_pretrained":True,"loss":float(loss.detach()),
         "upir":{"input_channels":41,"added_parameters":16,
             "new_weight_abs_max":float(model.detail1.pir.body[0].weight[:,40:].detach().abs().max())},
         "coarse":model.dynamics.last_solver_report,
@@ -326,63 +329,25 @@ def smoke(cfg, variant):
 
 
 def compare(cfg):
-    rows=[]
-    shared=[]
-    for variant in E.VARIANTS:
-        root=run_dir(cfg,variant)
-        report=json.loads((root/"trt_benchmark.json").read_text())
-        if not report["qualification_passed"]:
-            raise RuntimeError(f"Unqualified TensorRT result: {variant}")
-        shared.append(report["initial_shared_sha256"])
-        row={"variant":variant,"checkpoint_epoch":report["checkpoint_epoch"],
-             "rmse_m":report["trt_graph"]["all"]["rmse_m"],
-             "irmse_km_inv":report["trt_graph"]["all"]["irmse_km_inv"],
-             "mae_m":report["trt_graph"]["all"]["mae_m"],
-             "boundary3_rmse_m":report["trt_graph_boundary"]["bands"]["3"]["rmse_m"],
-             "median_ms":report["timing"]["trt_graph"]["synchronized_wall"]["median_ms"],
-             "p95_ms":report["timing"]["trt_graph"]["synchronized_wall"]["p95_ms"],
-             "parameters":report["parameters"]}
-        rows.append(row)
-    if len(set(shared))!=1:
-        raise RuntimeError("Actual pretrained common initialization differed across trained arms")
-    for row in rows:
-        row.update(rmse_improvement_pct=100*(1-row["rmse_m"]/rows[0]["rmse_m"]),
-                   speedup_vs_A=rows[0]["median_ms"]/row["median_ms"])
-    root=Path(cfg["drive_runs"])/cfg["run_name"]
-    with (root/"comparison.csv").open("w",newline="",encoding="utf-8") as handle:
-        writer=csv.DictWriter(handle,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
-    write_json(root/"comparison.json",rows)
-    preview_dir=root/"comparison_previews"
-    preview_dir.mkdir(exist_ok=True)
-    for index in range(0,1000,100):
-        pair=cv2.imread(str(run_dir(cfg,E.VARIANTS[0])/"test_preview"/f"{index:04d}_rgb_depth.png"))
-        panels=[pair[:,:1216]]
-        labels=["RGB"]
-        for variant in E.VARIANTS:
-            panels.append(cv2.imread(str(run_dir(cfg,variant)/"test_preview"/f"{index:04d}_depth.png")))
-            labels.append(variant)
-        # Vertically stacked full-resolution rows preserve pixel readability.
-        named=[]
-        for label,panel in zip(labels,panels):
-            title=np.full((32,panel.shape[1],3),245,np.uint8)
-            cv2.putText(title,label,(12,23),cv2.FONT_HERSHEY_SIMPLEX,.65,(25,25,25),1,cv2.LINE_AA)
-            named.append(np.concatenate((title,panel),axis=0))
-        cv2.imwrite(str(preview_dir/f"{index:04d}_RGB_A_B_C.png"),np.concatenate(named,axis=0))
-    print(json.dumps(rows,indent=2))
+    from benchmark_fast import compare
+    return compare(cfg)
 
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("action",choices=("prepare","smoke","train","benchmark","compare"))
+    parser.add_argument("action",choices=("prepare","history","smoke","train","preflight","benchmark","compare"))
     parser.add_argument("--config",required=True)
     parser.add_argument("--variant",choices=E.VARIANTS,default=E.VARIANTS[0])
     args=parser.parse_args()
     cfg=json.loads(Path(args.config).read_text(encoding="utf-8"))
     E.assert_config(cfg)
     if args.action=="prepare":prepare(cfg)
-    elif args.action=="benchmark":
-        from trt_benchmark import benchmark
-        try:benchmark(cfg,args.variant)
+    elif args.action=="history":
+        from history import audit_history
+        print(json.dumps(audit_history(cfg),indent=2),flush=True)
+    elif args.action in ('preflight','benchmark'):
+        from benchmark_fast import benchmark
+        try:benchmark(cfg,reference=args.action=='preflight')
         except Exception as error:
             import traceback
             write_json(run_dir(cfg,args.variant)/"benchmark_failure.json",
@@ -391,8 +356,7 @@ def main():
                  "gpu":torch.cuda.get_device_name(0) if torch.cuda.is_available() else None})
             raise
     elif args.action=="compare":
-        from compare_history import compare_history
-        compare_history(cfg)
+        compare(cfg)
     else:globals()[args.action](cfg,args.variant)
 
 

@@ -1,0 +1,290 @@
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/jit_utils.py:308: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_node_shape_type_inference(node, params_dict, opset_version)
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:714: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+/usr/local/lib/python3.13/dist-packages/torch/onnx/_internal/torchscript_exporter/utils.py:1187: UserWarning: Constant folding - Only steps=1 can be constant folded for opset >= 10 onnx::Slice op. Constant folding not applied. (Triggered internally at /pytorch/torch/csrc/jit/passes/onnx/constant_fold.cpp:178.)
+  _C._jit_pass_onnx_graph_shape_type_inference(
+[10/20/2026-18:00:17] [TRT] [W] WARNING The logger passed into createInferRuntime differs from one already registered for an existing builder, runtime, or refitter. So the current new logger is ignored, and TensorRT will use the existing one which is returned by nvinfer1::getLogger() instead.
+N1_s4_m3_f512 TensorRT graph accuracy 100/400
+N1_s4_m3_f512 TensorRT graph accuracy 200/400
+N1_s4_m3_f512 TensorRT graph accuracy 300/400
+N1_s4_m3_f512 TensorRT graph accuracy 400/400
+{
+  "variant": "N1_s4_m3_f512",
+  "all": {
+    "pixels": 25424992,
+    "squared_error_fraction_global": 1.0,
+    "rmse_m": 0.9796221285381508,
+    "mae_m": 0.2570363518208556,
+    "irmse_km_inv": 3.1806014234387887,
+    "imae_km_inv": 1.047861747029389,
+    "abs_rel": 0.013328561356846881,
+    "delta1": 0.996759527003981,
+    "pred_below_0_1": 0,
+    "error_tail": {
+      "1": {
+        "pixels": 1103415,
+        "pixel_fraction": 0.04339883371448062,
+        "sse_fraction": 0.9530906448954097,
+        "sse_m2": 23254778.391961575,
+        "mse_contribution_m2": 0.9146425057660421
+      },
+      "2": {
+        "pixels": 483117,
+        "pixel_fraction": 0.019001657896293538,
+        "sse_fraction": 0.9025293080025322,
+        "sse_m2": 22021115.370566368,
+        "mse_contribution_m2": 0.8661208377397471
+      },
+      "5": {
+        "pixels": 141318,
+        "pixel_fraction": 0.005558231837398415,
+        "sse_fraction": 0.7655476363677742,
+        "sse_m2": 18678853.609119415,
+        "mse_contribution_m2": 0.7346650732129794
+      },
+      "10": {
+        "pixels": 44327,
+        "pixel_fraction": 0.0017434420431676045,
+        "sse_fraction": 0.5721299296845207,
+        "sse_m2": 13959590.095108032,
+        "mse_contribution_m2": 0.5490499306787602
+      },
+      "20": {
+        "pixels": 9026,
+        "pixel_fraction": 0.00035500502812350936,
+        "sse_fraction": 0.29786478660461907,
+        "sse_m2": 7267702.857391357,
+        "mse_contribution_m2": 0.2858487765656468
+      }
+    }
+  },
+  "timing": {
+    "gpu_stream": {
+      "median_ms": 4.191232204437256,
+      "p95_ms": 4.2292221784591675,
+      "mean_ms": 4.195573801994324,
+      "fps_from_median": 238.59331843778554
+    },
+    "host_enqueue": {
+      "median_ms": 0.12249400015207357,
+      "p95_ms": 0.17305590013165786,
+      "mean_ms": 0.1284909300026508,
+      "fps_from_median": 8163.665148974826
+    },
+    "synchronized_wall": {
+      "median_ms": 4.215738999846508,
+      "p95_ms": 4.26210775015079,
+      "mean_ms": 4.220932836675881,
+      "fps_from_median": 237.2063356000951
+    },
+    "warmup": 100,
+    "iterations": 300,
+    "distinct_images": 100,
+    "peak_pytorch_allocated_mib": 907.22021484375,
+    "cuda_free_mib_after": 38033.4375,
+    "cuda_total_mib": 40441.375,
+    "memory_scope": "Torch peak excludes direct TensorRT allocations; process holds all compared backends and preloaded inputs, NOT isolated per-model footprint",
+    "scope": "GPU-resident inputs; includes D2D staging; excludes decode/preprocess/H2D/metrics/build/capture"
+  }
+}
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Unexpected keys (norm_head.num_batches_tracked, classifier.bias, classifier.weight, conv_head.weight, norm_head.bias, norm_head.running_mean, norm_head.running_var, norm_head.weight) found while loading pretrained weights. This may be expected if model is being adapted.
+{
+  "comparison": [
+    {
+      "variant": "K1_d4_fusion768",
+      "parameters": 657128,
+      "rmse_m": 0.9785038264475985,
+      "irmse_km_inv": 3.1149697505480423,
+      "mae_m": 0.25469565010850403,
+      "boundary3_rmse_m": 1.6797065658666537,
+      "far80_120_rmse_m": 8.874569744732193,
+      "mean_ms": 4.405349600018174,
+      "median_ms": 4.402295500085529,
+      "p95_ms": 4.426346099944567,
+      "fps_from_mean": 226.99674050746722,
+      "fps_from_median": 227.15421987928156,
+      "checkpoint_epoch_0based": 28,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": false,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "M0_s4_trimlow",
+      "parameters": 532616,
+      "rmse_m": 0.9868386345978738,
+      "irmse_km_inv": 3.200154329506432,
+      "mae_m": 0.25850146567358123,
+      "boundary3_rmse_m": 1.6844533274532743,
+      "far80_120_rmse_m": 9.069996286935858,
+      "mean_ms": 3.7866723666835846,
+      "median_ms": 3.7836794999748236,
+      "p95_ms": 3.8047496503168077,
+      "fps_from_mean": 264.08410952009893,
+      "fps_from_median": 264.2929983912892,
+      "checkpoint_epoch_0based": 22,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": false,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "M1_s4_fuse256",
+      "parameters": 601320,
+      "rmse_m": 0.9857638131922926,
+      "irmse_km_inv": 3.151924579648175,
+      "mae_m": 0.25729132060391946,
+      "boundary3_rmse_m": 1.6812925337170543,
+      "far80_120_rmse_m": 9.252254640882638,
+      "mean_ms": 4.021209633338003,
+      "median_ms": 4.0165965001506265,
+      "p95_ms": 4.044764850505089,
+      "fps_from_mean": 248.68138972647907,
+      "fps_from_median": 248.96700476697097,
+      "checkpoint_epoch_0based": 24,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": false,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "M2_s4_trimlow_fuse768",
+      "parameters": 605864,
+      "rmse_m": 0.9781868122559134,
+      "irmse_km_inv": 3.160076484092625,
+      "mae_m": 0.25589918408546497,
+      "boundary3_rmse_m": 1.6836107810910161,
+      "far80_120_rmse_m": 8.896168395334065,
+      "mean_ms": 4.383697693353194,
+      "median_ms": 4.382208000151877,
+      "p95_ms": 4.394164599852957,
+      "fps_from_mean": 228.11792006466493,
+      "fps_from_median": 228.19546675222682,
+      "checkpoint_epoch_0based": 27,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": false,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "M3_s4_trimlow_fuse768_jetctx",
+      "parameters": 610792,
+      "rmse_m": 0.9740777806165615,
+      "irmse_km_inv": 3.134729279623086,
+      "mae_m": 0.2565765909608371,
+      "boundary3_rmse_m": 1.682625930179705,
+      "far80_120_rmse_m": 9.04540551309192,
+      "mean_ms": 4.414880476642793,
+      "median_ms": 4.412033499647805,
+      "p95_ms": 4.432858900327119,
+      "fps_from_mean": 226.50669826523364,
+      "fps_from_median": 226.65285748166372,
+      "checkpoint_epoch_0based": 27,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": true,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "MSG32_scratch28",
+      "parameters": 363971,
+      "rmse_m": 1.2608546197580677,
+      "irmse_km_inv": 5.0868332794423505,
+      "mae_m": 0.4230399431130223,
+      "boundary3_rmse_m": 1.9940530745853362,
+      "far80_120_rmse_m": 12.049315665238202,
+      "mean_ms": 4.063973746648723,
+      "median_ms": 4.059196000071097,
+      "p95_ms": 4.093485449948275,
+      "fps_from_mean": 246.06458169781007,
+      "fps_from_median": 246.3542041287203,
+      "checkpoint_epoch_0based": 27,
+      "measurement": "historical_previous_session",
+      "benchmark_session_id": "ee77bb28b0584bc7a3f4f22a396f163c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": false,
+      "timing_same_session_as_new": false
+    },
+    {
+      "variant": "N1_s4_m3_f512",
+      "parameters": 582888,
+      "rmse_m": 0.9796221285381508,
+      "irmse_km_inv": 3.1806014234387887,
+      "mae_m": 0.2570363518208556,
+      "boundary3_rmse_m": 1.678922690099519,
+      "far80_120_rmse_m": 8.801300707733255,
+      "mean_ms": 4.220932836675881,
+      "median_ms": 4.215738999846508,
+      "p95_ms": 4.26210775015079,
+      "fps_from_mean": 236.91445438575892,
+      "fps_from_median": 237.2063356000951,
+      "checkpoint_epoch_0based": 27,
+      "measurement": "new_current_session",
+      "benchmark_session_id": "05d7fd33e19b4cc188d5ed9c1c97d33c",
+      "gpu": "NVIDIA A100-SXM4-40GB",
+      "training_evidence_verified": true,
+      "timing_same_session_as_new": true
+    }
+  ],
+  "targets": {
+    "metric_relative_tolerance": 0.0,
+    "no_worse_than_M3": {
+      "rmse_m": false,
+      "irmse_km_inv": false,
+      "mae_m": false,
+      "boundary3_rmse_m": true
+    },
+    "all_four_metrics_no_worse": false,
+    "within_parameter_budget": true,
+    "mean_wall_at_most_3_9ms": false,
+    "mean_wall_in_requested_3_8_to_3_9ms_band": false,
+    "all_quality_params_latency_targets_passed": false,
+    "note": "No-worse is point-estimate target, NOT exact predictions/statistical equivalence. Faster than3.8ms also passes speed cap; A100 only.",
+    "rmse_change_vs_M3_pct": 0.5691894458448532,
+    "irmse_change_vs_M3_pct": 1.4633526446410805,
+    "parameters_reduction_vs_M3_pct": 4.568494675765233,
+    "same_gpu_name_as_M3": true,
+    "latency_comparison_same_session": false,
+    "historical_mean_latency_change_pct_descriptive_only": -4.393043956523945
+  }
+}
+variant	parameters	rmse_m	irmse_km_inv	mae_m	boundary3_rmse_m	mean_ms	fps_from_mean	measurement
+0	K1_d4_fusion768	657128	0.978504	3.114970	0.254696	1.679707	4.405350	226.996741	historical_previous_session
+1	M0_s4_trimlow	532616	0.986839	3.200154	0.258501	1.684453	3.786672	264.084110	historical_previous_session
+2	M1_s4_fuse256	601320	0.985764	3.151925	0.257291	1.681293	4.021210	248.681390	historical_previous_session
+3	M2_s4_trimlow_fuse768	605864	0.978187	3.160076	0.255899	1.683611	4.383698	228.117920	historical_previous_session
+4	M3_s4_trimlow_fuse768_jetctx	610792	0.974078	3.134729	0.256577	1.682626	4.414880	226.506698	historical_previous_session
+5	MSG32_scratch28	363971	1.260855	5.086833	0.423040	1.994053	4.063974	246.064582	historical_previous_session
+6	N1_s4_m3_f512	582888	0.979622	3.180601	0.257036	1.678923	4.220933	236.914454	new_current_session
+
+{'metric_relative_tolerance': 0.0,
+ 'no_worse_than_M3': {'rmse_m': False,
+  'irmse_km_inv': False,
+  'mae_m': False,
+  'boundary3_rmse_m': True},
+ 'all_four_metrics_no_worse': False,
+ 'within_parameter_budget': True,
+ 'mean_wall_at_most_3_9ms': False,
+ 'mean_wall_in_requested_3_8_to_3_9ms_band': False,
+ 'all_quality_params_latency_targets_passed': False,
+ 'note': 'No-worse is point-estimate target, NOT exact predictions/statistical equivalence. Faster than3.8ms also passes speed cap; A100 only.',
+ 'rmse_change_vs_M3_pct': 0.5691894458448532,
+ 'irmse_change_vs_M3_pct': 1.4633526446410805,
+ 'parameters_reduction_vs_M3_pct': 4.568494675765233,
+ 'same_gpu_name_as_M3': True,
+ 'latency_comparison_same_session': False,
+ 'historical_mean_latency_change_pct_descriptive_only': -4.393043956523945}
+{'delta_rmse_new_minus_M3_m': 0.005544347921589532,
+ 'image_bootstrap_95pct_interval_m': [-0.0012987340301336635,
+  0.012376595580384373],
+ 'caveat': 'One seed; image bootstrap ignores sequence dependence and repeated development-val selection; not independent confirmation.'}
+Comparison: /content/drive/MyDrive/GeoLift_RT_Runs/S4_UPIR_M3_F512_Fresh30_pair01/comparison.csv
+New1000test predictions +10pairs: /content/drive/MyDrive/GeoLift_RT_Runs/S4_UPIR_M3_F512_Fresh30_pair01/N1_s4_m3_f512
+Frozen resume source: /content/drive/MyDrive/GeoLift_RT_Runs/S4_UPIR_M3_F512_Fresh30_pair01/frozen_bundle

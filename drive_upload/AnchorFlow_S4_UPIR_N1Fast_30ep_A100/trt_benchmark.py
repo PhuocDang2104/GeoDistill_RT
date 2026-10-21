@@ -82,6 +82,8 @@ def benchmark(cfg,variant):
     from run import setup,load_checkpoint,loader,move,run_dir
     device=setup(cfg)
     root=run_dir(cfg,variant)
+    session_path=Path(cfg['drive_runs'])/cfg['run_name']/'benchmark_session.json'
+    session=json.loads(session_path.read_text())['session_id']
     model,ckpt,checkpoint_path=load_checkpoint(cfg,variant,device)
     status=json.loads((root/"training_status.json").read_text())
     if status["completed_epochs"]!=cfg["epochs"]:raise RuntimeError("Train the entire registered epoch budget before final benchmark")
@@ -151,7 +153,7 @@ def benchmark(cfg,variant):
     inverse_drift=abs(a["irmse_km_inv"]-b["irmse_km_inv"])
     passed=not failed_frames and rmse_drift<=cfg["benchmark"]["rmse_drift_m"] and (
         inverse_drift<=cfg["benchmark"]["irmse_drift_km_inv"])
-    report={"variant":variant,"checkpoint_epoch":ckpt["state"]["selection"]["policy_epoch"],
+    report={"variant":variant,"benchmark_session_id":session,"checkpoint_epoch":ckpt["state"]["selection"]["policy_epoch"],
         "architecture":E.architecture(model),
         "upir_input_coefficients":model.detail1.pir.body[0].weight[:,40,0,0].detach().cpu().tolist(),
         "training_epochs":cfg["epochs"],
@@ -159,8 +161,10 @@ def benchmark(cfg,variant):
         "protocol_note":"UPIR predeclared 6cm max gate; matches historical diagnostic6cm, NOT original5cm parity",
         "checkpoint_sha256":digest(checkpoint_path),"onnx_sha256":digest(export_path),
         "engine_sha256":digest(engine_path),"source_sha256":E.source_hash(),
-        "initial_shared_sha256":ckpt["state"]["initial_shared_sha256"],
+        "initial_shared_sha256":getattr(model,'_comparison_initial_sha256',ckpt["state"]["initial_shared_sha256"]),
         "training_contract":ckpt['contract'],
+        "reference_provenance":getattr(model,'_reference_provenance',None),
+        "trained_this_run":variant in E.TRAIN_VARIANTS,
         "parameters":sum(p.numel() for p in model.parameters()),"build":build,
         "gpu":torch.cuda.get_device_name(0),"torch":torch.__version__,"cuda":torch.version.cuda,
         "qualification_passed":False,"accuracy_qualification_passed":passed,"parity_gates":cfg["benchmark"],

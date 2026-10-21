@@ -1,0 +1,2249 @@
+﻿{
+    "date":  "2026-10-21",
+    "mode":  "recoverable_same_volume_archive",
+    "archive_root":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21",
+    "external_D_available":  false,
+    "source_deletions_are_not_irreversible":  true,
+    "frozen_Q1_untouched":  true,
+    "preexisting_disconnected_junctions_untouched":  true,
+    "state":  "complete",
+    "items":  [
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_DecoderCapacity_30ep_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_DecoderCapacity_30ep_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "ANALYSIS.md",
+                                        "bytes":  5307,
+                                        "sha256":  "7cda1bd1f07ca40bc74aa858f65613fcd9cd8306eee0fec0f7fab5383df0a635"
+                                    },
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  3703,
+                                        "sha256":  "4a3ade3f1be2c99cd83501baa7e2a500b3c7bd79e2bb8d5d38c48e6ecf3e871a"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  6004,
+                                        "sha256":  "676ae030113b17b260f391800bfba3314689ef36f4e8cca38d3e46e001ba4875"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2380,
+                                        "sha256":  "1489368881b8588ee5b66c1ea5c312c80ad7b91446d5d085e1791454a27c7334"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8074,
+                                        "sha256":  "e219742bca5699a6e3b79c7f9d680156c9bc2897b6b2c4a07698d481b6b03468"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  4759,
+                                        "sha256":  "168ceea5c3e3a29f679eca941de162fbf1931157ac878f366fbf5ab62d5cb2c6"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  1232,
+                                        "sha256":  "6e371031fe5b2b6f1d7eb72fe821c8d44b47bae3a65d5b65dce2eff7b8af0e40"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  1301,
+                                        "sha256":  "49ac6f20e9f68c048fe08d4a6b7f94e665860f09b5154efefaf7a317cdf4f5e0"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  6151,
+                                        "sha256":  "d62ce809a612851e98af5c15d848d4a810fa4c0709fe5c11054bdb41463227e5"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  20364,
+                                        "sha256":  "d1c36102892b770c978d8fbc0ea4f3c2e23a2428a1463adf8822cddca4481200"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  8529,
+                                        "sha256":  "fb8904aed4594aaf78ac0938f11f092296e89b6448545a4b779a093ce6f091b6"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "Train_S4_UPIR_DecoderCapacity_Fresh30_A100.ipynb",
+                                        "bytes":  11223,
+                                        "sha256":  "6a589276eab86c8dcd1f63201c1c1278467ff6c3d1d9ab3449dd6ab7fedd3616"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10097,
+                                        "sha256":  "5a72dcc9018a41bc5d1bf4d5a27cab864b317711ac9f94c2aeba0473ca74767e"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity_analysis.json",
+                                        "bytes":  1776,
+                                        "sha256":  "cfce64163b86064200e2c03037d945080a49b84fa0b4873994831e1b4010536a"
+                                    },
+                                    {
+                                        "relative":  "evidence\\G_train_log.csv",
+                                        "bytes":  34521,
+                                        "sha256":  "a2cb66036bb63e0b9251f32c37ea76647d0c2b93ae4b3bb9d89c6ffb5ea70823"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_comparison.json",
+                                        "bytes":  5494,
+                                        "sha256":  "4d35ab3fbbe479c751d631f5dd144f241b822c023bedfe1d416690586921191d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10777,
+                                        "sha256":  "63b5cc3e808676e8632d432f7eea065282b584a5a060a222902a0cc1e9b2a9d4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17345,
+                                        "sha256":  "cf94275dd3b210f76463275b0c4b1d4f12c06e3eca1a10d995ceda0e9491dea3"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34265,
+                                        "sha256":  "daa08005ebd4486606d692ffe75189b43928710d216b7a1bdbf2ecdedb5211a6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  1005,
+                                        "sha256":  "cbcfb87e7797cbf352cd8db324c4771c1e5c51144b6e3393419474f71da6faff"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13605,
+                                        "sha256":  "b3706abbc33f941cc5dd5fe999540fd5bfa7db8b1905dc678f1573bed81b2388"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16144,
+                                        "sha256":  "e230575daadd78f3b25c584d4ae3cfd2c2daa19b9410fc5a410bb2fa8b18bc93"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6514,
+                                        "sha256":  "8575d5f52eb5a635fdeead6554f9584a9ab7481adef27b119e71794f448c8a92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13467,
+                                        "sha256":  "c11ec948f25653b5527a4a398830e5d5f1582b92dfdfb0386d7e15767590c045"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5749,
+                                        "sha256":  "400a31b8fc7a86d28ff99ba796b00d0740835df7de12f68ab683df10d641473f"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7466,
+                                        "sha256":  "e93d9aa44b5977638d918a4f9e2dbb24eb4ae19f1fb4f43089bd422c9afc8984"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3059,
+                                        "sha256":  "3d88113c848f16bb1174a290a1d7cb597b74f8466042d7e0c009b6b309aa7e9d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19384,
+                                        "sha256":  "793aaa69b6eff66eb93163f57f534a392b851cacf9391ede26ee22ccbc7cd77e"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6951,
+                                        "sha256":  "628b6b57eb0d30e8271b69aab323a98d5784686b7a400e4a5fa8ee8f6b088cc3"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6911,
+                                        "sha256":  "edff06a128d177f82847f45fc1e937b27657caf77bfa4a7bf17800ae87e52fb8"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11255,
+                                        "sha256":  "3b4aac685dc91a505c41d6412d746c13387ae4a5ed00a71a8d89cbbd488b6ad5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5679,
+                                        "sha256":  "79160c915894c6ced67573485ef27f3ee1ffd866fed301a00b1bdd7839c73eb8"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\base_experiment.cpython-311.pyc",
+                                        "bytes":  8243,
+                                        "sha256":  "dcf126abbb3715092146d6aa3d177c3aa503791b58e4a14b358c3a07a88512c2"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\compare_history.cpython-311.pyc",
+                                        "bytes":  13045,
+                                        "sha256":  "b0b2f554581016f734a636ff2b1b68b0f59e11fe9fdd9450e2971f07c1d6da1f"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\deployment.cpython-311.pyc",
+                                        "bytes":  19715,
+                                        "sha256":  "2096ac8001dfe76125514d1ae491644326a68b374c84ddbcfc2a4796cad95b97"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\experiment.cpython-311.pyc",
+                                        "bytes":  9840,
+                                        "sha256":  "16ec8d35cdffb75af6f7362eb2a1c537ac389dc4e4edaca638ae0a14e53280d9"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\objective.cpython-311.pyc",
+                                        "bytes":  1227,
+                                        "sha256":  "1a81f922a275d190f5352078c2d8346176365d1279db3315cacd841d6c6b2dbd"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\test_contracts.cpython-311.pyc",
+                                        "bytes":  24050,
+                                        "sha256":  "6856420425e4b41036b6b2b96e2441249f752bde3a6c0276892b2ad699cbda1f"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_DecoderCapacity_30ep_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_DecoderCapacity_30ep_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  97600,
+                                        "sha256":  "5fb1741ccb09351f8de771e0715cf6b41e5215b515d876dce53eb720e3041d04"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_Capacity1M_30ep_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_Capacity1M_30ep_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "ANALYSIS.md",
+                                        "bytes":  6460,
+                                        "sha256":  "7c807674be7fabe9f09dfa3875e111796398a6763d38aea0a703b0a24430d1c5"
+                                    },
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  3809,
+                                        "sha256":  "ea59c268b1da40c582fef610f3fdf2227363833768f495b96e96cbb3bf030d6a"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  8641,
+                                        "sha256":  "44bf45e61e032e5f9c14478ea7a96a4a95aef311e79b453cef2ab561be169228"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2393,
+                                        "sha256":  "ffead2a83cca6594c7de05d6f2599f5e67532e4ffba59809ffd9c16c80d126da"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8074,
+                                        "sha256":  "e219742bca5699a6e3b79c7f9d680156c9bc2897b6b2c4a07698d481b6b03468"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  6454,
+                                        "sha256":  "9b0fd9971479ffbd06f67170e7ef04affe2b3dfb6da713ef377d2f359993ee0a"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  1886,
+                                        "sha256":  "0b78a6909b57418b77f105cc74e4b78fc28702ca3b021b9cb9f010d06e48c8a9"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  7988,
+                                        "sha256":  "5dd4103bd2561cbc3a6940c390337a27211820fc7cbc54428f4337786386dc53"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  7035,
+                                        "sha256":  "f058e3686afec942b77d77493402ba4f514fa7c7097c9bc78897f1bb9a10a4c6"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  20364,
+                                        "sha256":  "d1c36102892b770c978d8fbc0ea4f3c2e23a2428a1463adf8822cddca4481200"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  11014,
+                                        "sha256":  "a638b7403965771aa8e41cba078114fd3ec1d62ee4caba9c265b0298de3c74bf"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "Train_S4_UPIR_Capacity1M_Fresh30_A100.ipynb",
+                                        "bytes":  12358,
+                                        "sha256":  "0496f25e651f6a3bccbfa6d3ee72c125481d5dc78330c8b1fda3221934ccb208"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10097,
+                                        "sha256":  "5a72dcc9018a41bc5d1bf4d5a27cab864b317711ac9f94c2aeba0473ca74767e"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity_analysis.json",
+                                        "bytes":  1776,
+                                        "sha256":  "cfce64163b86064200e2c03037d945080a49b84fa0b4873994831e1b4010536a"
+                                    },
+                                    {
+                                        "relative":  "evidence\\dataset_upload_audit.json",
+                                        "bytes":  3419,
+                                        "sha256":  "a1c5b695a75d26ebe040784c7cf4f89614b69e1689fea4bf4e071bacd78a3529"
+                                    },
+                                    {
+                                        "relative":  "evidence\\G_train_log.csv",
+                                        "bytes":  34521,
+                                        "sha256":  "a2cb66036bb63e0b9251f32c37ea76647d0c2b93ae4b3bb9d89c6ffb5ea70823"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_comparison.json",
+                                        "bytes":  5494,
+                                        "sha256":  "4d35ab3fbbe479c751d631f5dd144f241b822c023bedfe1d416690586921191d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10772,
+                                        "sha256":  "8bf86686d9b6593f05be35cf3af4ca7cc5547b3a366487a5d2c31137aa915342"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17340,
+                                        "sha256":  "e22c7128df49b8502455623d74de9c1251494d1ff93b252d0852567ca821033a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34260,
+                                        "sha256":  "66e64c0fe973233547073b4894b9e1dd11dd7816d61ae5ae30ccf85c4c862718"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  1000,
+                                        "sha256":  "95d60e5e510955d0654cfa74be5cdaf05ef43560c32aa032986f0a3f514ff91a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13600,
+                                        "sha256":  "9f69f6c1846c1687823f37232f8ca886caea993f23df19350e9531a45cd3f00d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16139,
+                                        "sha256":  "a6a6826129b30cba9162121cfc898fa2bce2d521f324015e07fdd97779889e4c"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6509,
+                                        "sha256":  "c0659ab2ae22b4a31119eb88e02a926971649ededf91585f2389977beb5fb974"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13462,
+                                        "sha256":  "342eb8f58ffec432798ce1007fa7270157e1b72a5d52251bc5eb6d66d30e9a82"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5744,
+                                        "sha256":  "d21f6fb9cca0a211220d79c48308be98845fdebf9c001bd6444954af416a6654"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7461,
+                                        "sha256":  "a27c8725ab2b04cc1bddf0f955e40db0b82e93d9144f34364dafb8e60d2784e9"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3054,
+                                        "sha256":  "e0c95dc6afdda5d054b02fe279312eebaa0ad709f9f28bb81066a48b7d7379ea"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19379,
+                                        "sha256":  "02f2e6d8618c8d5400c1f96563c728ef7d5f454b6d13324858810cffe32b7020"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6946,
+                                        "sha256":  "7708750bdd7141a3fc138efdd352e78e4aa33c69d1f916daaa9cc00b6a675099"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6906,
+                                        "sha256":  "aa2b42b52a2818219b154d85a547a66baabf3cf4adfe0e64ff6e3244c9adaa43"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11250,
+                                        "sha256":  "294377b836794fa623b80c5032b65dacba31841ca7b6d7f8997ac521290ce00c"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5674,
+                                        "sha256":  "97bbc4654a1cb78c4f9ad80a97dbfa1fa678479e3e7f10f3d4163f3aa52687d7"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\base_experiment.cpython-311.pyc",
+                                        "bytes":  8238,
+                                        "sha256":  "0f382112d89f14ae2681cf8e6df10d7ee995e1e52c70c7557643960f281dc5be"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\compare_history.cpython-311.pyc",
+                                        "bytes":  18426,
+                                        "sha256":  "50d88c2ea9dffccb9cea7bbb274f1a90301b79562e2527413ba8dbef35bea351"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\deployment.cpython-311.pyc",
+                                        "bytes":  19710,
+                                        "sha256":  "259892e3589f245bb293a179f516e4e6029bf941b7ee1919fe829ecf4c7b69fc"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\experiment.cpython-311.pyc",
+                                        "bytes":  12820,
+                                        "sha256":  "ae7fb0bf9c6c87c6dedd3eeae33998ed8bf5c529b730c7b4235b0596d2cc48a5"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\objective.cpython-311.pyc",
+                                        "bytes":  1222,
+                                        "sha256":  "be30678c50235506a7385eda17b9f75a6dff550fba9544098714c579dd1d2d93"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\test_contracts.cpython-311.pyc",
+                                        "bytes":  29865,
+                                        "sha256":  "c33fb7bee5a4fbaa2b7c2eaa579d18ec9b536a7227d9738856392b0c8ba8dd3a"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_Capacity1M_30ep_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_Capacity1M_30ep_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  102453,
+                                        "sha256":  "8432decac68c62748dc558655b3a8f712006b90ef6201112d313e1b8415f8429"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_D4Split_30ep_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_D4Split_30ep_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "ANALYSIS.md",
+                                        "bytes":  3604,
+                                        "sha256":  "676aa49ee96cf3d4233d8d5d8c46876054935822bbd39487c41ecb51aaeabb74"
+                                    },
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  4120,
+                                        "sha256":  "4ad7409136c4b47ece8d54d6fa4f485da2db3bf5ee7c4474a244ac6c0a48a71d"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  11216,
+                                        "sha256":  "1476aa5f30860d47cdaf0a7ee441c4702f24921dd3f53dffc8038ef61f2da366"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2471,
+                                        "sha256":  "e63f211ca7d646d52c9a5e6ea4a18e915f39041e3a3ad96fd5540e07af50d8ee"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8074,
+                                        "sha256":  "e219742bca5699a6e3b79c7f9d680156c9bc2897b6b2c4a07698d481b6b03468"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  6854,
+                                        "sha256":  "b0be7f6209ec08462cee57f4088f99fc737a0229fed1709404f23e0f683d8622"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  1988,
+                                        "sha256":  "c03fed9cef39e89cedd796439bc2f40cf780e947d727f1154a168a449335e0a8"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  8005,
+                                        "sha256":  "4280316849918195221bf4d86d5795262a61dafa44e14903098494332cd1ff9c"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  7190,
+                                        "sha256":  "c3ad6e7fb9b4b2a2a7bfa619920f83d2c5b3016140501a80064da9a292f28489"
+                                    },
+                                    {
+                                        "relative":  "reference.py",
+                                        "bytes":  5381,
+                                        "sha256":  "8663cc3f691fa9542892301af85fae9ba6956a7a7a4deacd7e725a5b349a2498"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  20934,
+                                        "sha256":  "7b1e93c686ce17dc9b12c69ac18f9907ed5e7ce5364d072e3ac542839e9a638b"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  17940,
+                                        "sha256":  "9ada3a1aa61d024072d882cac37e70dde72c3521db17d422872613b5150d8f80"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "Train_S4_UPIR_D4Split_Fresh30_A100.ipynb",
+                                        "bytes":  14703,
+                                        "sha256":  "190426818de5405235bfdc47a65023713190a3460408dbe6129f47d7ef91ac21"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10405,
+                                        "sha256":  "a73c1aa94b6a85c14548a8f9d082af57a0380d22e7223e14c993f529f90b7214"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity1m_user_log.txt",
+                                        "bytes":  24910,
+                                        "sha256":  "f4309e95601915e645a696c0b46afc8b0cb68ad83686a9f461f2e657060661cd"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity_analysis.json",
+                                        "bytes":  1776,
+                                        "sha256":  "cfce64163b86064200e2c03037d945080a49b84fa0b4873994831e1b4010536a"
+                                    },
+                                    {
+                                        "relative":  "evidence\\dataset_upload_audit.json",
+                                        "bytes":  3419,
+                                        "sha256":  "a1c5b695a75d26ebe040784c7cf4f89614b69e1689fea4bf4e071bacd78a3529"
+                                    },
+                                    {
+                                        "relative":  "evidence\\G_train_log.csv",
+                                        "bytes":  34521,
+                                        "sha256":  "a2cb66036bb63e0b9251f32c37ea76647d0c2b93ae4b3bb9d89c6ffb5ea70823"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_comparison.json",
+                                        "bytes":  5494,
+                                        "sha256":  "4d35ab3fbbe479c751d631f5dd144f241b822c023bedfe1d416690586921191d"
+                                    },
+                                    {
+                                        "relative":  "evidence\\reference_source_manifest.json",
+                                        "bytes":  3809,
+                                        "sha256":  "ea59c268b1da40c582fef610f3fdf2227363833768f495b96e96cbb3bf030d6a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10769,
+                                        "sha256":  "8342eed176a5951d7f01e1c7730af764993d82597c62ed242ee1cd3bbda89961"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17337,
+                                        "sha256":  "8b76398252d3c8a32c21a1109d5c407e2f7a93c59d8af61bc7d1443c84e5fd8f"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34257,
+                                        "sha256":  "794459d1ad9daf73cacc2c4d2d2b716cf3b795d9dafe4fe85bed9a8508bb41e3"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  997,
+                                        "sha256":  "89bc9eb4dfe6f1f3000acf0b32df36b204086ea3032e8193d42e14f54035d37c"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13597,
+                                        "sha256":  "74c5d15fdc3b77d46925d22485b5a7d095ea137b562178aec34b42c87edd99c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16136,
+                                        "sha256":  "d5a7032c27f64166c5abed11eeeefd18c144119a903361a1e634400bf766c673"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6506,
+                                        "sha256":  "c58a2d356923b7fd732e150d85ea9ae0d190042715b451ff16e360f939685606"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13459,
+                                        "sha256":  "ea5de5c322ec910f153b10c919babba589b0d35a0be11c1084f9d97714006666"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5741,
+                                        "sha256":  "f38b5815b9602c1347e82d954b8d4c2c1e8b1cd55a76dceae0032087c9301aed"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7458,
+                                        "sha256":  "b91416310fb61c0830f544c274ea7fe2aa076078770bad715e33f4685d00c662"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3051,
+                                        "sha256":  "64a17a4a249e791cfef1b673c3edd9cd797d619bfeab492df109031d0a04e9f8"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19376,
+                                        "sha256":  "dffad9364264a152dfc2e8299e7230fb84d1b4d9f122a161683d6a6f468d6242"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6943,
+                                        "sha256":  "5f998f80c4f0a6dbfb683a848062435283b2c5d89395e95da98d5eb029cb1a70"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6903,
+                                        "sha256":  "9cbce4d5cb825238bf67f696279a43db2ddee4b5689d8ef7af940542ec07760e"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11247,
+                                        "sha256":  "1c7f1f9330d45f3d0fd9ade9e1f51f6d9939612727b4d8d9d5b8c8dd7b1e288a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\selection.cpython-311.pyc",
+                                        "bytes":  3665,
+                                        "sha256":  "d5b21909ea8edf1b6ac228e4fb773cd95d6dee07f02aaa42dd0ebc48ddd4f915"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5671,
+                                        "sha256":  "c4a00ef62b9235b80221d93113fb067afcf4b923473cfaaaa4a96757386f05c5"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\base_experiment.cpython-311.pyc",
+                                        "bytes":  8235,
+                                        "sha256":  "3697501aefa43c60fc760a3f3c62da177796b418523bb89f4e41b6791241ad66"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\compare_history.cpython-311.pyc",
+                                        "bytes":  23470,
+                                        "sha256":  "98530257e16d88c6ba380b4071adbc93216ebe33d8adff68081cc89dcce679ed"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\deployment.cpython-311.pyc",
+                                        "bytes":  19707,
+                                        "sha256":  "26dd06ab62353ba9e1278ec785aa33162bd2b4595f0372e49c0c9af07a337831"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\experiment.cpython-311.pyc",
+                                        "bytes":  13395,
+                                        "sha256":  "c02171cee289073b8d9f6dd2df20d50043e8b5f4ca6a3fad28254e3fa8ef8eeb"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\objective.cpython-311.pyc",
+                                        "bytes":  1219,
+                                        "sha256":  "57e4b39a85f525f1d035cd4f063a61388de72251544d1d6cc71cfab55f1615de"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\reference.cpython-311.pyc",
+                                        "bytes":  9907,
+                                        "sha256":  "2e7a904fdb07e6681e644254ba333c872f3570d609136ae77e2947aa6d3d562f"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\run.cpython-311.pyc",
+                                        "bytes":  40350,
+                                        "sha256":  "e2020b05f9144c5d014cd1fe6355aa2b1718c4130cf23dfafd935ba7264e6c33"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\test_contracts.cpython-311.pyc",
+                                        "bytes":  43433,
+                                        "sha256":  "e6303f227f6c3255b2855708547be5f6a1fcbc02087e42a6d1bf437e1a1eea1c"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\train_graph.cpython-311.pyc",
+                                        "bytes":  8641,
+                                        "sha256":  "160091b9dac89fabff2c073abde7d63cf32262c06dd2ea582bb788b2996fb203"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_D4Split_30ep_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_D4Split_30ep_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  114515,
+                                        "sha256":  "98cedce5a2fcf20d388093a7112490b1317aa95204daac3f68ee8a1ae7989f68"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_Edge600K_MSGCHN_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_Edge600K_MSGCHN_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "ANALYSIS.md",
+                                        "bytes":  6865,
+                                        "sha256":  "c64f1e4b79acba377ecc4227287bb7ef773d25a424636b78b982603379bfed28"
+                                    },
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  5046,
+                                        "sha256":  "2f1777a0f2e2db10419bc9174a2bbc8e41ee6168ff89d6c22ea9d7ef2ea98da2"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  9777,
+                                        "sha256":  "3477874715d07a07464caff91f1f7f8085597ce67abe638febb9526635b0ab47"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2740,
+                                        "sha256":  "332d6170e67f72e70ef43ca34743d85137a4e38078131535ea097db224fd29af"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8227,
+                                        "sha256":  "d7d02967b0c35684955d5ced96a01f78a7c4a9ad93605249ae2cd2259d7b3842"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  5699,
+                                        "sha256":  "27898090f044ef1ddd59ebaf8d8ba93c8f663817705a84aa19fa53f9763cb0f9"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  2881,
+                                        "sha256":  "04356b724afff2e74e0e038f4de9454452b093268594555e3d7cf99550f2e268"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  11003,
+                                        "sha256":  "9b217bad59bb3e850d576b8bab2aa6abced3267b43f414ea7c3f39e6932449fe"
+                                    },
+                                    {
+                                        "relative":  "msgchn.py",
+                                        "bytes":  10541,
+                                        "sha256":  "33a6768d10946de9b3d6b5e49e095eced62b65570958b41ec1988297dcecf95f"
+                                    },
+                                    {
+                                        "relative":  "msgchn_benchmark.py",
+                                        "bytes":  5013,
+                                        "sha256":  "3b6e19366bde7752b68b541b23e40f94cc232be066952f0d25c6bf9c43506ea6"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  7360,
+                                        "sha256":  "c04b70045a3efe58fa8a8aed0eac4b2509710211a09e0c08e391f04ddf1eb1a5"
+                                    },
+                                    {
+                                        "relative":  "reference.py",
+                                        "bytes":  6274,
+                                        "sha256":  "c7022d5ccbcaae3534090a8be4044b5a2fa4bd6ffc92cf12e3aa536155d8914f"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  18552,
+                                        "sha256":  "0fdcec21d02512d0005184687e945777f898463b3f8f9207ae5071462c44837b"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  16815,
+                                        "sha256":  "1c7b98cdb116f91228f5c04bf8c05ab4a7cb9f2a5025f5ea30143306361aed35"
+                                    },
+                                    {
+                                        "relative":  "Train_Edge600K_MSGCHN_A100.ipynb",
+                                        "bytes":  14967,
+                                        "sha256":  "53fd3b89b53c080c0074577d5b38f9b5a9f7f38140e7dfd7ff509f3ce79a165b"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10449,
+                                        "sha256":  "1fe83fbec11508dc692dc5fbd800ce83be2c1638e84ac3dbc95c5f7ef2fac8a8"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity1m_user_log.txt",
+                                        "bytes":  24910,
+                                        "sha256":  "f4309e95601915e645a696c0b46afc8b0cb68ad83686a9f461f2e657060661cd"
+                                    },
+                                    {
+                                        "relative":  "evidence\\capacity_analysis.json",
+                                        "bytes":  1776,
+                                        "sha256":  "cfce64163b86064200e2c03037d945080a49b84fa0b4873994831e1b4010536a"
+                                    },
+                                    {
+                                        "relative":  "evidence\\d4split_stage_comparison.csv",
+                                        "bytes":  1281,
+                                        "sha256":  "e0134d253167519656951cc8a3b471c1fbefb4295202848425b49cb6f9aecd31"
+                                    },
+                                    {
+                                        "relative":  "evidence\\d4split_user_log.txt",
+                                        "bytes":  25567,
+                                        "sha256":  "f31aa49107e6d4f24c4ce06ff103224febb0a2cf13d8f371bc453aa2dc51c8d2"
+                                    },
+                                    {
+                                        "relative":  "evidence\\dataset_upload_audit.json",
+                                        "bytes":  3419,
+                                        "sha256":  "a1c5b695a75d26ebe040784c7cf4f89614b69e1689fea4bf4e071bacd78a3529"
+                                    },
+                                    {
+                                        "relative":  "evidence\\G_train_log.csv",
+                                        "bytes":  34521,
+                                        "sha256":  "a2cb66036bb63e0b9251f32c37ea76647d0c2b93ae4b3bb9d89c6ffb5ea70823"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_comparison.json",
+                                        "bytes":  5494,
+                                        "sha256":  "4d35ab3fbbe479c751d631f5dd144f241b822c023bedfe1d416690586921191d"
+                                    },
+                                    {
+                                        "relative":  "evidence\\reference_policy.json",
+                                        "bytes":  43477,
+                                        "sha256":  "808d4b87028b153d5f31b543721ead0a489634dfa804a7dce9bbb322ff20b46a"
+                                    },
+                                    {
+                                        "relative":  "evidence\\reference_source_manifest.json",
+                                        "bytes":  3809,
+                                        "sha256":  "ea59c268b1da40c582fef610f3fdf2227363833768f495b96e96cbb3bf030d6a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10772,
+                                        "sha256":  "e1b8455e6ee257c43920a833ef352264bb384750eaadd154f5b2dff6cb98437a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17340,
+                                        "sha256":  "3d6e9c2b80b8fc627b48c3e7057d602a3aaf42d7b9e3af5cac7ad69f375b06e7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34260,
+                                        "sha256":  "df53e5bab6557cf30293f8368a35de2c436d0fa468da5266d2320f2bb2b237ed"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  1000,
+                                        "sha256":  "248fb5254b2465fc3060d5e7af15338f234b8b6b5a00c3fe8473f340e85292c7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13600,
+                                        "sha256":  "61317b9bb3117fdb87ed3142c21f9704005b6aecc402ffb7f4b185c64ec1f628"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16139,
+                                        "sha256":  "e9f4f53c44ff8418716845efd47a1fb16bedd6c0ab88b01b06803737712fd9f5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6509,
+                                        "sha256":  "f21239cf7dfdf77f3a2f668ad478365cb4dca69c8a5386743536232db5b35273"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13462,
+                                        "sha256":  "f20d7f3f4de80458464330e120ec9006ebff8764e6f77db2e65c01a0736a3fb7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5744,
+                                        "sha256":  "8d61a4b9a4f2ac3d84f75ffa04df9cd78421a6bec113f9e1ad584ace8e5545fc"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7461,
+                                        "sha256":  "544f45cca23b76da3cfc228bf2b061fafbeba091ca92d12673f6950a30bb6fdd"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3054,
+                                        "sha256":  "b038aa24b373d68b4b180375dcb655aa921c496e90912fbcee961b857425f4d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19379,
+                                        "sha256":  "7e883aa55ecad0533c709a59ca49e1efca5dfd2b96514e73e547ec2a9295dba2"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6946,
+                                        "sha256":  "768dde7437896224fe88f11b9276c6590f564ee5815f9e496f0f4b301e6bb217"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6906,
+                                        "sha256":  "33cd23e2f86484b84c708b59f1cf97cea931bc1da0262eba2b5e82a4a3f0d555"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11250,
+                                        "sha256":  "ee18855ae3fce773225000861ed074032482392e6d3031e806f3bf0b5de6077d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\selection.cpython-311.pyc",
+                                        "bytes":  3668,
+                                        "sha256":  "36ad34b207275dee205f5d11c26bb07a44c51255506605cc0e061cf420c1a396"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5674,
+                                        "sha256":  "7c6528bf39fbd513a261fe16bc5bebb418982fb46a5ba0378d0f3ef98ea52ee1"
+                                    },
+                                    {
+                                        "relative":  "vendor_msgchn\\LICENSE",
+                                        "bytes":  11558,
+                                        "sha256":  "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6"
+                                    },
+                                    {
+                                        "relative":  "vendor_msgchn\\official_network.py",
+                                        "bytes":  8979,
+                                        "sha256":  "a27b621dbc1b604d0e76f802c19ea2c1722f5046b316034bc8aac7214938c687"
+                                    },
+                                    {
+                                        "relative":  "vendor_msgchn\\official_params.json",
+                                        "bytes":  962,
+                                        "sha256":  "2fd7c5f720e550130c5e42c2ffe154261dd47e74e9eef2c32424091d8662f93a"
+                                    },
+                                    {
+                                        "relative":  "vendor_msgchn\\provenance.json",
+                                        "bytes":  574,
+                                        "sha256":  "9e687547dc8cb77bfa1afc2c71f54376c154a8ca94faa5301841a68defc0e091"
+                                    },
+                                    {
+                                        "relative":  "vendor_msgchn\\__pycache__\\official_network.cpython-311.pyc",
+                                        "bytes":  12828,
+                                        "sha256":  "45454404c448935c5c0b501d992888259c0b7875a63586f68fd92724573376b3"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\base_experiment.cpython-311.pyc",
+                                        "bytes":  8238,
+                                        "sha256":  "d48d3559d091d455108c42a8998830a48f4b275a4dbc7b62d7ae33fee212295b"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\compare_history.cpython-311.pyc",
+                                        "bytes":  19922,
+                                        "sha256":  "22c994afd2e66935aa376cc843203dc0bb1c0c287e7df9d4973d11d4489da45e"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\deployment.cpython-311.pyc",
+                                        "bytes":  19823,
+                                        "sha256":  "03c83d2f480e804d0ea55daddf4f2a52cb44fcb62b18627ee3504d66858a38f8"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\experiment.cpython-311.pyc",
+                                        "bytes":  13593,
+                                        "sha256":  "ea4bfa9f7996d1102bdeb30c51c212f748c8f1c1d9af3f86e0c4f8f98a798d84"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\msgchn.cpython-311.pyc",
+                                        "bytes":  23630,
+                                        "sha256":  "c152fcc90ae0da25f10b90b749bc32349a6181ec059215129dda761bf85f642f"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\objective.cpython-311.pyc",
+                                        "bytes":  1222,
+                                        "sha256":  "34ad304e1d296c073e76107d7f42c4d8763d732630b074f89e950779e139fab2"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\reference.cpython-311.pyc",
+                                        "bytes":  10427,
+                                        "sha256":  "cfa61845ffe19d1e816abe5b0b748af58e10e7d7fd5477a14861fe277fb011e5"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\run.cpython-311.pyc",
+                                        "bytes":  40353,
+                                        "sha256":  "18b20d60c92c599b6a93adcfb94c1cdde73378deb18300953b88e6a209fe1135"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\test_contracts.cpython-311.pyc",
+                                        "bytes":  44073,
+                                        "sha256":  "3b53c088e46c8601ea4e2cce68de4e03044fa7261446a508d9a4238214f33db1"
+                                    },
+                                    {
+                                        "relative":  "__pycache__\\train_graph.cpython-311.pyc",
+                                        "bytes":  8644,
+                                        "sha256":  "fd1759190f73a6a8d58c237346896c8c4921123bc3f37f7b364ddcd87c3c0784"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_Edge600K_MSGCHN_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_Edge600K_MSGCHN_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  143478,
+                                        "sha256":  "3e9f36587279f2f9c810310ea177d07a350881c0d6cc4efa6be935508679f8eb"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_M3_F512_30ep_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_M3_F512_30ep_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  3803,
+                                        "sha256":  "5b4f827bd16bb89ec57dacc658cbe3da7e3bfd02177a9292f419eecd6a63ad70"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  8662,
+                                        "sha256":  "91e9681978bf40d376444155065b70ed0c88326f08438358783ce31c4cc63909"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2632,
+                                        "sha256":  "f7f89907059a940148b4a70278bef0b7e82ac9f469f5268fa340264a08d73636"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8227,
+                                        "sha256":  "d7d02967b0c35684955d5ced96a01f78a7c4a9ad93605249ae2cd2259d7b3842"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  6013,
+                                        "sha256":  "9bac8a7f12d9012d1aa4db4cba12c3408fb7919368c45ca49e3b351cfcc1ff58"
+                                    },
+                                    {
+                                        "relative":  "history.py",
+                                        "bytes":  6551,
+                                        "sha256":  "46f92cf65626b2d8a7a8bd2ffb977abdfbaefbdaf795405dadc72df48c4cbc16"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  768,
+                                        "sha256":  "13eed93d35da3c2e7e0ffd0fd373d9028f7ec4c7d957c1b6d306884d039f1cf8"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  2420,
+                                        "sha256":  "aeed14d2e6edcfbd8810830ed43fb3e12e9f62ffbae108247dac7ebe81537cf9"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  7002,
+                                        "sha256":  "c26fe63547ddcad1cbc58e4434d982188b6083a1e33fe8c85c3ab2b5721bcacb"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  18348,
+                                        "sha256":  "0afe5f6f179aa11b46a366e2dd3843fd8ecfe3d2cb4102909c636223c7c9d781"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  16667,
+                                        "sha256":  "9eaede0a8cf8f612efdad9f0ef7bcd985bf811bdbb8e0719c0699940c694b793"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "Train_M3_Fusion512_Fresh30_A100.ipynb",
+                                        "bytes":  13345,
+                                        "sha256":  "42d3b9818c82d100c2ee91ea1ae72190b777d01aa4caa80b10e47b004dca09ad"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10449,
+                                        "sha256":  "1fe83fbec11508dc692dc5fbd800ce83be2c1638e84ac3dbc95c5f7ef2fac8a8"
+                                    },
+                                    {
+                                        "relative":  "evidence\\edge600_user_log.txt",
+                                        "bytes":  35253,
+                                        "sha256":  "986a77fd85aa6858c76ce6ae9438f714668d68550f44116ff4d2e7c8cdfa3f3c"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_rows.json",
+                                        "bytes":  3481,
+                                        "sha256":  "7e8e43b368d039d5b6d3b1605e24d2c8685d6e89858782b74bae6cfaefb114d5"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_rows_provenance.json",
+                                        "bytes":  294,
+                                        "sha256":  "ad25b9a5b81ed9d87ba7f74f128e2b2e8a12c5e683c6121072d643c7b64b6199"
+                                    },
+                                    {
+                                        "relative":  "evidence\\parent_policy.json",
+                                        "bytes":  43322,
+                                        "sha256":  "1f9447bf827dfb346ce9fd91c495fc3ae7807b76548870c2912566c7f85cf5e7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10772,
+                                        "sha256":  "e1b8455e6ee257c43920a833ef352264bb384750eaadd154f5b2dff6cb98437a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17340,
+                                        "sha256":  "3d6e9c2b80b8fc627b48c3e7057d602a3aaf42d7b9e3af5cac7ad69f375b06e7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34260,
+                                        "sha256":  "df53e5bab6557cf30293f8368a35de2c436d0fa468da5266d2320f2bb2b237ed"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  1000,
+                                        "sha256":  "248fb5254b2465fc3060d5e7af15338f234b8b6b5a00c3fe8473f340e85292c7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13600,
+                                        "sha256":  "61317b9bb3117fdb87ed3142c21f9704005b6aecc402ffb7f4b185c64ec1f628"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16139,
+                                        "sha256":  "e9f4f53c44ff8418716845efd47a1fb16bedd6c0ab88b01b06803737712fd9f5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6509,
+                                        "sha256":  "f21239cf7dfdf77f3a2f668ad478365cb4dca69c8a5386743536232db5b35273"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13462,
+                                        "sha256":  "f20d7f3f4de80458464330e120ec9006ebff8764e6f77db2e65c01a0736a3fb7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5744,
+                                        "sha256":  "8d61a4b9a4f2ac3d84f75ffa04df9cd78421a6bec113f9e1ad584ace8e5545fc"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7461,
+                                        "sha256":  "544f45cca23b76da3cfc228bf2b061fafbeba091ca92d12673f6950a30bb6fdd"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3054,
+                                        "sha256":  "b038aa24b373d68b4b180375dcb655aa921c496e90912fbcee961b857425f4d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19379,
+                                        "sha256":  "7e883aa55ecad0533c709a59ca49e1efca5dfd2b96514e73e547ec2a9295dba2"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6946,
+                                        "sha256":  "768dde7437896224fe88f11b9276c6590f564ee5815f9e496f0f4b301e6bb217"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6906,
+                                        "sha256":  "33cd23e2f86484b84c708b59f1cf97cea931bc1da0262eba2b5e82a4a3f0d555"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11250,
+                                        "sha256":  "ee18855ae3fce773225000861ed074032482392e6d3031e806f3bf0b5de6077d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\selection.cpython-311.pyc",
+                                        "bytes":  3668,
+                                        "sha256":  "36ad34b207275dee205f5d11c26bb07a44c51255506605cc0e061cf420c1a396"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5674,
+                                        "sha256":  "7c6528bf39fbd513a261fe16bc5bebb418982fb46a5ba0378d0f3ef98ea52ee1"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_M3_F512_30ep_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_M3_F512_30ep_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  99255,
+                                        "sha256":  "3c7863ac6575d177f928e14ab5ea52cf18a3a7149e467b7d5170fa479eca5cc5"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_PhaseFusion_4Ablation_30ep_A100",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_PhaseFusion_4Ablation_30ep_A100",
+                      "directory":  true,
+                      "files":  [
+                                    {
+                                        "relative":  "ANALYSIS_AND_FULL_KITTI_PLAN.md",
+                                        "bytes":  4519,
+                                        "sha256":  "cfac203eb0413cd5c46e6b2c50b79cdb148f234460da053e8c0c7301023f9059"
+                                    },
+                                    {
+                                        "relative":  "base_experiment.py",
+                                        "bytes":  3476,
+                                        "sha256":  "3435372abf397a5525446d15ca48fa7c9c850c76c4f414d6514cf3f138b0f97e"
+                                    },
+                                    {
+                                        "relative":  "bundle_manifest.json",
+                                        "bytes":  4000,
+                                        "sha256":  "65e363e5ce4e769d7d1dcad74eac0bc765d53e64a602a1d3a639f700fbdcfdfa"
+                                    },
+                                    {
+                                        "relative":  "compare_history.py",
+                                        "bytes":  10038,
+                                        "sha256":  "557c60ce9c670ae02269ed9e06089b77d06cfd0fffdb26e272e689128567a10d"
+                                    },
+                                    {
+                                        "relative":  "config.json",
+                                        "bytes":  2601,
+                                        "sha256":  "9bc315ccb52d0318f024bc11b566232e54d3184add02a23420310f8492c91e27"
+                                    },
+                                    {
+                                        "relative":  "deployment.py",
+                                        "bytes":  8227,
+                                        "sha256":  "d7d02967b0c35684955d5ced96a01f78a7c4a9ad93605249ae2cd2259d7b3842"
+                                    },
+                                    {
+                                        "relative":  "experiment.py",
+                                        "bytes":  5568,
+                                        "sha256":  "9d76fed67f31a335014b85c0537cbb4a5cdab4cdd87f12f06d23b1f5afd193e6"
+                                    },
+                                    {
+                                        "relative":  "history.py",
+                                        "bytes":  7731,
+                                        "sha256":  "e8044626a894ac2284d62bb972cc5c0f2df7f33da2f8a5ded5816fc63b2b5506"
+                                    },
+                                    {
+                                        "relative":  "local_verification.json",
+                                        "bytes":  2558,
+                                        "sha256":  "f20d5724c70fe2b49ffc42b331f717b2a93e36ca580a287cf749dbf1ac1d021e"
+                                    },
+                                    {
+                                        "relative":  "model_profiles.json",
+                                        "bytes":  4656,
+                                        "sha256":  "dc8a6961c2bf5ed5ecb12022804ddc57c13fd6f16ebf4f6caa2a33d854dd5cc4"
+                                    },
+                                    {
+                                        "relative":  "objective.py",
+                                        "bytes":  466,
+                                        "sha256":  "288fe030cb9fcd913a190f89ddfb625e41c85b005e5720ebb4cfe49b059210c7"
+                                    },
+                                    {
+                                        "relative":  "phase_fusion.py",
+                                        "bytes":  3919,
+                                        "sha256":  "a2d6fb6a034aa7ee3b61134b51d4f1a74fded16ce38f146238d547005277a29c"
+                                    },
+                                    {
+                                        "relative":  "README.md",
+                                        "bytes":  6468,
+                                        "sha256":  "3d0fcd7159167cf232f3aa7f9cef2889f47f0f9ee947b608bedabca0d077ca10"
+                                    },
+                                    {
+                                        "relative":  "requirements-trt.txt",
+                                        "bytes":  119,
+                                        "sha256":  "a2c7752909cbdad8149ed2e1b6a8180aee74808540f62b9d499f83a91fad426f"
+                                    },
+                                    {
+                                        "relative":  "requirements.txt",
+                                        "bytes":  107,
+                                        "sha256":  "3614abe5dff6b621165253cf06ff8ba6eb366caf576bdf6bf5701c86c1c3cfed"
+                                    },
+                                    {
+                                        "relative":  "run.py",
+                                        "bytes":  18694,
+                                        "sha256":  "a1ea5e1439c8baebb4ca315dda7b207160bb7274bbf65ff661f3e22371c0f19d"
+                                    },
+                                    {
+                                        "relative":  "test_contracts.py",
+                                        "bytes":  16107,
+                                        "sha256":  "d50a3014f9bccda558a4a097e423d50e1087be03374a078829f1c465fb85e193"
+                                    },
+                                    {
+                                        "relative":  "train_graph.py",
+                                        "bytes":  4382,
+                                        "sha256":  "a14cca0ff2493bf85998aa53adcb5df044691c8763b30c92506ff3429d2e6c9d"
+                                    },
+                                    {
+                                        "relative":  "Train_PhaseFusion_4Ablation_Fresh30_A100.ipynb",
+                                        "bytes":  13511,
+                                        "sha256":  "0bb9c7fc8f2e26517608aa0a5b530c47a1a2a77313c1eec5e6da4191eaf1e762"
+                                    },
+                                    {
+                                        "relative":  "trt_benchmark.py",
+                                        "bytes":  10449,
+                                        "sha256":  "1fe83fbec11508dc692dc5fbd800ce83be2c1638e84ac3dbc95c5f7ef2fac8a8"
+                                    },
+                                    {
+                                        "relative":  "evidence\\edge600_user_log.txt",
+                                        "bytes":  35253,
+                                        "sha256":  "986a77fd85aa6858c76ce6ae9438f714668d68550f44116ff4d2e7c8cdfa3f3c"
+                                    },
+                                    {
+                                        "relative":  "evidence\\historical_rows.json",
+                                        "bytes":  3481,
+                                        "sha256":  "7e8e43b368d039d5b6d3b1605e24d2c8685d6e89858782b74bae6cfaefb114d5"
+                                    },
+                                    {
+                                        "relative":  "evidence\\N1_user_result.json",
+                                        "bytes":  617,
+                                        "sha256":  "71714a39e82678a77920630f6aba31c4d218ee1dd10365ac557931678ebf942f"
+                                    },
+                                    {
+                                        "relative":  "evidence\\parent_policy.json",
+                                        "bytes":  43322,
+                                        "sha256":  "1f9447bf827dfb346ce9fd91c495fc3ae7807b76548870c2912566c7f85cf5e7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\boundaries.py",
+                                        "bytes":  4321,
+                                        "sha256":  "cc127b3dbc717c6bbd33a6ceda3c69cf1c79f3859f3c768926f777d178ab8f29"
+                                    },
+                                    {
+                                        "relative":  "vendor\\core.py",
+                                        "bytes":  7010,
+                                        "sha256":  "8f54084fc734fc5b18363cb00a9e29c2f620693b0305e360674835d6f0596c3d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\data.py",
+                                        "bytes":  17757,
+                                        "sha256":  "4a54948359f96f21bac9966de5f2f7d781d0501ca2ef4324a64d8c5efe0c0359"
+                                    },
+                                    {
+                                        "relative":  "vendor\\device_constants.py",
+                                        "bytes":  281,
+                                        "sha256":  "64ab5137e12ae6ec26d251a7188f0a41bc45045372e4aa433735a162c8fd0e45"
+                                    },
+                                    {
+                                        "relative":  "vendor\\fine_geometry.py",
+                                        "bytes":  7192,
+                                        "sha256":  "142aaead08cd10bed6efe618466b57b9b75378def7e47ad87885f43e760def77"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry.py",
+                                        "bytes":  8071,
+                                        "sha256":  "b9b74e96ba18418024560af88621da9b11fa27a1988588c7fb19ac170352b588"
+                                    },
+                                    {
+                                        "relative":  "vendor\\geometry_primitives.py",
+                                        "bytes":  3231,
+                                        "sha256":  "de6acd0ac75a15e409043eb422087f8e08a0f7ea0189d05e2f4da4651151fde4"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_legacy.py",
+                                        "bytes":  7795,
+                                        "sha256":  "de1c97e9e452d682b7467de3cff39ea246b477f823a02207516c5fca57a342d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\losses_parent.py",
+                                        "bytes":  6808,
+                                        "sha256":  "cc91da8f4aa18383da0d33b3f6a362e390c96bb1704bbd3670c37ccd8f874438"
+                                    },
+                                    {
+                                        "relative":  "vendor\\loss_helpers.py",
+                                        "bytes":  2750,
+                                        "sha256":  "0890aa6672c1b90b17a290a58a0f952b6c016da7dda4b300093c415ad9f15483"
+                                    },
+                                    {
+                                        "relative":  "vendor\\metrics.py",
+                                        "bytes":  3727,
+                                        "sha256":  "e0ca91878c9b0caf3466e87097ac92c53b0cbb21c0a14408c2843de20a13cc51"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model.py",
+                                        "bytes":  1300,
+                                        "sha256":  "eecb00968ed1a66238777b07e9719c9439c306333d4f9b31ed12213b26b3da8d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_base.py",
+                                        "bytes":  9013,
+                                        "sha256":  "55118a3d4df68c70b7061654a97da719ea54dfe05bf1264f13753f937e935324"
+                                    },
+                                    {
+                                        "relative":  "vendor\\model_parent.py",
+                                        "bytes":  3288,
+                                        "sha256":  "4225ef7d68f94a871bd35cc7316b65e47c6eb4bfb22b777d8306f21849301ad7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\ode_solver.py",
+                                        "bytes":  5032,
+                                        "sha256":  "6df38e0fcc1e1804a77ed803f1e4cea5310f8777a2fbf9f4815aae9cc0b052c6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\phase_readout.py",
+                                        "bytes":  5189,
+                                        "sha256":  "e1ace873035be331a47f95ee0df577e42b30c97755a6c41e7e90676488310381"
+                                    },
+                                    {
+                                        "relative":  "vendor\\selection.py",
+                                        "bytes":  2209,
+                                        "sha256":  "490db369f4ef27134a301ebd4b5e410d30bd6b99def951e80a1ddc15ff18ac92"
+                                    },
+                                    {
+                                        "relative":  "vendor\\support.py",
+                                        "bytes":  2452,
+                                        "sha256":  "233b5540bccd4ea676f32d1f7582d4fbf8884c0ced9362e9d30be07909e72cb6"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\boundaries.cpython-311.pyc",
+                                        "bytes":  10772,
+                                        "sha256":  "e1b8455e6ee257c43920a833ef352264bb384750eaadd154f5b2dff6cb98437a"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\core.cpython-311.pyc",
+                                        "bytes":  17340,
+                                        "sha256":  "3d6e9c2b80b8fc627b48c3e7057d602a3aaf42d7b9e3af5cac7ad69f375b06e7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\data.cpython-311.pyc",
+                                        "bytes":  34260,
+                                        "sha256":  "df53e5bab6557cf30293f8368a35de2c436d0fa468da5266d2320f2bb2b237ed"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\device_constants.cpython-311.pyc",
+                                        "bytes":  1000,
+                                        "sha256":  "248fb5254b2465fc3060d5e7af15338f234b8b6b5a00c3fe8473f340e85292c7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\fine_geometry.cpython-311.pyc",
+                                        "bytes":  13600,
+                                        "sha256":  "61317b9bb3117fdb87ed3142c21f9704005b6aecc402ffb7f4b185c64ec1f628"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry.cpython-311.pyc",
+                                        "bytes":  16139,
+                                        "sha256":  "e9f4f53c44ff8418716845efd47a1fb16bedd6c0ab88b01b06803737712fd9f5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\geometry_primitives.cpython-311.pyc",
+                                        "bytes":  6509,
+                                        "sha256":  "f21239cf7dfdf77f3a2f668ad478365cb4dca69c8a5386743536232db5b35273"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\losses_parent.cpython-311.pyc",
+                                        "bytes":  13462,
+                                        "sha256":  "f20d7f3f4de80458464330e120ec9006ebff8764e6f77db2e65c01a0736a3fb7"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\loss_helpers.cpython-311.pyc",
+                                        "bytes":  5744,
+                                        "sha256":  "8d61a4b9a4f2ac3d84f75ffa04df9cd78421a6bec113f9e1ad584ace8e5545fc"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\metrics.cpython-311.pyc",
+                                        "bytes":  7461,
+                                        "sha256":  "544f45cca23b76da3cfc228bf2b061fafbeba091ca92d12673f6950a30bb6fdd"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model.cpython-311.pyc",
+                                        "bytes":  3054,
+                                        "sha256":  "b038aa24b373d68b4b180375dcb655aa921c496e90912fbcee961b857425f4d5"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_base.cpython-311.pyc",
+                                        "bytes":  19379,
+                                        "sha256":  "7e883aa55ecad0533c709a59ca49e1efca5dfd2b96514e73e547ec2a9295dba2"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\model_parent.cpython-311.pyc",
+                                        "bytes":  6946,
+                                        "sha256":  "768dde7437896224fe88f11b9276c6590f564ee5815f9e496f0f4b301e6bb217"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\ode_solver.cpython-311.pyc",
+                                        "bytes":  6906,
+                                        "sha256":  "33cd23e2f86484b84c708b59f1cf97cea931bc1da0262eba2b5e82a4a3f0d555"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\phase_readout.cpython-311.pyc",
+                                        "bytes":  11250,
+                                        "sha256":  "ee18855ae3fce773225000861ed074032482392e6d3031e806f3bf0b5de6077d"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\selection.cpython-311.pyc",
+                                        "bytes":  3668,
+                                        "sha256":  "36ad34b207275dee205f5d11c26bb07a44c51255506605cc0e061cf420c1a396"
+                                    },
+                                    {
+                                        "relative":  "vendor\\__pycache__\\support.cpython-311.pyc",
+                                        "bytes":  5674,
+                                        "sha256":  "7c6528bf39fbd513a261fe16bc5bebb418982fb46a5ba0378d0f3ef98ea52ee1"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "drive_upload\\AnchorFlow_S4_UPIR_PhaseFusion_4Ablation_30ep_A100.zip",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\drive_upload\\AnchorFlow_S4_UPIR_PhaseFusion_4Ablation_30ep_A100.zip",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  105379,
+                                        "sha256":  "17450fe488a6113e933bbbbff42811e36a70bbf8ee99797a8e30999c885ae46d"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_capacity.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_capacity.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  11637,
+                                        "sha256":  "0fa02b2c31ab9e940ea6c82d467acc8b7624d7ecd5afec30c45b0bc2642f5051"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_capacity.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_capacity.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  3415,
+                                        "sha256":  "2ae0fc65072b4e381551bd76834b95762b310e40f33872513a2dc9a2126077f5"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_capacity1m.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_capacity1m.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  12611,
+                                        "sha256":  "7118c3da1f699cbcec433a14fcbeb8faf5ff2bdf8a2453c2c8340862504ae61e"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_capacity1m.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_capacity1m.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  4133,
+                                        "sha256":  "f3e1e9cad30e7a04e54443b978c9ef2f0dc58c92efd4f6a0a095650f3627431a"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_d4split.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_d4split.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  14659,
+                                        "sha256":  "4ea26726d6fe16a8f771d31350efcaa5b3243053bf487258cfb2240b1988089e"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_d4split.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_d4split.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  4219,
+                                        "sha256":  "7c79fc7c703257f640d9e620c46afc3f46b8b7e940bdaa44b7c521577633d47e"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_edge600.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_edge600.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  10328,
+                                        "sha256":  "61f19fd96ea8d738adb9eac946e82f5767077f1cb98d4dd8b91d525a5663dc5a"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_edge600.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_edge600.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  5566,
+                                        "sha256":  "29c15c1935ca0d39c4a00f69c4a83ecdac34a8e68e4bf37eef48c773a1ca5a08"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_m3_f512.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_m3_f512.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  12763,
+                                        "sha256":  "eaa00d4dea2e0f81cbff2b978ea8e41245720502fbc91ca5fd9704ea280029d8"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_m3_f512.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_m3_f512.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  4354,
+                                        "sha256":  "358d880f4bb67500441e7d4499f10c9b60f6016463fa3dd60a218c479b14aa28"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_phasefusion.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_phasefusion.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  7944,
+                                        "sha256":  "2ff8673313b1258a0b9514a03f9e73295f0a768d35e2026b3aecef283342a5ea"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\verify_s4_phasefusion.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\verify_s4_phasefusion.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  4721,
+                                        "sha256":  "4655fe16404be5339c41bdb88e14e91533a1389290cbb6586cced78c923db6fb"
+                                    }
+                                ],
+                      "verified":  true
+                  },
+                  {
+                      "source_relative":  "scripts\\package_s4_n1fast.py",
+                      "destination":  "C:\\Users\\ADMIN\\Desktop\\GeoDistill_RT\\.archive\\q1_controls_2026_10_21\\scripts\\package_s4_n1fast.py",
+                      "directory":  false,
+                      "files":  [
+                                    {
+                                        "relative":  "",
+                                        "bytes":  8517,
+                                        "sha256":  "c3f25559e69f2288623025dca437d67d6c955657bf0de1e687ada7aca2ac6a9b"
+                                    }
+                                ],
+                      "verified":  true
+                  }
+              ],
+    "file_count":  407,
+    "bytes":  4209595
+}

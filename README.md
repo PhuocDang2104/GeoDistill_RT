@@ -1,35 +1,52 @@
 # GeoDistill-RT / AnchorFlow
 
-**Current deployment baseline: V11-derived S4-U-PIR NoRelative (`G_s4_upir_norel`).**
-Coarse **4 NFE**, no fine NODE,583,880 parameters. `best_policy.pth` epoch27 from
-fresh30, seed42,1.600train/400val; metric teacher ON, relative loss OFF.
+**Current baseline: `Q1_s4_n1_fast` — S4 JetODE + U-PIR, Fusion512, Jet-context128.**
+Adopted21/10/2026 at the user's request. **582,888 parameters; coarse4 NFE/fine0**.
+Neural architecture is identical to N1; Q1 combines a fresh30 checkpoint with a
+deployment-only fastpath. This is the **subset/development baseline**, not a
+full-KITTI-trained model, official-test result or measured Orin implementation.
 
-| A100 · TensorRT FP32 + CUDA Graph | Measured |
+| A100 pipeline · TensorRT FP32 + CUDA Graph · full400 | Q1 reported |
 |---|---:|
-| RMSE / iRMSE |0.990151m /3.172074km⁻¹|
-| MAE / boundary3 RMSE |0.258984m /1.685668m|
-| Wall median / P95 |3.827 /3.845ms|
-| FPS |261.3|
+| RMSE / iRMSE | **0.978691 m / 3.170880 km⁻¹** |
+| MAE / boundary3 RMSE | 0.255826 m / 1.667166 m |
+| Synchronized wall mean / median / P95 | **3.8467 / 3.8436 / 3.8612 ms** |
+| FPS = 1000 / mean | **259.97** |
+| Reversed-order repeat mean | 3.8454 ms |
 
-Full400 /25,424,992 valid pixels. B1×352×1216,100 changing timed images,
-D2D included, decoding/preprocessing/H2D excluded. **Not end-to-end or Orin latency.**
-G improves RMSE versus no-fine D by0.274%, but changes both U-conditioning and
-relative loss; separate architectural gain is not established. Not all old
-targets pass; MAE/boundary winners differ. No leaderboard/universal accuracy claim.
+Same Q1 weights: original engine4.2294ms → fast3.8467ms (**9.05% lower wall**).
+Metrics differ by numerical noise. Accuracy differences versus old N1 are between
+training runs, **not caused by the deployment rewrite**.
+
+B1×352×1216;400 development frames/25,424,992 valid GT pixels;100 distinct GPU
+timing images,100warmup/300iterations. D2D included; decode/preprocess/H2D/build/
+capture excluded. **Not end-to-end throughput or Orin latency.** GPU evidence is
+the user's console snapshot; full report/checkpoint hashes are not included
+locally and are not fabricated from the log.
 
 ## Start here
 
-- [Baseline architecture, equations, evidence and limits](docs/AnchorFlow_V11_Baseline.md).
-- [Frozen Drive training package + notebook](drive_upload/AnchorFlow_S4_UPIR_NoRelative_30ep_A100/README.md).
-- [Orin NX / AGX GPU inference package](production/AnchorFlow_S4_UPIR_Orin/README.md):
-  export ONNX/assets on Colab, build engine and benchmark on target; no training.
-- [Completed run evidence and attribution analysis](benchmarks/s4_upir_norel_2026_10_19/README.md).
-- [Historical V11.3 accuracy](docs/AnchorFlow_V11_3.md),
-  [old Fixed6 RK3+fine2 contract](docs/history/AnchorFlow_V11_Fixed6_2026_10_14.md).
+- [Baseline specification and rigorous equations](docs/AnchorFlow_V11_Baseline.md).
+- [Adopted model / exact private artifact checklist](production/AnchorFlow_S4_Q1_Fast/README.md).
+- [Frozen train/benchmark package](drive_upload/AnchorFlow_S4_UPIR_N1Fast_30ep_A100/README.md):
+  upload WHOLE folder; do not modify source/manifest when resuming.
+- [Same-checkpoint attribution, CSV and raw evidence](benchmarks/q1_n1fast_2026_10_21/README.md).
+- [GeoLift_Data metric-only checklist](docs/GeoLift_Data_MetricOnly_Transfer.md).
 
-Weights, KITTI and teacher payloads stay local/Drive, not Git. The Orin package
-contains code, **not checkpoint/exported ONNX**; exporter records the actual
-checkpoint SHA and retains strict training contracts. Current model does not
-depend on legacy `src/` or older-version folders.
+Train: seed42/B4,ImageNet encoder,fresh30,1600train/400val,AdamW fused,
+BF16CNN/FP32geometry+loss. Metric teacher train-only, **relative OFF**.
+PyTorch trains; TensorRT compiles inference. No early stop; epoch-boundary resume.
 
-[Docs](docs/README.md) · [Drive bundles](drive_upload/README.md) · [Cleanup](REPO_CLEANUP.md).
+```bash
+python scripts/package_current_baseline.py
+python scripts/verify_s4_n1fast.py
+```
+
+Packaging verifies/repackages frozen bytes; reverification writes outside them.
+Weights, KITTI/teacher data and exported ONNX/engines stay local/Drive, not Git.
+The [old G Orin helper](production/AnchorFlow_S4_UPIR_Orin/README.md) is historical,
+**not a Q1 exporter**. Q1 Orin and full-KITTI generalization remain unmeasured.
+Do not reuse A100 engines on another device.
+
+[Docs](docs/README.md) · [Drive package](drive_upload/README.md) ·
+[This cleanup / recovery](benchmarks/q1_n1fast_2026_10_21/CLEANUP.md).

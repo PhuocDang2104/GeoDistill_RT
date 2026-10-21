@@ -1,6 +1,9 @@
-# AnchorFlow S4-U-PIR NoRelative — Orin GPU inference
+# Historical G S4-U-PIR NoRelative — Orin GPU inference
 
-Current deployment baseline: `G_s4_upir_norel`, **583,880 parameters, coarse4 NFE,
+**Superseded by [Q1](../AnchorFlow_S4_Q1_Fast/README.md). This exporter pins G,
+not Q1; do not rename variants or bypass checkpoint contracts to load Q1.**
+
+Historical G deployment: `G_s4_upir_norel`, **583,880 parameters, coarse4 NFE,
 fine0**. Inference only. Supports the TensorRT10 GPU API used by JetPack6.x on
 Orin NX / AGX Orin. **Not yet tested on physical Orin.** No claimed Orin latency.
 

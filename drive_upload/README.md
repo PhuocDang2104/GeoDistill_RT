@@ -1,35 +1,30 @@
-# Drive bundles
+# Active Drive package: Q1_s4_n1_fast
 
-## Current baseline
+Upload the WHOLE [N1-Fast/Q1 frozen folder](AnchorFlow_S4_UPIR_N1Fast_30ep_A100/README.md)
+to MyDrive and open `Train_N1Fast_Fresh30_A100.ipynb`. The README/notebook inside
+are original completed experimental bytes; [current adoption is recorded separately](../production/AnchorFlow_S4_Q1_Fast/README.md).
+Do not edit their sources/config/manifest to change the historical status text.
 
-[AnchorFlow_S4_UPIR_NoRelative_30ep_A100](AnchorFlow_S4_UPIR_NoRelative_30ep_A100/README.md):
-upload WHOLE folder to MyDrive and open `Train_S4_UPIR_NoRelative_Fresh30_A100.ipynb`.
-Fresh30/resume, seed42, metric teacher ON, relative OFF; full400 TRT FP32 graph
-benchmark and1000test predictions. Selected G best_policy epoch27.
+582888params,coarse4NFE/fine0,seed42,B4,fresh30/resume,ImageNet,metric teacher only,
+relative OFF. Same400 TensorRT FP32+CUDA Graph accuracy/runtime protocol. Keep the
+oldN1 Drive run for preflight/reference measurement; local archived control folders
+are not required by this completed, self-contained snapshot.
 
-Frozen source/config/manifest remain unchanged after training. Never upload helpers
-inside frozen CODE: source hash includes every `.py`. Checkpoints/data remain outside Git.
+```bash
+python scripts/package_current_baseline.py
+```
 
-Moving to another Colab/Drive account? Follow the
-[metric-only dataset checklist](../docs/GeoLift_Data_MetricOnly_Transfer.md).
-Only the teacher type is metric-only; RGB/sparse/GT/K and split JSON are still required.
+This command verifies/repackages Q1 without any retired parent generator and
+without changing frozen bytes. Dataset/checkpoint/ONNX/engines are not in Git/ZIP.
+[GeoLift_Data checklist](../docs/GeoLift_Data_MetricOnly_Transfer.md).
 
-## Deployment
+## Retained historical compatibility
 
-[Orin NX / AGX package](../production/AnchorFlow_S4_UPIR_Orin/README.md): upload as
-SEPARATE helper folder, export from completed Colab, copy ONNX/manifest/real samples
-to Orin. Native build, inference only; no PyTorch needed on target. Orin not measured yet.
+- [G NoRelative folder](AnchorFlow_S4_UPIR_NoRelative_30ep_A100/README.md) remains
+  immutable for historical reproduction and the old G Orin exporter.
+- V11/V11.3 and prior device-audit folders are legacy controls, not current baseline.
+- DecoderCapacity/1M/D4Split/Edge600/N1-parent/PhaseFusion source folders, ZIPs and
+  generators were cold-stored, not irreversibly erased. [Archive receipt/recovery](../benchmarks/q1_n1fast_2026_10_21/CLEANUP.md).
 
-## New experiment — not promoted
-
-[S4-U-PIR DecoderCapacity](AnchorFlow_S4_UPIR_DecoderCapacity_30ep_A100/README.md):
-fresh30 ×3 on A100, matched G0 control + wider D16/D8 decoder H + H/D4 extension I.
-Metric teacher only, no relative path; full400 TensorRT FP32 + CUDA Graph metric/
-runtime comparison. Current baseline stays G until measured results justify a change.
-
-## Controls
-
-A/B/C FineAblation, D NoFine, E JPIR and F dual-teacher UPIR are controls, not
-simultaneous current baselines. Retain for reproduction; G runtime does not depend
-on them. Prior V11.3 adaptive/Fixed6 and S6/S3 audits are historical workflows.
-[Current equations/results](../docs/AnchorFlow_V11_Baseline.md).
+Only [Q1](../docs/AnchorFlow_V11_Baseline.md) is the current adopted development
+baseline. Full-KITTI and Q1 Orin qualification are pending.
