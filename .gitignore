@@ -20,6 +20,8 @@ env/
 *.tar
 *.tar.gz
 *.tgz
+/tmp/
+/output/
 
 data/depth_selection/**
 !data/depth_selection/
@@ -27,6 +29,7 @@ data/depth_selection/**
 !data/depth_selection/splits/*.txt
 data/kitti_depth_completion/
 data/teacher_subset_2000/
+data/dmd3cpp_handoff_evidence/
 
 teacher_outputs/**
 student_outputs/**

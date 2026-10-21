@@ -10,6 +10,7 @@ V11 học neural vector field trên geometric jet; numerical solver tích phân 
 | Nguyên lý V11, training, metric và insight mới nhất | [AnchorFlow_V11.md](docs/AnchorFlow_V11.md) |
 | Folder V11 upload nguyên lên Drive | [AnchorFlow_v11_NODE](drive_upload/AnchorFlow_v11_NODE/README.md) |
 | Train riêng V11 | [Notebook fresh40 + early stop](drive_upload/AnchorFlow_v11_NODE/Train_AnchorFlow_V11_NODE_TAR2000_Fresh40.ipynb) |
+| Sinh riêng teacher DMD3C++ cho toàn bộ 85.898 train, lưu ZIP KITTI và teacher shards lên Drive | [FullKITTI Colab notebook](notebooks/DMD3Cpp_FullKITTI_Train_To_Drive.ipynb) — đã sinh và kiểm tra đủ 85.898 mẫu trên A100; [data handoff](data/DMD3Cpp_FullKITTI_HANDOFF.md) |
 | Train V10.1/V11 đồng thời rồi benchmark tuần tự | [Notebook paired benchmark](notebooks/AnchorFlow_Compare_V10_1_V11_Fresh40.ipynb) · [Hướng dẫn](docs/AnchorFlow_V10_1_V11_Benchmark.md) |
 | Kết quả paired run đã hoàn thành, kèm raw metric nhỏ | [Benchmark pair01](results/benchmarks/v10_1_v11_pair01/README.md) |
 | Baseline/control V10.1 learned-h Euler2 | [V10.1](docs/AnchorFlow_V10_1.md) |
